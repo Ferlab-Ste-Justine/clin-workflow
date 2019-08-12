@@ -1,0 +1,715 @@
+{
+  "settings": {
+    "number_of_shards": 8
+  },
+  "mappings": {
+    "_doc": {
+      "properties": {
+        "GERP___NR": {
+          "type": "float"
+        },
+        "GERP___RS": {
+          "type": "float"
+        },
+        "Predictions": {
+          "properties": {
+            "FATHMM": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              }
+            },
+            "Polyphen2_HDIV": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              }
+            },
+            "Polyphen2_HVAR": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              }
+            },
+            "SIFT": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              }
+            },
+            "available": {
+              "type": "boolean"
+            }
+          }
+        },
+        "ad": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword",
+              "ignore_above": 256
+            }
+          }
+        },
+        "alt": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword",
+              "ignore_above": 256
+            }
+          }
+        },
+        "annotationTool": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword",
+              "ignore_above": 256
+            }
+          }
+        },
+        "assemblyVersion": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword",
+              "ignore_above": 256
+            }
+          }
+        },
+        "chrom": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword",
+              "ignore_above": 256
+            }
+          }
+        },
+        "clinvar_clnsig": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword",
+              "ignore_above": 256
+            }
+          }
+        },
+        "clinvar_hgvs": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword",
+              "ignore_above": 256
+            }
+          }
+        },
+        "clinvar_id": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword",
+              "ignore_above": 256
+            }
+          }
+        },
+        "clinvar_trait": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword",
+              "ignore_above": 256
+            }
+          }
+        },
+        "dbSNP_ID": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword",
+              "ignore_above": 256
+            }
+          }
+        },
+        "donor": {
+          "type": "nested",
+          "include_in_parent": true,
+          "properties": {
+            "depth": {
+              "type": "long"
+            },
+            "donorId": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              }
+            },
+            "familyId": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              }
+            },
+            "phenotypes": {
+              "type": "nested",
+              "include_in_parent": true,
+              "properties": {
+                "pheno": {
+                  "type": "keyword"
+                }
+              }
+            },
+            "pid": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              }
+            },
+            "quality": {
+              "type": "float"
+            },
+            "sequencingStrategy": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              }
+            },
+            "studyId": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              }
+            },
+            "type": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              }
+            },
+            "zygosity": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              }
+            }
+          }
+        },
+        "frequencies": {
+          "properties": {
+            "1000Gp3": {
+              "properties": {
+                "AC": {
+                  "type": "long"
+                },
+                "AF": {
+                  "type": "float"
+                },
+                "AFR_AC": {
+                  "type": "long"
+                },
+                "AFR_AF": {
+                  "type": "float"
+                },
+                "AMR_AC": {
+                  "type": "long"
+                },
+                "AMR_AF": {
+                  "type": "float"
+                },
+                "EAS_AC": {
+                  "type": "long"
+                },
+                "EAS_AF": {
+                  "type": "float"
+                },
+                "EUR_AC": {
+                  "type": "long"
+                },
+                "EUR_AF": {
+                  "type": "float"
+                },
+                "SAS_AC": {
+                  "type": "long"
+                },
+                "SAS_AF": {
+                  "type": "float"
+                },
+                "available": {
+                  "type": "boolean"
+                }
+              }
+            },
+            "ESP6500": {
+              "properties": {
+                "AA_AC": {
+                  "type": "long"
+                },
+                "AA_AF": {
+                  "type": "float"
+                },
+                "EA_AC": {
+                  "type": "long"
+                },
+                "EA_AF": {
+                  "type": "float"
+                },
+                "available": {
+                  "type": "boolean"
+                }
+              }
+            },
+            "ExAc": {
+              "properties": {
+                "AC": {
+                  "type": "long"
+                },
+                "ADJ_AC": {
+                  "type": "long"
+                },
+                "ADJ_AF": {
+                  "type": "float"
+                },
+                "AF": {
+                  "type": "float"
+                },
+                "AFR_AC": {
+                  "type": "long"
+                },
+                "AFR_AF": {
+                  "type": "float"
+                },
+                "AMR_AC": {
+                  "type": "long"
+                },
+                "AMR_AF": {
+                  "type": "float"
+                },
+                "EAS_AC": {
+                  "type": "long"
+                },
+                "EAS_AF": {
+                  "type": "float"
+                },
+                "FIN_AC": {
+                  "type": "long"
+                },
+                "FIN_AF": {
+                  "type": "float"
+                },
+                "NFE_AC": {
+                  "type": "long"
+                },
+                "NFE_AF": {
+                  "type": "float"
+                },
+                "SAS_AC": {
+                  "type": "long"
+                },
+                "SAS_AF": {
+                  "type": "float"
+                },
+                "available": {
+                  "type": "boolean"
+                }
+              }
+            },
+            "gnomAD_exomes": {
+              "properties": {
+                "AC": {
+                  "type": "long"
+                },
+                "AF": {
+                  "type": "float"
+                },
+                "AFR_AC": {
+                  "type": "long"
+                },
+                "AFR_AF": {
+                  "type": "float"
+                },
+                "AFR_AN": {
+                  "type": "long"
+                },
+                "AMR_AC": {
+                  "type": "long"
+                },
+                "AMR_AF": {
+                  "type": "float"
+                },
+                "AMR_AN": {
+                  "type": "long"
+                },
+                "AN": {
+                  "type": "long"
+                },
+                "ASJ_AC": {
+                  "type": "long"
+                },
+                "ASJ_AF": {
+                  "type": "float"
+                },
+                "ASJ_AN": {
+                  "type": "long"
+                },
+                "EAS_AC": {
+                  "type": "long"
+                },
+                "EAS_AF": {
+                  "type": "float"
+                },
+                "EAS_AN": {
+                  "type": "long"
+                },
+                "FIN_AC": {
+                  "type": "long"
+                },
+                "FIN_AF": {
+                  "type": "float"
+                },
+                "FIN_AN": {
+                  "type": "long"
+                },
+                "NFE_AC": {
+                  "type": "long"
+                },
+                "NFE_AF": {
+                  "type": "float"
+                },
+                "NFE_AN": {
+                  "type": "long"
+                },
+                "SAS_AC": {
+                  "type": "long"
+                },
+                "SAS_AF": {
+                  "type": "float"
+                },
+                "SAS_AN": {
+                  "type": "long"
+                },
+                "available": {
+                  "type": "boolean"
+                }
+              }
+            },
+            "gnomAD_genomes": {
+              "properties": {
+                "AC": {
+                  "type": "long"
+                },
+                "AF": {
+                  "type": "float"
+                },
+                "AFR_AC": {
+                  "type": "long"
+                },
+                "AFR_AF": {
+                  "type": "float"
+                },
+                "AFR_AN": {
+                  "type": "long"
+                },
+                "AMR_AC": {
+                  "type": "long"
+                },
+                "AMR_AF": {
+                  "type": "float"
+                },
+                "AMR_AN": {
+                  "type": "long"
+                },
+                "AN": {
+                  "type": "long"
+                },
+                "ASJ_AC": {
+                  "type": "long"
+                },
+                "ASJ_AF": {
+                  "type": "float"
+                },
+                "ASJ_AN": {
+                  "type": "long"
+                },
+                "EAS_AC": {
+                  "type": "long"
+                },
+                "EAS_AF": {
+                  "type": "float"
+                },
+                "EAS_AN": {
+                  "type": "long"
+                },
+                "FIN_AC": {
+                  "type": "long"
+                },
+                "FIN_AF": {
+                  "type": "float"
+                },
+                "FIN_AN": {
+                  "type": "long"
+                },
+                "NFE_AC": {
+                  "type": "long"
+                },
+                "NFE_AF": {
+                  "type": "float"
+                },
+                "NFE_AN": {
+                  "type": "long"
+                },
+                "available": {
+                  "type": "boolean"
+                }
+              }
+            }
+          }
+        },
+        "functionalAnnotations": {
+          "properties": {
+            "aaLen": {
+              "type": "long"
+            },
+            "aaPos": {
+              "type": "long"
+            },
+            "allele": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              }
+            },
+            "biotype": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              }
+            },
+            "cdnaLen": {
+              "type": "long"
+            },
+            "cdnaPos": {
+              "type": "long"
+            },
+            "cdsLen": {
+              "type": "long"
+            },
+            "cdsPos": {
+              "type": "long"
+            },
+            "distance": {
+              "type": "long"
+            },
+            "effet": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              }
+            },
+            "errorsWarningsInfo": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              }
+            },
+            "featureId": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              }
+            },
+            "featureType": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              }
+            },
+            "gene": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              }
+            },
+            "geneId": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              }
+            },
+            "hgvsC": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              }
+            },
+            "hgvsP": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              }
+            },
+            "impact": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              }
+            },
+            "rank/total": {
+              "type": "long"
+            }
+          }
+        },
+        "gq": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword",
+              "ignore_above": 256
+            }
+          }
+        },
+        "gt": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword",
+              "ignore_above": 256
+            }
+          }
+        },
+        "id": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword",
+              "ignore_above": 256
+            }
+          }
+        },
+        "lossOfFunctionEffect": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword",
+              "ignore_above": 256
+            }
+          }
+        },
+        "mutation": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword",
+              "ignore_above": 256
+            }
+          }
+        },
+        "mutationId": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword",
+              "ignore_above": 256
+            }
+          }
+        },
+        "nonsenseMediatedDecayEffects": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword",
+              "ignore_above": 256
+            }
+          }
+        },
+        "reference": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword",
+              "ignore_above": 256
+            }
+          }
+        },
+        "start": {
+          "type": "long"
+        },
+        "type": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword",
+              "ignore_above": 256
+            }
+          }
+        }
+      }
+    }
+  }
+}
