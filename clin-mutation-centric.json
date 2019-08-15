@@ -349,6 +349,12 @@
             },
             "gnomAD_exomes": {
               "properties": {
+                "POPMAX_AC": {
+                  "type": "long"
+                },
+                "POPMAX_AF": {
+                  "type": "float"
+                },
                 "AC": {
                   "type": "long"
                 },
@@ -428,6 +434,12 @@
             },
             "gnomAD_genomes": {
               "properties": {
+                "POPMAX_AC": {
+                  "type": "long"
+                },
+                "POPMAX_AF": {
+                  "type": "float"
+                },
                 "AC": {
                   "type": "long"
                 },
