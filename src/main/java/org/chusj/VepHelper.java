@@ -103,8 +103,10 @@ public class VepHelper {
         String mutation = reference + ">" + alt.split(",")[0];
         String dnaChanges = chrPos + ":g." + position + mutation;
 
+        JSONObject funcAnnotation = null;
+
         for (String s : csqArray) {
-            processVepAnnotations(s, dnaChanges);
+            funcAnnotation = processVepAnnotations(s, dnaChanges);
 
         }
 
@@ -121,7 +123,7 @@ public class VepHelper {
 
     }
 
-    private static void processVepAnnotations(String csqLine, String id) {
+    private static JSONObject processVepAnnotations(String csqLine, String id) {
 
         //System.out.print("\n"+csqLine);
         String[] functionalAnnotationArray = csqLine.split("[|]", -1);
@@ -185,19 +187,20 @@ public class VepHelper {
         String GIVEN_REF = functionalAnnotationArray[pos++].trim();
         String USED_REF = functionalAnnotationArray[pos++].trim();
         String BAM_EDIT = functionalAnnotationArray[pos++].trim();
-        String a1000Gp3_AC = functionalAnnotationArray[pos++].trim();
-        String a1000Gp3_AF = functionalAnnotationArray[pos++].trim();
-        String a1000Gp3_AFR_AC = functionalAnnotationArray[pos++].trim();
-        // 29 -
-        String a1000Gp3_AFR_AF = functionalAnnotationArray[pos++].trim();
-        String a1000Gp3_AMR_AC = functionalAnnotationArray[pos++].trim();
-        String a1000Gp3_AMR_AF = functionalAnnotationArray[pos++].trim();
-        String a1000Gp3_EAS_AC = functionalAnnotationArray[pos++].trim();
-        String a1000Gp3_EAS_AF = functionalAnnotationArray[pos++].trim();
-        String a1000Gp3_EUR_AC = functionalAnnotationArray[pos++].trim();
-        String a1000Gp3_EUR_AF = functionalAnnotationArray[pos++].trim();
-        String a1000Gp3_SAS_AC = functionalAnnotationArray[pos++].trim();
-        String a1000Gp3_SAS_AF = functionalAnnotationArray[pos++].trim();
+
+        addNumberToJsonObject("AC", functionalAnnotationArray[pos++] , frequency1000Gp3);
+        addNumberToJsonObject("AF", functionalAnnotationArray[pos++] , frequency1000Gp3);
+        addNumberToJsonObject("AFR_AC", functionalAnnotationArray[pos++] , frequency1000Gp3);
+        // 29
+        addNumberToJsonObject("AFR_AF", functionalAnnotationArray[pos++] , frequency1000Gp3);
+        addNumberToJsonObject("AMR_AC", functionalAnnotationArray[pos++] , frequency1000Gp3);
+        addNumberToJsonObject("AMR_AF", functionalAnnotationArray[pos++] , frequency1000Gp3);
+        addNumberToJsonObject("EAS_AC", functionalAnnotationArray[pos++] , frequency1000Gp3);
+        addNumberToJsonObject("EAS_AF", functionalAnnotationArray[pos++] , frequency1000Gp3);
+        addNumberToJsonObject("EUR_AC", functionalAnnotationArray[pos++] , frequency1000Gp3);
+        addNumberToJsonObject("EUR_AF", functionalAnnotationArray[pos++] , frequency1000Gp3);
+        addNumberToJsonObject("SAS_AC", functionalAnnotationArray[pos++] , frequency1000Gp3);
+        addNumberToJsonObject("SAS_AF", functionalAnnotationArray[pos++] , frequency1000Gp3);
         String ALSPAC_AC = functionalAnnotationArray[pos++].trim();
         //39 -
         String ALSPAC_AF = functionalAnnotationArray[pos++].trim();
@@ -220,11 +223,11 @@ public class VepHelper {
         String DEOGEN2_rankscore = functionalAnnotationArray[pos++].trim();
         String DEOGEN2_score = functionalAnnotationArray[pos++].trim();
         String Denisova = functionalAnnotationArray[pos++].trim();
-        String ESP6500_AA_AC = functionalAnnotationArray[pos++].trim();
+        addNumberToJsonObject("AA_AC", functionalAnnotationArray[pos++] , frequencyEsp6500);
         //59 -
-        String ESP6500_AA_AF = functionalAnnotationArray[pos++].trim();
-        String ESP6500_EA_AF = functionalAnnotationArray[pos++].trim();
-        String ESP6500_EA_AC = functionalAnnotationArray[pos++].trim();
+        addNumberToJsonObject("AA_AF", functionalAnnotationArray[pos++] , frequencyEsp6500);
+        addNumberToJsonObject("EA_AC", functionalAnnotationArray[pos++] , frequencyEsp6500);
+        addNumberToJsonObject("EA_AF", functionalAnnotationArray[pos++] , frequencyEsp6500);
         String Eigen_PC_phred_coding = functionalAnnotationArray[pos++].trim();
         String Eigen_PC_raw_coding = functionalAnnotationArray[pos++].trim();
         String Eigen_PC_raw_coding_rankscore = functionalAnnotationArray[pos++].trim();
@@ -235,23 +238,23 @@ public class VepHelper {
         // 69 -
         String Ensembl_proteinid = functionalAnnotationArray[pos++].trim();
         String Ensembl_transcriptid = functionalAnnotationArray[pos++].trim();
-        String ExAC_AC = functionalAnnotationArray[pos++].trim();
-        String ExAC_AF = functionalAnnotationArray[pos++].trim();
-        String ExAC_AFR_AC = functionalAnnotationArray[pos++].trim();
-        String ExAC_AFR_AF = functionalAnnotationArray[pos++].trim();
-        String ExAC_AMR_AC = functionalAnnotationArray[pos++].trim();
-        String ExAC_AMR_AF = functionalAnnotationArray[pos++].trim();
-        String ExAC_Adj_AC = functionalAnnotationArray[pos++].trim();
-        String ExAC_Adj_AF = functionalAnnotationArray[pos++].trim();
+        addNumberToJsonObject("AC", functionalAnnotationArray[pos++] , frequencyExAc);
+        addNumberToJsonObject("AF", functionalAnnotationArray[pos++] , frequencyExAc);
+        addNumberToJsonObject("AFR_AC", functionalAnnotationArray[pos++] , frequencyExAc);
+        addNumberToJsonObject("AFR_AF", functionalAnnotationArray[pos++] , frequencyExAc);
+        addNumberToJsonObject("AMR_AC", functionalAnnotationArray[pos++] , frequencyExAc);
+        addNumberToJsonObject("AMR_AF", functionalAnnotationArray[pos++] , frequencyExAc);
+        addNumberToJsonObject("Adj_AC", functionalAnnotationArray[pos++] , frequencyExAc);
+        addNumberToJsonObject("Adj_AF", functionalAnnotationArray[pos++] , frequencyExAc);
         // 79
-        String ExAC_EAS_AC = functionalAnnotationArray[pos++].trim();
-        String ExAC_EAS_AF = functionalAnnotationArray[pos++].trim();
-        String ExAC_FIN_AC = functionalAnnotationArray[pos++].trim();
-        String ExAC_FIN_AF = functionalAnnotationArray[pos++].trim();
-        String ExAC_NFE_AC = functionalAnnotationArray[pos++].trim();
-        String ExAC_NFE_AF = functionalAnnotationArray[pos++].trim();
-        String ExAC_SAS_AC = functionalAnnotationArray[pos++].trim();
-        String ExAC_SAS_AF = functionalAnnotationArray[pos++].trim();
+        addNumberToJsonObject("EAS_AC", functionalAnnotationArray[pos++] , frequencyExAc);
+        addNumberToJsonObject("EAS_AF", functionalAnnotationArray[pos++] , frequencyExAc);
+        addNumberToJsonObject("FIN_AC", functionalAnnotationArray[pos++] , frequencyExAc);
+        addNumberToJsonObject("FIN_AF", functionalAnnotationArray[pos++] , frequencyExAc);
+        addNumberToJsonObject("NFE_AC", functionalAnnotationArray[pos++] , frequencyExAc);
+        addNumberToJsonObject("NFE_AF", functionalAnnotationArray[pos++] , frequencyExAc);
+        addNumberToJsonObject("SAS_AC", functionalAnnotationArray[pos++] , frequencyExAc);
+        addNumberToJsonObject("SAS_AF", functionalAnnotationArray[pos++] , frequencyExAc);
         String ExAC_nonTCGA_AC = functionalAnnotationArray[pos++].trim();
         String ExAC_nonTCGA_AF = functionalAnnotationArray[pos++].trim();
         // 89
@@ -616,17 +619,21 @@ public class VepHelper {
 
 
 
-
+        frequencies.put("1000Gp3", frequency1000Gp3);
+        frequencies.put("ExAc", frequencyExAc);
         frequencies.put("gnomAD_exomes", frequencyGnomadEx);
         frequencies.put("gnomAD_genomes", frequencyGnomadGen);
+        frequencies.put("ESP6500", frequencyEsp6500);
+        funcAnnotation.put("frequencies", frequencies);
 
 
 
-
-        if ((boolean) frequencyGnomadEx.get("available")) System.out.println(frequencies.toString(2));
+        if ((boolean) frequencyGnomadEx.get("available")) System.out.println(funcAnnotation.toString(2));
         //if ((boolean) frequencyGnomadGen.get("available")) System.out.println(frequencyGnomadGen.toString(2));
 
 //        System.out.print("\n");
+
+        return; funcAnnotation;
 
     }
 
