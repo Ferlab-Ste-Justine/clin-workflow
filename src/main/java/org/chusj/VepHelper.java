@@ -633,7 +633,7 @@ public class VepHelper {
 
 //        System.out.print("\n");
 
-        return; funcAnnotation;
+        return funcAnnotation;
 
     }
 
