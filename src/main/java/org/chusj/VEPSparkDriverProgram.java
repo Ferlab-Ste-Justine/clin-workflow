@@ -18,7 +18,9 @@ import org.json.JSONObject;
 
 import javax.xml.bind.DatatypeConverter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.security.MessageDigest;
+import java.util.Properties;
 
 public class VEPSparkDriverProgram {
 
@@ -82,6 +84,21 @@ public class VEPSparkDriverProgram {
 
     public static void buildAndStoreJsonObj(String extractedLine, String familyId, String patientId, String studyId,
                                             String type, String projectId, String sequencingStrategy, String esLoad) throws IOException {
+
+
+        String[] pedigree = {"14140,P","14141,M", "14142,F"};
+        JSONObject propertiesOneMutation = VepHelper.processVcfDataLine(extractedLine, "dn,dq", pedigree);
+        propertiesOneMutation.put("assemblyVersion", "GRCh38");
+        propertiesOneMutation.put("annotationTool", "VEP");
+        propertiesOneMutation.put("annotationToolVersion", 96.3);
+
+        // extract donor info if not found
+        //String qual = (String) propertiesOneMutation.remove("qual");
+        //String filter = (String) propertiesOneMutation.remove("filter");
+
+
+
+
 
     }
 
@@ -147,5 +164,20 @@ public class VEPSparkDriverProgram {
         }
         return false;
     }
+
+    private Properties getPropertiesFromFile(String filename) {
+        Properties prop = new Properties();
+
+        try (InputStream in =
+                     getClass().getResourceAsStream(filename)) {
+            prop.load(in);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+
+        return prop;
+    }
+
 
 }

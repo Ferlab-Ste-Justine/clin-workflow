@@ -5,21 +5,6 @@
   "mappings": {
     "_doc": {
       "properties": {
-        "GERP___NR": {
-          "type": "float"
-        },
-        "GERP___RS": {
-          "type": "float"
-        },
-        "ad": {
-          "type": "text",
-          "fields": {
-            "keyword": {
-              "type": "keyword",
-              "ignore_above": 256
-            }
-          }
-        },
         "alt": {
           "type": "text",
           "fields": {
@@ -48,42 +33,6 @@
           }
         },
         "chrom": {
-          "type": "text",
-          "fields": {
-            "keyword": {
-              "type": "keyword",
-              "ignore_above": 256
-            }
-          }
-        },
-        "clinvar_clnsig": {
-          "type": "text",
-          "fields": {
-            "keyword": {
-              "type": "keyword",
-              "ignore_above": 256
-            }
-          }
-        },
-        "clinvar_hgvs": {
-          "type": "text",
-          "fields": {
-            "keyword": {
-              "type": "keyword",
-              "ignore_above": 256
-            }
-          }
-        },
-        "clinvar_id": {
-          "type": "text",
-          "fields": {
-            "keyword": {
-              "type": "keyword",
-              "ignore_above": 256
-            }
-          }
-        },
-        "clinvar_trait": {
           "type": "text",
           "fields": {
             "keyword": {
@@ -175,6 +124,24 @@
               }
             },
             "zygosity": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              }
+            },
+            "ad": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              }
+            },
+            "gt": {
               "type": "text",
               "fields": {
                 "keyword": {
@@ -665,6 +632,24 @@
                 }
               }
             },
+            "clinvar_id": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              }
+            },
+            "clinvar_trait": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              }
+            },
             "clinvar_OMIM_id": {
               "type": "text",
               "fields": {
@@ -675,6 +660,24 @@
               }
             },
             "clinvar_Orphanet_id": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              }
+            },
+            "clinvar_clnsig": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              }
+            },
+            "clinvar_hgvs": {
               "type": "text",
               "fields": {
                 "keyword": {
@@ -770,15 +773,6 @@
           }
         },
         "gq": {
-          "type": "text",
-          "fields": {
-            "keyword": {
-              "type": "keyword",
-              "ignore_above": 256
-            }
-          }
-        },
-        "gt": {
           "type": "text",
           "fields": {
             "keyword": {
