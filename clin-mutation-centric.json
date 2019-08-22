@@ -57,6 +57,24 @@
             "depth": {
               "type": "long"
             },
+            "mq": {
+              "type": "long"
+            },
+            "mqRankSum": {
+              "type": "float"
+            },
+            "readPosRankSum": {
+              "type": "float"
+            },
+            "filter": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              }
+            },
             "donorId": {
               "type": "text",
               "fields": {
@@ -141,6 +159,51 @@
                 }
               }
             },
+            "af": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              }
+            },
+            "dp": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              }
+            },
+            "mb": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              }
+            },
+            "f1r2": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              }
+            },
+            "f2r1": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              }
+            },
             "gt": {
               "type": "text",
               "fields": {
@@ -149,6 +212,9 @@
                   "ignore_above": 256
                 }
               }
+            },
+            "gq": {
+              "type": "long"
             }
           }
         },
@@ -769,15 +835,6 @@
             },
             "rank/total": {
               "type": "long"
-            }
-          }
-        },
-        "gq": {
-          "type": "text",
-          "fields": {
-            "keyword": {
-              "type": "keyword",
-              "ignore_above": 256
             }
           }
         },

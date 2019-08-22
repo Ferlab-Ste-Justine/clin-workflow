@@ -35,7 +35,7 @@ public class VepHelper {
 
             // Main - Child=14140,Mother=14141,Father=14142
 
-            String[] pedigree = {"14140,P","14141,M", "14142,F"};
+            String[] pedigree = {"14140","14141", "14142"};
 
             while (true) {
                 fetchedLine = buf.readLine();
@@ -48,12 +48,17 @@ public class VepHelper {
                     propertiesOneMutation.put("annotationToolVersion", 96.3);
 
                     // extract donor info if not found
-                    String qual = (String) propertiesOneMutation.remove("qual");
-                    String filter = (String) propertiesOneMutation.remove("filter");
+//                    String qual = (String) propertiesOneMutation.remove("qual");
+//                    String filter = (String) propertiesOneMutation.remove("filter");
+                    JSONArray donorArray = (JSONArray) propertiesOneMutation.remove("donor");
+                    for (int i=0; i<donorArray.length(); i++) {
+                        JSONObject donor = (JSONObject) donorArray.get(i);
+                        System.out.println("donors:" + donor.toString(2));
+                    }
+
+
                 }
             }
-
-
         }
         if (countMutation>0) {
             avgFuncAnnoPerMutation = (float) countFuncAnnoPerMutation / countMutation;
@@ -125,7 +130,7 @@ public class VepHelper {
         String[] gt = lineValueArray[pos++].split(",");
         String[] gq = lineValueArray[pos++].split(",");
         String adStr = lineValueArray[pos++];
-        System.out.println(adStr);
+        //System.out.println(adStr);
         String[] ad = adStr.split(",", -1);
         String[] af = lineValueArray[pos++].split(",");
         String[] f1r2 = lineValueArray[pos++].split(",");
@@ -168,10 +173,13 @@ public class VepHelper {
         for (int i=0; i< nbDonor; i++) {
 
             arrayDonor[i].put("phenotypes", phenotypesArray);
-            arrayDonor[i].put("qual", qual);
+            addNumberToJsonObject("quality", qual, arrayDonor[i], false);
             arrayDonor[i].put("filter", filter);
             arrayDonor[i].put("gt", gt[i]);
+            addNumberToJsonObject("gq", gq[i], arrayDonor[i], false);
             String adS = null;
+            // bug in snpSift Extract...  does not keep correctly unknown value . in GEN[*].AD
+            // but in that regards, the information is so bad that it's okay to put 0,1 or 1,0
             if (ad.length < nbDonor * 2) {
                 if ("./.".equalsIgnoreCase(gt[i])) {
                     adS = "0,0";
@@ -182,12 +190,22 @@ public class VepHelper {
                 } else { //1/1
                     adS = "1,0";
                 }
-
             } else {
                 adS = ad[i * 2] + "," + ad[(i * 2) + 1];
             }
-
             arrayDonor[i].put("ad", adS);
+            arrayDonor[i].put("af", af[i]);
+            arrayDonor[i].put("f1r2", f1r2[i*2] + "," + f1r2[i*2+1]);
+            arrayDonor[i].put("f2r1", f2r1[i*2] + "," + f2r1[i*2+1]);
+            arrayDonor[i].put("dp", genDP[i]);
+            arrayDonor[i].put("sb", sb[i]);
+            arrayDonor[i].put("mb", mb[i]);
+            addNumberToJsonObject("mq", mqS, arrayDonor[i], false);
+            addNumberToJsonObject("mqRankSum", mqRankSum, arrayDonor[i], false);
+            addNumberToJsonObject("depth", dpS, arrayDonor[i], false);
+            addNumberToJsonObject("readPosRankSum", readPosRankSum, arrayDonor[i], false);
+            arrayDonor[i].put("donorId", pedigree[i]);
+
 
             donorArray.put(arrayDonor[i]);
 
