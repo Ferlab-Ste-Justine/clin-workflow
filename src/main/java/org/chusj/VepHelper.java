@@ -82,6 +82,7 @@ public class VepHelper {
         JSONObject propertiesOneMutation = new JSONObject();
         JSONArray donorArray = new JSONArray();
         JSONArray phenotypesArray = new JSONArray();
+        JSONArray bdExtArray = new JSONArray();
 
         int nbDonor = pedigree.length;
         JSONObject[] arrayDonor = new JSONObject[nbDonor];
@@ -96,7 +97,7 @@ public class VepHelper {
         }
         countMutation++;
         String position = lineValueArray[pos++];
-        String id = lineValueArray[pos++];   // mdb_snp membership id
+        bdExtArray.put( new JSONObject().put("dbSNP", addStrToJsonObject("dbSNP_ID", lineValueArray[pos++], propertiesOneMutation, false)));
         String reference = lineValueArray[pos++];
         String alt = lineValueArray[pos++].replace(",<NON_REF>", ""); // CT,<NON_REF> or G,TGG,<NON_REF>
         String qual = lineValueArray[pos++];
@@ -125,7 +126,6 @@ public class VepHelper {
         if (mixed) propertiesOneMutation.put("type", "MIXED");
 
         propertiesOneMutation.put("alt", alt);
-        if (id.length()>0) propertiesOneMutation.put("dbSNP_ID",id);
 
         String[] gt = lineValueArray[pos++].split(",");
         String[] gq = lineValueArray[pos++].split(",");
@@ -165,7 +165,7 @@ public class VepHelper {
         JSONArray functionalAnnotations = new JSONArray();
 
         for (String s : csqArray) {
-            functionalAnnotations.put(processVepAnnotations(s, dnaChanges));
+            functionalAnnotations.put(processVepAnnotations(s, bdExtArray));
         }
 
         propertiesOneMutation.put("functionalAnnotations", functionalAnnotations);
@@ -211,12 +211,13 @@ public class VepHelper {
 
         }
         propertiesOneMutation.put("donor", donorArray);
+        propertiesOneMutation.put("bdExt", bdExtArray);
 
         return propertiesOneMutation;
 
     }
 
-    private static JSONObject processVepAnnotations(String csqLine, String id) {
+    private static JSONObject processVepAnnotations(String csqLine, JSONArray bdExtArray ) {
 
         //System.out.print("\n"+csqLine);
         String[] functionalAnnotationArray = csqLine.split("[|]", -1);
@@ -335,7 +336,7 @@ public class VepHelper {
         String Eigen_pred_coding = functionalAnnotationArray[pos++];
         String Eigen_raw_coding = functionalAnnotationArray[pos++];
         String Eigen_raw_coding_rankscore = functionalAnnotationArray[pos++];
-        String Ensembl_geneid = functionalAnnotationArray[pos++];
+        bdExtArray.put( new JSONObject().put("Ensembl",addStrToJsonObject("ensembl_geneid", functionalAnnotationArray[pos++], funcAnnotation, false)));
         // 69 -
         String Ensembl_proteinid = functionalAnnotationArray[pos++];
         String Ensembl_transcriptid = functionalAnnotationArray[pos++];
@@ -510,11 +511,11 @@ public class VepHelper {
         String cds_strand = functionalAnnotationArray[pos++];
         String chr = functionalAnnotationArray[pos++];
         String clinvar_MedGen_id = functionalAnnotationArray[pos++];
-        addStrToJsonObject("clinvar_OMIM_id", functionalAnnotationArray[pos++], funcAnnotation, false);
-        addStrToJsonObject("clinvar_Orphanet_id", functionalAnnotationArray[pos++], funcAnnotation, false);
+        bdExtArray.put( new JSONObject().put("OMIM",addStrToJsonObject("clinvar_OMIM_id", functionalAnnotationArray[pos++], funcAnnotation, false)));
+        bdExtArray.put( new JSONObject().put("Orphanet", addStrToJsonObject("clinvar_Orphanet_id", functionalAnnotationArray[pos++], funcAnnotation, false)));
         addStrToJsonObject("clinvar_clnsig", functionalAnnotationArray[pos++], funcAnnotation, false);
         addStrToJsonObject("clinvar_hgvs", functionalAnnotationArray[pos++], funcAnnotation, false);
-        addStrToJsonObject("clinvar_id", functionalAnnotationArray[pos++], funcAnnotation, false);
+        bdExtArray.put( new JSONObject().put("clinvar", addStrToJsonObject("clinvar_id", functionalAnnotationArray[pos++], funcAnnotation, false)));
         String clinvar_review = functionalAnnotationArray[pos++];
         // 229
         addStrToJsonObject("clinvar_trait", functionalAnnotationArray[pos++], funcAnnotation, false);
@@ -747,28 +748,35 @@ public class VepHelper {
 
     }
 
-    private static void addNumberToJsonObject(String popName, String var, JSONObject freqObject, boolean withAvailability) {
+    private static boolean addNumberToJsonObject(String popName, String var, JSONObject freqObject, boolean withAvailability) {
+        boolean avail = false;
         if (var.length()>0 && !".".equalsIgnoreCase(var)) {
             try {
                 freqObject.put(popName, NF.parse(var));
-                if (withAvailability) freqObject.put("available", true);
+                avail = true;
+                if (withAvailability) freqObject.put("available", avail);
             } catch (ParseException parseException) {
                 parseException.printStackTrace();
-                if (withAvailability) freqObject.put("available", false);
+                if (withAvailability) freqObject.put("available", avail);
             }
         } else if (withAvailability) {
-            freqObject.put("available", false);
+            freqObject.put("available", avail);
+
         }
+        return avail;
     }
 
-    private static void addStrToJsonObject(String popName, String var, JSONObject freqObject, boolean withAvailability) {
+    private static boolean addStrToJsonObject(String popName, String var, JSONObject freqObject, boolean withAvailability) {
+        boolean avail = false;
         if (var.length()>0 && !".".equalsIgnoreCase(var)) {
-                freqObject.put(popName, var);
-                if (withAvailability) freqObject.put("available", true);
+            freqObject.put(popName, var);
+            avail = true;
+            if (withAvailability) freqObject.put("available", avail);
         } else if (withAvailability) {
-
-            freqObject.put("available", false);
+            freqObject.put("available", avail);
         }
+        return avail;
+
     }
 
 

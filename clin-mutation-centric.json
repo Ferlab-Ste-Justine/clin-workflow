@@ -218,6 +218,27 @@
             }
           }
         },
+        "bdExt" : {
+          "type": "nested",
+          "include_in_parent": true,
+          "properties": {
+            "dbSNP": {
+              "type": "boolean"
+            },
+            "Ensembl": {
+              "type": "boolean"
+            },
+            "OMIM": {
+              "type": "boolean"
+            },
+            "Orphanet": {
+              "type": "boolean"
+            },
+            "clinvar": {
+              "type": "boolean"
+            }
+          }
+        },
         "functionalAnnotations": {
           "properties": {
             "predictions": {
@@ -653,15 +674,6 @@
                 }
               }
             },
-            "errorsWarningsInfo": {
-              "type": "text",
-              "fields": {
-                "keyword": {
-                  "type": "keyword",
-                  "ignore_above": 256
-                }
-              }
-            },
             "featureId": {
               "type": "text",
               "fields": {
@@ -698,6 +710,15 @@
                 }
               }
             },
+            "ensembl_geneid": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              }
+            },
             "clinvar_id": {
               "type": "text",
               "fields": {
@@ -707,6 +728,7 @@
                 }
               }
             },
+
             "clinvar_trait": {
               "type": "text",
               "fields": {
@@ -825,6 +847,15 @@
               }
             },
             "impact": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              }
+            },
+            "consequence": {
               "type": "text",
               "fields": {
                 "keyword": {
