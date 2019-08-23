@@ -225,13 +225,13 @@
             "dbSNP": {
               "type": "boolean"
             },
-            "Ensembl": {
+            "ensembl": {
               "type": "boolean"
             },
-            "OMIM": {
+            "omim": {
               "type": "boolean"
             },
-            "Orphanet": {
+            "orphanet": {
               "type": "boolean"
             },
             "clinvar": {
@@ -728,7 +728,6 @@
                 }
               }
             },
-
             "clinvar_trait": {
               "type": "text",
               "fields": {
@@ -863,9 +862,6 @@
                   "ignore_above": 256
                 }
               }
-            },
-            "rank/total": {
-              "type": "long"
             }
           }
         },

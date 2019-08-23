@@ -18,6 +18,13 @@ public class VepHelper {
     private static int countFuncAnnoPerMutation = 0;
     private static int countMutation =0;
     private static NumberFormat NF = NumberFormat.getInstance();
+    private static JSONObject lastOne;
+    private static final int CLINVAR = 0;
+    private static final int OMIM = 1;
+    private static final int ENSEMBL = 2;
+    private static final int ORPHANET = 3;
+    private static final int DBSNP = 4;
+    private static final int PUBMED = 5;
 
 
     public static void main(String[] args) throws Exception {
@@ -46,15 +53,16 @@ public class VepHelper {
                     propertiesOneMutation.put("assemblyVersion", "GRCh38");
                     propertiesOneMutation.put("annotationTool", "VEP");
                     propertiesOneMutation.put("annotationToolVersion", 96.3);
-
+                    lastOne = propertiesOneMutation;
                     // extract donor info if not found
 //                    String qual = (String) propertiesOneMutation.remove("qual");
 //                    String filter = (String) propertiesOneMutation.remove("filter");
                     JSONArray donorArray = (JSONArray) propertiesOneMutation.remove("donor");
-                    for (int i=0; i<donorArray.length(); i++) {
-                        JSONObject donor = (JSONObject) donorArray.get(i);
-                        System.out.println("donors:" + donor.toString(2));
-                    }
+                    System.out.println("donors:" + donorArray.toString(2));
+//                    for (int i=0; i<donorArray.length(); i++) {
+//                        JSONObject donor = (JSONObject) donorArray.get(i);
+//                        System.out.println("donors:" + donor.toString(2));
+//                    }
 
 
                 }
@@ -64,6 +72,7 @@ public class VepHelper {
             avgFuncAnnoPerMutation = (float) countFuncAnnoPerMutation / countMutation;
         }
         System.out.println("\navgFuncAnnoPerMutation="+avgFuncAnnoPerMutation);
+        System.out.println("lastOne="+lastOne.toString(2));
 
     }
 
@@ -78,6 +87,9 @@ public class VepHelper {
         // System.out.println("lineValueArray.length="+lineValueArray.length);
         // dynamic positioning system -- pos counter++
         int pos = 0;
+
+        //boolean db_snp = flase, clinvar = false, omim = false, emsembl = false, orphanet = false , pubmed=false;
+        boolean[] dbExt = {false, false, false, false, false, false};
 
         JSONObject propertiesOneMutation = new JSONObject();
         JSONArray donorArray = new JSONArray();
@@ -97,7 +109,11 @@ public class VepHelper {
         }
         countMutation++;
         String position = lineValueArray[pos++];
-        bdExtArray.put( new JSONObject().put("dbSNP", addStrToJsonObject("dbSNP_ID", lineValueArray[pos++], propertiesOneMutation, false)));
+
+        if (addStrToJsonObject("dbSNP_ID", lineValueArray[pos++], propertiesOneMutation, false)) {
+            // bdExtArray.put( new JSONObject().put("dbSNP",
+            dbExt[DBSNP] =  true;
+        }
         String reference = lineValueArray[pos++];
         String alt = lineValueArray[pos++].replace(",<NON_REF>", ""); // CT,<NON_REF> or G,TGG,<NON_REF>
         String qual = lineValueArray[pos++];
@@ -165,7 +181,7 @@ public class VepHelper {
         JSONArray functionalAnnotations = new JSONArray();
 
         for (String s : csqArray) {
-            functionalAnnotations.put(processVepAnnotations(s, bdExtArray));
+            functionalAnnotations.put(processVepAnnotations(s, bdExtArray, dbExt));
         }
 
         propertiesOneMutation.put("functionalAnnotations", functionalAnnotations);
@@ -210,6 +226,13 @@ public class VepHelper {
             donorArray.put(arrayDonor[i]);
 
         }
+
+        bdExtArray.put( new JSONObject().put("dbSNP", dbExt[DBSNP] ));
+        bdExtArray.put( new JSONObject().put("clinvar", dbExt[CLINVAR] ));
+        bdExtArray.put( new JSONObject().put("ensembl", dbExt[ENSEMBL] ));
+        bdExtArray.put( new JSONObject().put("omim", dbExt[OMIM] ));
+        bdExtArray.put( new JSONObject().put("orphanet", dbExt[ORPHANET] ));
+
         propertiesOneMutation.put("donor", donorArray);
         propertiesOneMutation.put("bdExt", bdExtArray);
 
@@ -217,7 +240,7 @@ public class VepHelper {
 
     }
 
-    private static JSONObject processVepAnnotations(String csqLine, JSONArray bdExtArray ) {
+    private static JSONObject processVepAnnotations(String csqLine, JSONArray bdExtArray, boolean[] dbExt ) {
 
         //System.out.print("\n"+csqLine);
         String[] functionalAnnotationArray = csqLine.split("[|]", -1);
@@ -247,8 +270,6 @@ public class VepHelper {
         JSONObject frequencyEsp6500 = new JSONObject();
         JSONObject frequencyGnomadEx = new JSONObject();
         JSONObject frequencyGnomadGen = new JSONObject();
-
-        JSONObject predictions = new JSONObject();
         JSONObject prediction = new JSONObject();
 
 
@@ -336,7 +357,9 @@ public class VepHelper {
         String Eigen_pred_coding = functionalAnnotationArray[pos++];
         String Eigen_raw_coding = functionalAnnotationArray[pos++];
         String Eigen_raw_coding_rankscore = functionalAnnotationArray[pos++];
-        bdExtArray.put( new JSONObject().put("Ensembl",addStrToJsonObject("ensembl_geneid", functionalAnnotationArray[pos++], funcAnnotation, false)));
+        if (addStrToJsonObject("ensembl_geneid", functionalAnnotationArray[pos++], funcAnnotation, false)) {
+            dbExt[ENSEMBL] = true;
+        }
         // 69 -
         String Ensembl_proteinid = functionalAnnotationArray[pos++];
         String Ensembl_transcriptid = functionalAnnotationArray[pos++];
@@ -511,11 +534,17 @@ public class VepHelper {
         String cds_strand = functionalAnnotationArray[pos++];
         String chr = functionalAnnotationArray[pos++];
         String clinvar_MedGen_id = functionalAnnotationArray[pos++];
-        bdExtArray.put( new JSONObject().put("OMIM",addStrToJsonObject("clinvar_OMIM_id", functionalAnnotationArray[pos++], funcAnnotation, false)));
-        bdExtArray.put( new JSONObject().put("Orphanet", addStrToJsonObject("clinvar_Orphanet_id", functionalAnnotationArray[pos++], funcAnnotation, false)));
+        if (addStrToJsonObject("clinvar_OMIM_id", functionalAnnotationArray[pos++], funcAnnotation, false)){
+            dbExt[OMIM] = true;
+        }
+        if (addStrToJsonObject("clinvar_Orphanet_id", functionalAnnotationArray[pos++], funcAnnotation, false)){
+            dbExt[ORPHANET] = true;
+        }
         addStrToJsonObject("clinvar_clnsig", functionalAnnotationArray[pos++], funcAnnotation, false);
         addStrToJsonObject("clinvar_hgvs", functionalAnnotationArray[pos++], funcAnnotation, false);
-        bdExtArray.put( new JSONObject().put("clinvar", addStrToJsonObject("clinvar_id", functionalAnnotationArray[pos++], funcAnnotation, false)));
+        if ( addStrToJsonObject("clinvar_id", functionalAnnotationArray[pos++], funcAnnotation, false)){
+            dbExt[CLINVAR] = true;
+        }
         String clinvar_review = functionalAnnotationArray[pos++];
         // 229
         addStrToJsonObject("clinvar_trait", functionalAnnotationArray[pos++], funcAnnotation, false);
