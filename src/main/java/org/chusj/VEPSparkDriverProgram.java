@@ -86,8 +86,9 @@ public class VEPSparkDriverProgram {
                                             String type, String projectId, String sequencingStrategy, String esLoad) throws IOException {
 
 
-        String[] pedigree = {"14140,P","14141,M", "14142,F"};
-        JSONObject propertiesOneMutation = VepHelper.processVcfDataLine(extractedLine, "dn,dq", pedigree);
+        //String[] pedigree = {"14140,P","14141,M", "14142,F"};
+        Properties pedigreeProps = VepHelper.getPropertiesFromFile("pedigree.properties");
+        JSONObject propertiesOneMutation = VepHelper.processVcfDataLine(extractedLine, "dn,dq", pedigreeProps);
         propertiesOneMutation.put("assemblyVersion", "GRCh38");
         propertiesOneMutation.put("annotationTool", "VEP");
         propertiesOneMutation.put("annotationToolVersion", 96.3);

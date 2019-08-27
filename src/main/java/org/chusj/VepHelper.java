@@ -7,8 +7,11 @@ import org.json.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
+import java.io.IOException;
+import java.io.InputStream;
 import java.text.NumberFormat;
 import java.text.ParseException;
+import java.util.Properties;
 
 import static org.chusj.VEPSparkDriverProgram.getSHA256Hash;
 
@@ -42,23 +45,30 @@ public class VepHelper {
 
             // Main - Child=14140,Mother=14141,Father=14142
 
-            String[] pedigree = {"14140","14141", "14142"};
+            //String[] pedigree = {"14140,P","14141,M", "14142,F"};
+
+            Properties pedigreeProps = getPropertiesFromFile("pedigree.properties");
+
+            //pedigreeProps.forEach((prop) -> System.out.println("prop="+prop));
+            //for (int i=0; i<pedigreeProps.toString())
+            System.out.println(pedigreeProps.toString());
 
             while (true) {
                 fetchedLine = buf.readLine();
                 if (fetchedLine == null) {
                     break;
                 } else {
-                    JSONObject propertiesOneMutation = processVcfDataLine(fetchedLine, "dn,dq", pedigree);
+                    JSONObject propertiesOneMutation = processVcfDataLine(fetchedLine, "dn,dq", pedigreeProps);
                     propertiesOneMutation.put("assemblyVersion", "GRCh38");
                     propertiesOneMutation.put("annotationTool", "VEP");
                     propertiesOneMutation.put("annotationToolVersion", 96.3);
-                    lastOne = propertiesOneMutation;
+
+                    //lastOne = propertiesOneMutation;
                     // extract donor info if not found
 //                    String qual = (String) propertiesOneMutation.remove("qual");
 //                    String filter = (String) propertiesOneMutation.remove("filter");
-                    JSONArray donorArray = (JSONArray) propertiesOneMutation.remove("donor");
-                    System.out.println("donors:" + donorArray.toString(2));
+                    //JSONArray donorArray = (JSONArray) propertiesOneMutation.remove("donor");
+                    //System.out.println("donors:" + donorArray.toString(2));
 //                    for (int i=0; i<donorArray.length(); i++) {
 //                        JSONObject donor = (JSONObject) donorArray.get(i);
 //                        System.out.println("donors:" + donor.toString(2));
@@ -77,7 +87,7 @@ public class VepHelper {
     }
 
 
-    public static JSONObject processVcfDataLine(String extractedLine, String OptionStr, String[] pedigree) {
+    public static JSONObject processVcfDataLine(String extractedLine, String OptionStr, Properties pedigreeProps) {
 
         //CHROM	POS	ID	REF	ALT	QUAL	FILTER	DP	MQ	MQRankSum
         // ReadPosRankSum	LOD	FractionInformativeReads	SNP	MNP	INS	DEL	MIXED	HOM	HET
@@ -95,6 +105,11 @@ public class VepHelper {
         JSONArray donorArray = new JSONArray();
         JSONArray phenotypesArray = new JSONArray();
         JSONArray bdExtArray = new JSONArray();
+
+        String[] pedigree = pedigreeProps.getProperty("pedigree").split(",");
+        String familyId = pedigreeProps.getProperty("FamilyId");
+        String[] patientId = pedigreeProps.getProperty("PatientId").split(",");
+        String[] relation = pedigreeProps.getProperty("relation").split(",");
 
         int nbDonor = pedigree.length;
         JSONObject[] arrayDonor = new JSONObject[nbDonor];
@@ -135,11 +150,11 @@ public class VepHelper {
         boolean het = Boolean.valueOf(lineValueArray[pos++]);
 
 
-        if (snp) propertiesOneMutation.put("type", "SNP");
-        if (mnp) propertiesOneMutation.put("type", "MNP");
-        if (ins) propertiesOneMutation.put("type", "INS");
-        if (del) propertiesOneMutation.put("type", "DEL");
-        if (mixed) propertiesOneMutation.put("type", "MIXED");
+//        if (snp) propertiesOneMutation.put("type", "SNP");
+//        if (mnp) propertiesOneMutation.put("type", "MNP");
+//        if (ins) propertiesOneMutation.put("type", "INS");
+//        if (del) propertiesOneMutation.put("type", "DEL");
+//        if (mixed) propertiesOneMutation.put("type", "MIXED");
 
         propertiesOneMutation.put("alt", alt);
 
@@ -157,8 +172,11 @@ public class VepHelper {
 
 
         String dnS = lineValueArray[pos++];
-        String dqS = lineValueArray[pos++];
+        //String dqS = lineValueArray[pos++];
+        String homS = lineValueArray[pos++];
+        String hetS = lineValueArray[pos++];
         String hiConfDeNovo = lineValueArray[pos++];
+        String lodS = lineValueArray[pos++];
 
         String csq = lineValueArray[pos++];
         String[] csqArray = csq.split(",");  // return functionalAnnotation array
@@ -176,13 +194,16 @@ public class VepHelper {
 
 
 
-//        JSONObject funcAnnotation = null;
+        JSONObject variant_class = new JSONObject();
 
         JSONArray functionalAnnotations = new JSONArray();
 
+        //System.out.println("\ndna="+dnaChanges);
         for (String s : csqArray) {
-            functionalAnnotations.put(processVepAnnotations(s, bdExtArray, dbExt));
+            functionalAnnotations.put(processVepAnnotations(s, bdExtArray, dbExt, variant_class));
         }
+
+        propertiesOneMutation.put("type",  variant_class.get("type"));
 
         propertiesOneMutation.put("functionalAnnotations", functionalAnnotations);
 
@@ -192,6 +213,7 @@ public class VepHelper {
             addNumberToJsonObject("quality", qual, arrayDonor[i], false);
             arrayDonor[i].put("filter", filter);
             arrayDonor[i].put("gt", gt[i]);
+            arrayDonor[i].put("zygosity", zygosity(gt[i]));
             addNumberToJsonObject("gq", gq[i], arrayDonor[i], false);
             String adS = null;
             // bug in snpSift Extract...  does not keep correctly unknown value . in GEN[*].AD
@@ -210,10 +232,12 @@ public class VepHelper {
                 adS = ad[i * 2] + "," + ad[(i * 2) + 1];
             }
             arrayDonor[i].put("ad", adS);
-            arrayDonor[i].put("af", af[i]);
+//            arrayDonor[i].put("af", );
+            addNumberToJsonObject("af", af[i], arrayDonor[i], false);
             arrayDonor[i].put("f1r2", f1r2[i*2] + "," + f1r2[i*2+1]);
             arrayDonor[i].put("f2r1", f2r1[i*2] + "," + f2r1[i*2+1]);
-            arrayDonor[i].put("dp", genDP[i]);
+//            arrayDonor[i].put("dp", );
+            addNumberToJsonObject("dp", genDP[i], arrayDonor[i], false);
             arrayDonor[i].put("sb", sb[i]);
             arrayDonor[i].put("mb", mb[i]);
             addNumberToJsonObject("mq", mqS, arrayDonor[i], false);
@@ -221,7 +245,9 @@ public class VepHelper {
             addNumberToJsonObject("depth", dpS, arrayDonor[i], false);
             addNumberToJsonObject("readPosRankSum", readPosRankSum, arrayDonor[i], false);
             arrayDonor[i].put("donorId", pedigree[i]);
-
+            arrayDonor[i].put("patientId", patientId[i]);
+            arrayDonor[i].put("familyId", familyId);
+            arrayDonor[i].put("relation", relation[i]);
 
             donorArray.put(arrayDonor[i]);
 
@@ -236,11 +262,14 @@ public class VepHelper {
         propertiesOneMutation.put("donor", donorArray);
         propertiesOneMutation.put("bdExt", bdExtArray);
 
+        if (dbExt[DBSNP] || dbExt[CLINVAR]  || dbExt[OMIM] || dbExt[ORPHANET]  )
+            lastOne = propertiesOneMutation;
+
         return propertiesOneMutation;
 
     }
 
-    private static JSONObject processVepAnnotations(String csqLine, JSONArray bdExtArray, boolean[] dbExt ) {
+    private static JSONObject processVepAnnotations(String csqLine, JSONArray bdExtArray, boolean[] dbExt, JSONObject variant_class ) {
 
         //System.out.print("\n"+csqLine);
         String[] functionalAnnotationArray = csqLine.split("[|]", -1);
@@ -258,7 +287,8 @@ public class VepHelper {
 
         int pos = 0;
 
-        if (functionalAnnotationArray.length < 403) {
+        //System.out.println(functionalAnnotationArray.length);
+        if (functionalAnnotationArray.length < 408) {
             System.out.println(" " + csqLine + " short");
         }
 
@@ -271,6 +301,7 @@ public class VepHelper {
         JSONObject frequencyGnomadEx = new JSONObject();
         JSONObject frequencyGnomadGen = new JSONObject();
         JSONObject prediction = new JSONObject();
+
 
 
 
@@ -304,17 +335,31 @@ public class VepHelper {
         addNumberToJsonObject("strand", functionalAnnotationArray[pos++] , funcAnnotation, false);
         //19 -
         String FLAGS = functionalAnnotationArray[pos++];
+        //+1
+        //String VARIANT_CLASS = functionalAnnotationArray[pos++];
+        //System.out.print("-vclass="+VARIANT_CLASS);
+        //JSONObject variant_class = new JSONObject();
+        addStrToJsonObject("type", functionalAnnotationArray[pos++], variant_class, false);
         String SYMBOL_SOURCE = functionalAnnotationArray[pos++];
         String HGNC_ID = functionalAnnotationArray[pos++];
-        String CANONICAL = functionalAnnotationArray[pos++];
+        addBooleanToJsonObject("canonical", functionalAnnotationArray[pos++], funcAnnotation, false);
+
         String GIVEN_REF = functionalAnnotationArray[pos++];
         String USED_REF = functionalAnnotationArray[pos++];
         String BAM_EDIT = functionalAnnotationArray[pos++];
 
+        // +4
+
+        String CLIN_SIG = functionalAnnotationArray[pos++];
+        String SOMATIC = functionalAnnotationArray[pos++];
+        String PHENO = functionalAnnotationArray[pos++];
+        if (addStrToJsonObject("pubmed", functionalAnnotationArray[pos++], funcAnnotation, false)) {
+            dbExt[PUBMED] = true;
+        }
         addNumberToJsonObject("AC", functionalAnnotationArray[pos++] , frequency1000Gp3, true);
         addNumberToJsonObject("AF", functionalAnnotationArray[pos++] , frequency1000Gp3, true);
         addNumberToJsonObject("AFR_AC", functionalAnnotationArray[pos++] , frequency1000Gp3, true);
-        // 29
+        // 29+5
         addNumberToJsonObject("AFR_AF", functionalAnnotationArray[pos++] , frequency1000Gp3, true);
         addNumberToJsonObject("AMR_AC", functionalAnnotationArray[pos++] , frequency1000Gp3, true);
         addNumberToJsonObject("AMR_AF", functionalAnnotationArray[pos++] , frequency1000Gp3, true);
@@ -768,7 +813,7 @@ public class VepHelper {
         //funcAnnotation.(funcAnnoProperties);
 
 
-        if ((boolean) frequencyGnomadEx.get("available")) System.out.println(funcAnnotation.toString(2));
+        //if ((boolean) frequencyGnomadEx.get("available")) System.out.println(funcAnnotation.toString(2));
         //if ((boolean) frequencyGnomadGen.get("available")) System.out.println(frequencyGnomadGen.toString(2));
 
 //        System.out.print("\n");
@@ -777,37 +822,93 @@ public class VepHelper {
 
     }
 
-    private static boolean addNumberToJsonObject(String popName, String var, JSONObject freqObject, boolean withAvailability) {
+    private static boolean addNumberToJsonObject(String name, String var, JSONObject jsonObject, boolean withAvailability) {
         boolean avail = false;
         if (var.length()>0 && !".".equalsIgnoreCase(var)) {
             try {
-                freqObject.put(popName, NF.parse(var));
+                jsonObject.put(name, NF.parse(var));
                 avail = true;
-                if (withAvailability) freqObject.put("available", avail);
+                if (withAvailability) jsonObject.put("available", avail);
             } catch (ParseException parseException) {
                 parseException.printStackTrace();
-                if (withAvailability) freqObject.put("available", avail);
+                if (withAvailability) jsonObject.put("available", avail);
             }
         } else if (withAvailability) {
-            freqObject.put("available", avail);
+            jsonObject.put("available", avail);
 
         }
         return avail;
     }
 
-    private static boolean addStrToJsonObject(String popName, String var, JSONObject freqObject, boolean withAvailability) {
+    private static boolean addBooleanToJsonObject(String name, String var, JSONObject jsonObject, boolean withAvailability) {
         boolean avail = false;
         if (var.length()>0 && !".".equalsIgnoreCase(var)) {
-            freqObject.put(popName, var);
-            avail = true;
-            if (withAvailability) freqObject.put("available", avail);
+            if ("YES".equalsIgnoreCase(var)) {
+                jsonObject.put(name, true);
+                avail = true;
+            } else {
+                jsonObject.put(name, false);
+                avail = true;
+            }
+            if (withAvailability) jsonObject.put("available", avail);
         } else if (withAvailability) {
-            freqObject.put("available", avail);
+            jsonObject.put("available", avail);
+            jsonObject.put(name, false);
+        } else {
+            jsonObject.put(name, false);
+        }
+        return avail;
+    }
+
+    private static boolean addStrToJsonObject(String name, String var, JSONObject jsonObject, boolean withAvailability) {
+        boolean avail = false;
+        if (var.length()>0 && !".".equalsIgnoreCase(var)) {
+            jsonObject.put(name, var);
+            avail = true;
+            if (withAvailability) jsonObject.put("available", avail);
+        } else if (withAvailability) {
+            jsonObject.put("available", avail);
         }
         return avail;
 
     }
 
+    public static String zygosity(String gt) {
+        char[] gtA = gt.toCharArray();
+        if (gtA[0] == '.' || gtA[2] == '.') {
+            return "UNK";
+        }
+        if (gtA.length == 3) {
+            // Homo
+            if ( gtA[0] == gtA[2] ) {
+                if ( gtA[0] == '0') {
+                    return "HOM REF";
+                } else {
+                    return "HOM ALT";
+                }
+            // not equal
+            } else if (gtA[0] == '0' ) {
+                return "HET REF";
+            } else if (gtA[0] == '1' ) {
+                return "HET ALT";
+            }
+        }
+        return "UNK";
 
+    }
+
+
+    public static Properties getPropertiesFromFile(String filename) {
+        Properties prop = new Properties();
+
+        try (BufferedReader buf = new BufferedReader(new FileReader(filename))) {
+            prop.load(buf);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+
+        return prop;
+    }
 
 }

@@ -84,6 +84,15 @@
                 }
               }
             },
+            "patientId": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              }
+            },
             "familyId": {
               "type": "text",
               "fields": {
@@ -160,22 +169,10 @@
               }
             },
             "af": {
-              "type": "text",
-              "fields": {
-                "keyword": {
-                  "type": "keyword",
-                  "ignore_above": 256
-                }
-              }
+              "type": "float"
             },
             "dp": {
-              "type": "text",
-              "fields": {
-                "keyword": {
-                  "type": "keyword",
-                  "ignore_above": 256
-                }
-              }
+              "type": "long"
             },
             "mb": {
               "type": "text",
@@ -235,6 +232,9 @@
               "type": "boolean"
             },
             "clinvar": {
+              "type": "boolean"
+            },
+            "pubmed": {
               "type": "boolean"
             }
           }
@@ -719,6 +719,15 @@
                 }
               }
             },
+            "pubmed": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              }
+            },
             "clinvar_id": {
               "type": "text",
               "fields": {
@@ -862,6 +871,9 @@
                   "ignore_above": 256
                 }
               }
+            },
+            "canonical": {
+              "type": "boolean"
             }
           }
         },
