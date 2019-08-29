@@ -22,6 +22,8 @@ import javax.xml.bind.DatatypeConverter;
 import java.io.IOException;
 import java.security.MessageDigest;
 
+import static org.chusj.VEPSparkDriverProgram.getSHA1Hash;
+
 public class ESSparkDriverProgram {
 
     public static RestHighLevelClient client;
@@ -626,10 +628,11 @@ public class ESSparkDriverProgram {
         }
 
         String chrPos = chrom.substring(3); // remove 'chr'
-        String mutation = reference + ">" + alt.split(",")[0];
+        String mutation = "chr" + reference + ">" + alt.split(",")[0];
         String dnaChanges = chrPos + ":g." + position + mutation;
 
-        String uid = getSHA256Hash(dnaChanges);
+        //String uid = getSHA256Hash(dnaChanges);
+        String uid = getSHA1Hash(dnaChanges);
 
         propertiesOneMutation.put("id", uid);
         propertiesOneMutation.put("mutationId", dnaChanges);

@@ -328,37 +328,37 @@
                       "type": "long"
                     },
                     "AF": {
-                      "type": "float"
+                      "type": "double"
                     },
                     "AFR_AC": {
                       "type": "long"
                     },
                     "AFR_AF": {
-                      "type": "float"
+                      "type": "double"
                     },
                     "AMR_AC": {
                       "type": "long"
                     },
                     "AMR_AF": {
-                      "type": "float"
+                      "type": "double"
                     },
                     "EAS_AC": {
                       "type": "long"
                     },
                     "EAS_AF": {
-                      "type": "float"
+                      "type": "double"
                     },
                     "EUR_AC": {
                       "type": "long"
                     },
                     "EUR_AF": {
-                      "type": "float"
+                      "type": "double"
                     },
                     "SAS_AC": {
                       "type": "long"
                     },
                     "SAS_AF": {
-                      "type": "float"
+                      "type": "double"
                     },
                     "available": {
                       "type": "boolean"
@@ -371,13 +371,13 @@
                       "type": "long"
                     },
                     "AA_AF": {
-                      "type": "float"
+                      "type": "double"
                     },
                     "EA_AC": {
                       "type": "long"
                     },
                     "EA_AF": {
-                      "type": "float"
+                      "type": "double"
                     },
                     "available": {
                       "type": "boolean"
@@ -393,46 +393,46 @@
                       "type": "long"
                     },
                     "ADJ_AF": {
-                      "type": "float"
+                      "type": "double"
                     },
                     "AF": {
-                      "type": "float"
+                      "type": "double"
                     },
                     "AFR_AC": {
                       "type": "long"
                     },
                     "AFR_AF": {
-                      "type": "float"
+                      "type": "double"
                     },
                     "AMR_AC": {
                       "type": "long"
                     },
                     "AMR_AF": {
-                      "type": "float"
+                      "type": "double"
                     },
                     "EAS_AC": {
                       "type": "long"
                     },
                     "EAS_AF": {
-                      "type": "float"
+                      "type": "double"
                     },
                     "FIN_AC": {
                       "type": "long"
                     },
                     "FIN_AF": {
-                      "type": "float"
+                      "type": "double"
                     },
                     "NFE_AC": {
                       "type": "long"
                     },
                     "NFE_AF": {
-                      "type": "float"
+                      "type": "double"
                     },
                     "SAS_AC": {
                       "type": "long"
                     },
                     "SAS_AF": {
-                      "type": "float"
+                      "type": "double"
                     },
                     "available": {
                       "type": "boolean"
@@ -445,19 +445,19 @@
                       "type": "long"
                     },
                     "POPMAX_AF": {
-                      "type": "float"
+                      "type": "double"
                     },
                     "AC": {
                       "type": "long"
                     },
                     "AF": {
-                      "type": "float"
+                      "type": "double"
                     },
                     "AFR_AC": {
                       "type": "long"
                     },
                     "AFR_AF": {
-                      "type": "float"
+                      "type": "double"
                     },
                     "AFR_AN": {
                       "type": "long"
@@ -466,7 +466,7 @@
                       "type": "long"
                     },
                     "AMR_AF": {
-                      "type": "float"
+                      "type": "double"
                     },
                     "AMR_AN": {
                       "type": "long"
@@ -478,7 +478,7 @@
                       "type": "long"
                     },
                     "ASJ_AF": {
-                      "type": "float"
+                      "type": "double"
                     },
                     "ASJ_AN": {
                       "type": "long"
@@ -487,7 +487,7 @@
                       "type": "long"
                     },
                     "EAS_AF": {
-                      "type": "float"
+                      "type": "double"
                     },
                     "EAS_AN": {
                       "type": "long"
@@ -496,7 +496,7 @@
                       "type": "long"
                     },
                     "FIN_AF": {
-                      "type": "float"
+                      "type": "double"
                     },
                     "FIN_AN": {
                       "type": "long"
@@ -505,7 +505,7 @@
                       "type": "long"
                     },
                     "NFE_AF": {
-                      "type": "float"
+                      "type": "double"
                     },
                     "NFE_AN": {
                       "type": "long"
@@ -514,7 +514,7 @@
                       "type": "long"
                     },
                     "SAS_AF": {
-                      "type": "float"
+                      "type": "double"
                     },
                     "SAS_AN": {
                       "type": "long"
@@ -530,19 +530,19 @@
                       "type": "long"
                     },
                     "POPMAX_AF": {
-                      "type": "float"
+                      "type": "double"
                     },
                     "AC": {
                       "type": "long"
                     },
                     "AF": {
-                      "type": "float"
+                      "type": "double"
                     },
                     "AFR_AC": {
                       "type": "long"
                     },
                     "AFR_AF": {
-                      "type": "float"
+                      "type": "double"
                     },
                     "AFR_AN": {
                       "type": "long"
@@ -551,7 +551,7 @@
                       "type": "long"
                     },
                     "AMR_AF": {
-                      "type": "float"
+                      "type": "double"
                     },
                     "AMR_AN": {
                       "type": "long"
@@ -563,7 +563,7 @@
                       "type": "long"
                     },
                     "ASJ_AF": {
-                      "type": "float"
+                      "type": "double"
                     },
                     "ASJ_AN": {
                       "type": "long"
@@ -572,7 +572,7 @@
                       "type": "long"
                     },
                     "EAS_AF": {
-                      "type": "float"
+                      "type": "double"
                     },
                     "EAS_AN": {
                       "type": "long"
@@ -581,7 +581,7 @@
                       "type": "long"
                     },
                     "FIN_AF": {
-                      "type": "float"
+                      "type": "double"
                     },
                     "FIN_AN": {
                       "type": "long"
@@ -590,7 +590,7 @@
                       "type": "long"
                     },
                     "NFE_AF": {
-                      "type": "float"
+                      "type": "double"
                     },
                     "NFE_AN": {
                       "type": "long"
@@ -627,10 +627,10 @@
               }
             },
             "aaPos": {
-              "type": "long"
+              "type": "text"
             },
             "ProteinPos": {
-              "type": "long"
+              "type": "text"
             },
             "allele": {
               "type": "text",
@@ -654,13 +654,13 @@
               "type": "long"
             },
             "cdnaPos": {
-              "type": "long"
+              "type": "text"
             },
             "cdsLen": {
               "type": "long"
             },
             "cdsPos": {
-              "type": "long"
+              "type": "text"
             },
             "distance": {
               "type": "long"

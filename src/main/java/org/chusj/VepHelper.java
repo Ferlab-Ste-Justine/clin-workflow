@@ -1,19 +1,18 @@
 package org.chusj;
 
 
-import com.sun.tools.internal.jxc.ap.Const;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.InputStream;
+import java.math.BigDecimal;
 import java.text.NumberFormat;
 import java.text.ParseException;
-import java.util.Properties;
+import java.util.*;
 
-import static org.chusj.VEPSparkDriverProgram.getSHA256Hash;
+import static org.chusj.VEPSparkDriverProgram.getSHA1Hash;
 
 public class VepHelper {
 
@@ -22,6 +21,7 @@ public class VepHelper {
     private static int countMutation =0;
     private static NumberFormat NF = NumberFormat.getInstance();
     private static JSONObject lastOne;
+    private static boolean toPrint = false;
     private static final int CLINVAR = 0;
     private static final int OMIM = 1;
     private static final int ENSEMBL = 2;
@@ -59,9 +59,11 @@ public class VepHelper {
                     break;
                 } else {
                     JSONObject propertiesOneMutation = processVcfDataLine(fetchedLine, "dn,dq", pedigreeProps);
-                    propertiesOneMutation.put("assemblyVersion", "GRCh38");
-                    propertiesOneMutation.put("annotationTool", "VEP");
-                    propertiesOneMutation.put("annotationToolVersion", 96.3);
+                    if (toPrint) {
+                        System.out.println(fetchedLine);
+                        //System.out.println(propertiesOneMutation.toString(2));
+                    }
+
 
                     //lastOne = propertiesOneMutation;
                     // extract donor info if not found
@@ -81,9 +83,10 @@ public class VepHelper {
         if (countMutation>0) {
             avgFuncAnnoPerMutation = (float) countFuncAnnoPerMutation / countMutation;
         }
-        System.out.println("\navgFuncAnnoPerMutation="+avgFuncAnnoPerMutation);
-        System.out.println("lastOne="+lastOne.toString(2));
 
+        //System.out.println("lastOne="+lastOne.toString(2));
+
+        System.out.println("\navgFuncAnnoPerMutation="+avgFuncAnnoPerMutation+"  mutationCount="+ countMutation);
     }
 
 
@@ -93,13 +96,24 @@ public class VepHelper {
         // ReadPosRankSum	LOD	FractionInformativeReads	SNP	MNP	INS	DEL	MIXED	HOM	HET
         // GEN[*].GT	GEN[*].AD	GEN[*].AF	GEN[*].F1R2	GEN[*].F2R1	GEN[*].DP	GEN[*].SB	GEN[*].MB	CSQ
         //System.out.print(".");
-        String[] lineValueArray = extractedLine.split("\t");
-        // System.out.println("lineValueArray.length="+lineValueArray.length);
-        // dynamic positioning system -- pos counter++
-        int pos = 0;
 
+        String[] lineValueArray = extractedLine.split("\t");
+        // dynamic positioning system -- pos counter++
+        toPrint = false;
+        int pos = 0;
+        String chrom = lineValueArray[pos++];
+        if ("CHROM".equalsIgnoreCase(chrom)) {
+            return null; // Meta data line
+        }
+        // System.out.println("lineValueArray.length="+lineValueArray.length);
         //boolean db_snp = flase, clinvar = false, omim = false, emsembl = false, orphanet = false , pubmed=false;
         boolean[] dbExt = {false, false, false, false, false, false};
+        List<Set<String>> dbExtId = new ArrayList<>();
+
+        for (int i=0; i<dbExt.length; i++) {
+            dbExtId.add(i, new HashSet<>());
+        }
+
 
         JSONObject propertiesOneMutation = new JSONObject();
         JSONArray donorArray = new JSONArray();
@@ -107,9 +121,14 @@ public class VepHelper {
         JSONArray bdExtArray = new JSONArray();
 
         String[] pedigree = pedigreeProps.getProperty("pedigree").split(",");
-        String familyId = pedigreeProps.getProperty("FamilyId");
-        String[] patientId = pedigreeProps.getProperty("PatientId").split(",");
+        String familyId = pedigreeProps.getProperty("familyId");
+        String[] patientId = pedigreeProps.getProperty("patientId").split(",");
         String[] relation = pedigreeProps.getProperty("relation").split(",");
+        String studyId = pedigreeProps.getProperty("studyId");
+        String sequencingStrategy = pedigreeProps.getProperty("sequencingStrategy");
+        propertiesOneMutation.put("assemblyVersion", pedigreeProps.getProperty("assemblyVersion"));
+        propertiesOneMutation.put("annotationTool", pedigreeProps.getProperty("annotationTool"));
+        propertiesOneMutation.put("annotationToolVersion", pedigreeProps.getProperty("annotationToolVersion"));
 
         int nbDonor = pedigree.length;
         JSONObject[] arrayDonor = new JSONObject[nbDonor];
@@ -117,11 +136,6 @@ public class VepHelper {
             arrayDonor[i] = new JSONObject();
         }
 
-
-        String chrom = lineValueArray[pos++];
-        if ("CHROM".equalsIgnoreCase(chrom)) {
-            return null; // Meta data line
-        }
         countMutation++;
         String position = lineValueArray[pos++];
 
@@ -130,6 +144,7 @@ public class VepHelper {
             dbExt[DBSNP] =  true;
         }
         String reference = lineValueArray[pos++];
+
         String alt = lineValueArray[pos++].replace(",<NON_REF>", ""); // CT,<NON_REF> or G,TGG,<NON_REF>
         String qual = lineValueArray[pos++];
         String filter = lineValueArray[pos++];
@@ -184,15 +199,14 @@ public class VepHelper {
 
         String chrPos = chrom.substring(3); // remove 'chr'
         String mutation = reference + ">" + alt.split(",")[0];
-        String dnaChanges = chrPos + ":g." + position + mutation;
-        String uid = getSHA256Hash(dnaChanges);
+        String dnaChanges = "chr" + chrPos + ":g." + position + mutation;
+        String uid = getSHA1Hash(dnaChanges);
 
         propertiesOneMutation.put("id", uid);
         propertiesOneMutation.put("mutationId", dnaChanges);
         propertiesOneMutation.put("mutation", mutation);
-        propertiesOneMutation.put("chrom",chrPos);
-
-
+        propertiesOneMutation.put("chrom", chrPos);
+        propertiesOneMutation.put("reference", reference);
 
         JSONObject variant_class = new JSONObject();
 
@@ -200,7 +214,7 @@ public class VepHelper {
 
         //System.out.println("\ndna="+dnaChanges);
         for (String s : csqArray) {
-            functionalAnnotations.put(processVepAnnotations(s, bdExtArray, dbExt, variant_class));
+            functionalAnnotations.put(processVepAnnotations(s, dbExtId, dbExt, variant_class));
         }
 
         propertiesOneMutation.put("type",  variant_class.get("type"));
@@ -210,11 +224,11 @@ public class VepHelper {
         for (int i=0; i< nbDonor; i++) {
 
             arrayDonor[i].put("phenotypes", phenotypesArray);
-            addNumberToJsonObject("quality", qual, arrayDonor[i], false);
+            addNumberToJsonObject("quality", qual, arrayDonor[i], false, 'f');
             arrayDonor[i].put("filter", filter);
             arrayDonor[i].put("gt", gt[i]);
             arrayDonor[i].put("zygosity", zygosity(gt[i]));
-            addNumberToJsonObject("gq", gq[i], arrayDonor[i], false);
+            addNumberToJsonObject("gq", gq[i], arrayDonor[i], false, 'l');
             String adS = null;
             // bug in snpSift Extract...  does not keep correctly unknown value . in GEN[*].AD
             // but in that regards, the information is so bad that it's okay to put 0,1 or 1,0
@@ -233,21 +247,23 @@ public class VepHelper {
             }
             arrayDonor[i].put("ad", adS);
 //            arrayDonor[i].put("af", );
-            addNumberToJsonObject("af", af[i], arrayDonor[i], false);
+            addNumberToJsonObject("af", af[i], arrayDonor[i], false, 'f');
             arrayDonor[i].put("f1r2", f1r2[i*2] + "," + f1r2[i*2+1]);
             arrayDonor[i].put("f2r1", f2r1[i*2] + "," + f2r1[i*2+1]);
 //            arrayDonor[i].put("dp", );
-            addNumberToJsonObject("dp", genDP[i], arrayDonor[i], false);
+            addNumberToJsonObject("dp", genDP[i], arrayDonor[i], false, 'l');
             arrayDonor[i].put("sb", sb[i]);
             arrayDonor[i].put("mb", mb[i]);
-            addNumberToJsonObject("mq", mqS, arrayDonor[i], false);
-            addNumberToJsonObject("mqRankSum", mqRankSum, arrayDonor[i], false);
-            addNumberToJsonObject("depth", dpS, arrayDonor[i], false);
-            addNumberToJsonObject("readPosRankSum", readPosRankSum, arrayDonor[i], false);
+            addNumberToJsonObject("mq", mqS, arrayDonor[i], false, 'l'); //.E0
+            addNumberToJsonObject("mqRankSum", mqRankSum, arrayDonor[i], false, 'f'); //".8116E1"
+            addNumberToJsonObject("depth", dpS, arrayDonor[i], false, 'l');
+            addNumberToJsonObject("readPosRankSum", readPosRankSum, arrayDonor[i], false, 'f');
             arrayDonor[i].put("donorId", pedigree[i]);
             arrayDonor[i].put("patientId", patientId[i]);
             arrayDonor[i].put("familyId", familyId);
             arrayDonor[i].put("relation", relation[i]);
+            arrayDonor[i].put("studyId", studyId);
+            arrayDonor[i].put("sequencingStrategy", sequencingStrategy);
 
             donorArray.put(arrayDonor[i]);
 
@@ -269,7 +285,7 @@ public class VepHelper {
 
     }
 
-    private static JSONObject processVepAnnotations(String csqLine, JSONArray bdExtArray, boolean[] dbExt, JSONObject variant_class ) {
+    private static JSONObject processVepAnnotations(String csqLine, List<Set<String>> dbExtId, boolean[] dbExt, JSONObject variant_class ) {
 
         //System.out.print("\n"+csqLine);
         String[] functionalAnnotationArray = csqLine.split("[|]", -1);
@@ -305,7 +321,7 @@ public class VepHelper {
 
 
 
-        //0 -
+        //0 - Allele|Consequence|IMPACT|SYMBOL|Gene|Feature_type|Feature|BIOTYPE|EXON|INTRON
         addStrToJsonObject("allele", functionalAnnotationArray[pos++], funcAnnotation, false);
 //        String Consequence = functionalAnnotationArray[pos++];
         addStrToJsonObject("consequence", functionalAnnotationArray[pos++], funcAnnotation, false);
@@ -319,21 +335,21 @@ public class VepHelper {
         addStrToJsonObject("exon", functionalAnnotationArray[pos++], funcAnnotation, false);
         //String INTRON = functionalAnnotationArray[pos++];
         addStrToJsonObject("intron", functionalAnnotationArray[pos++], funcAnnotation, false);
-        // 9 -
+        // 9 - HGVSc|HGVSp|cDNA_position|CDS_position|Protein_position|Amino_acids|Codons|Existing_variation|DISTANCE|STRAND
         addStrToJsonObject("hgvsC", functionalAnnotationArray[pos++], funcAnnotation, false);
         addStrToJsonObject("hgvsP", functionalAnnotationArray[pos++], funcAnnotation, false);
-        addNumberToJsonObject("cdnaPos", functionalAnnotationArray[pos++] , funcAnnotation, false);
-        addNumberToJsonObject("cdsPos", functionalAnnotationArray[pos++] , funcAnnotation, false);
+        addStrToJsonObject("cdnaPos", functionalAnnotationArray[pos++] , funcAnnotation, false);
+        addStrToJsonObject("cdsPos", functionalAnnotationArray[pos++] , funcAnnotation, false);
         //String Protein_position = functionalAnnotationArray[pos++];
-        addNumberToJsonObject("ProteinPos", functionalAnnotationArray[pos++] , funcAnnotation, false);
+        addStrToJsonObject("ProteinPos", functionalAnnotationArray[pos++] , funcAnnotation, false);
         String Amino_acids = functionalAnnotationArray[pos++];
         //addNumberToJsonObject("aaLen", functionalAnnotationArray[pos++] , funcAnnotation, false);
 //        String Codons = functionalAnnotationArray[pos++];
         addStrToJsonObject("codons", functionalAnnotationArray[pos++], funcAnnotation, false);
         String Existing_variation = functionalAnnotationArray[pos++];
-        addNumberToJsonObject("distance", functionalAnnotationArray[pos++] , funcAnnotation, false);
-        addNumberToJsonObject("strand", functionalAnnotationArray[pos++] , funcAnnotation, false);
-        //19 -
+        addNumberToJsonObject("distance", functionalAnnotationArray[pos++] , funcAnnotation, false, 'l');
+        addNumberToJsonObject("strand", functionalAnnotationArray[pos++] , funcAnnotation, false, 'l'); // can be empty
+        //19 - |FLAGS|VARIANT_CLASS|SYMBOL_SOURCE
         String FLAGS = functionalAnnotationArray[pos++];
         //+1
         //String VARIANT_CLASS = functionalAnnotationArray[pos++];
@@ -341,6 +357,7 @@ public class VepHelper {
         //JSONObject variant_class = new JSONObject();
         addStrToJsonObject("type", functionalAnnotationArray[pos++], variant_class, false);
         String SYMBOL_SOURCE = functionalAnnotationArray[pos++];
+        // HGNC_ID|CANONICAL|GIVEN_REF|USED_REF|BAM_EDIT|
         String HGNC_ID = functionalAnnotationArray[pos++];
         addBooleanToJsonObject("canonical", functionalAnnotationArray[pos++], funcAnnotation, false);
 
@@ -348,27 +365,30 @@ public class VepHelper {
         String USED_REF = functionalAnnotationArray[pos++];
         String BAM_EDIT = functionalAnnotationArray[pos++];
 
-        // +4
+        // +4 CLIN_SIG|SOMATIC|PHENO|PUBMED
 
         String CLIN_SIG = functionalAnnotationArray[pos++];
         String SOMATIC = functionalAnnotationArray[pos++];
         String PHENO = functionalAnnotationArray[pos++];
-        if (addStrToJsonObject("pubmed", functionalAnnotationArray[pos++], funcAnnotation, false)) {
+        String pubmed = functionalAnnotationArray[pos++];
+
+        if (addStrToJsonObject("pubmed", pubmed, funcAnnotation, false)) {
             dbExt[PUBMED] = true;
         }
-        addNumberToJsonObject("AC", functionalAnnotationArray[pos++] , frequency1000Gp3, true);
-        addNumberToJsonObject("AF", functionalAnnotationArray[pos++] , frequency1000Gp3, true);
-        addNumberToJsonObject("AFR_AC", functionalAnnotationArray[pos++] , frequency1000Gp3, true);
+
+        addNumberToJsonObject("AC", functionalAnnotationArray[pos++] , frequency1000Gp3, true, 'l');
+        addNumberToJsonObject("AF", functionalAnnotationArray[pos++] , frequency1000Gp3, true, 'f');
+        addNumberToJsonObject("AFR_AC", functionalAnnotationArray[pos++] , frequency1000Gp3, true, 'l');
         // 29+5
-        addNumberToJsonObject("AFR_AF", functionalAnnotationArray[pos++] , frequency1000Gp3, true);
-        addNumberToJsonObject("AMR_AC", functionalAnnotationArray[pos++] , frequency1000Gp3, true);
-        addNumberToJsonObject("AMR_AF", functionalAnnotationArray[pos++] , frequency1000Gp3, true);
-        addNumberToJsonObject("EAS_AC", functionalAnnotationArray[pos++] , frequency1000Gp3, true);
-        addNumberToJsonObject("EAS_AF", functionalAnnotationArray[pos++] , frequency1000Gp3, true);
-        addNumberToJsonObject("EUR_AC", functionalAnnotationArray[pos++] , frequency1000Gp3, true);
-        addNumberToJsonObject("EUR_AF", functionalAnnotationArray[pos++] , frequency1000Gp3, true);
-        addNumberToJsonObject("SAS_AC", functionalAnnotationArray[pos++] , frequency1000Gp3, true);
-        addNumberToJsonObject("SAS_AF", functionalAnnotationArray[pos++] , frequency1000Gp3, true);
+        addNumberToJsonObject("AFR_AF", functionalAnnotationArray[pos++] , frequency1000Gp3, true, 'f');
+        addNumberToJsonObject("AMR_AC", functionalAnnotationArray[pos++] , frequency1000Gp3, true, 'l');
+        addNumberToJsonObject("AMR_AF", functionalAnnotationArray[pos++] , frequency1000Gp3, true, 'f');
+        addNumberToJsonObject("EAS_AC", functionalAnnotationArray[pos++] , frequency1000Gp3, true, 'l');
+        addNumberToJsonObject("EAS_AF", functionalAnnotationArray[pos++] , frequency1000Gp3, true, 'f');
+        addNumberToJsonObject("EUR_AC", functionalAnnotationArray[pos++] , frequency1000Gp3, true, 'l');
+        addNumberToJsonObject("EUR_AF", functionalAnnotationArray[pos++] , frequency1000Gp3, true, 'f');
+        addNumberToJsonObject("SAS_AC", functionalAnnotationArray[pos++] , frequency1000Gp3, true, 'l');
+        addNumberToJsonObject("SAS_AF", functionalAnnotationArray[pos++] , frequency1000Gp3, true, 'f');
         String ALSPAC_AC = functionalAnnotationArray[pos++];
         //39 -
         String ALSPAC_AF = functionalAnnotationArray[pos++];
@@ -391,11 +411,11 @@ public class VepHelper {
         String DEOGEN2_rankscore = functionalAnnotationArray[pos++];
         String DEOGEN2_score = functionalAnnotationArray[pos++];
         String Denisova = functionalAnnotationArray[pos++];
-        addNumberToJsonObject("AA_AC", functionalAnnotationArray[pos++] , frequencyEsp6500, true);
+        addNumberToJsonObject("AA_AC", functionalAnnotationArray[pos++] , frequencyEsp6500, true, 'l');
         //59 -
-        addNumberToJsonObject("AA_AF", functionalAnnotationArray[pos++] , frequencyEsp6500, true);
-        addNumberToJsonObject("EA_AC", functionalAnnotationArray[pos++] , frequencyEsp6500, true);
-        addNumberToJsonObject("EA_AF", functionalAnnotationArray[pos++] , frequencyEsp6500, true);
+        addNumberToJsonObject("AA_AF", functionalAnnotationArray[pos++] , frequencyEsp6500, true, 'f');
+        addNumberToJsonObject("EA_AC", functionalAnnotationArray[pos++] , frequencyEsp6500, true, 'l');
+        addNumberToJsonObject("EA_AF", functionalAnnotationArray[pos++] , frequencyEsp6500, true, 'f');
         String Eigen_PC_phred_coding = functionalAnnotationArray[pos++];
         String Eigen_PC_raw_coding = functionalAnnotationArray[pos++];
         String Eigen_PC_raw_coding_rankscore = functionalAnnotationArray[pos++];
@@ -408,23 +428,23 @@ public class VepHelper {
         // 69 -
         String Ensembl_proteinid = functionalAnnotationArray[pos++];
         String Ensembl_transcriptid = functionalAnnotationArray[pos++];
-        addNumberToJsonObject("AC", functionalAnnotationArray[pos++] , frequencyExAc, true);
-        addNumberToJsonObject("AF", functionalAnnotationArray[pos++] , frequencyExAc, true);
-        addNumberToJsonObject("AFR_AC", functionalAnnotationArray[pos++] , frequencyExAc, true);
-        addNumberToJsonObject("AFR_AF", functionalAnnotationArray[pos++] , frequencyExAc, true);
-        addNumberToJsonObject("AMR_AC", functionalAnnotationArray[pos++] , frequencyExAc, true);
-        addNumberToJsonObject("AMR_AF", functionalAnnotationArray[pos++] , frequencyExAc, true);
-        addNumberToJsonObject("Adj_AC", functionalAnnotationArray[pos++] , frequencyExAc, true);
-        addNumberToJsonObject("Adj_AF", functionalAnnotationArray[pos++] , frequencyExAc, true);
+        addNumberToJsonObject("AC", functionalAnnotationArray[pos++] , frequencyExAc, true, 'l');
+        addNumberToJsonObject("AF", functionalAnnotationArray[pos++] , frequencyExAc, true, 'f');
+        addNumberToJsonObject("AFR_AC", functionalAnnotationArray[pos++] , frequencyExAc, true, 'l');
+        addNumberToJsonObject("AFR_AF", functionalAnnotationArray[pos++] , frequencyExAc, true, 'f');
+        addNumberToJsonObject("AMR_AC", functionalAnnotationArray[pos++] , frequencyExAc, true, 'l');
+        addNumberToJsonObject("AMR_AF", functionalAnnotationArray[pos++] , frequencyExAc, true, 'f');
+        addNumberToJsonObject("Adj_AC", functionalAnnotationArray[pos++] , frequencyExAc, true, 'l');
+        addNumberToJsonObject("Adj_AF", functionalAnnotationArray[pos++] , frequencyExAc, true, 'f');
         // 79
-        addNumberToJsonObject("EAS_AC", functionalAnnotationArray[pos++] , frequencyExAc, true);
-        addNumberToJsonObject("EAS_AF", functionalAnnotationArray[pos++] , frequencyExAc, true);
-        addNumberToJsonObject("FIN_AC", functionalAnnotationArray[pos++] , frequencyExAc, true);
-        addNumberToJsonObject("FIN_AF", functionalAnnotationArray[pos++] , frequencyExAc, true);
-        addNumberToJsonObject("NFE_AC", functionalAnnotationArray[pos++] , frequencyExAc, true);
-        addNumberToJsonObject("NFE_AF", functionalAnnotationArray[pos++] , frequencyExAc, true);
-        addNumberToJsonObject("SAS_AC", functionalAnnotationArray[pos++] , frequencyExAc, true);
-        addNumberToJsonObject("SAS_AF", functionalAnnotationArray[pos++] , frequencyExAc, true);
+        addNumberToJsonObject("EAS_AC", functionalAnnotationArray[pos++] , frequencyExAc, true, 'l');
+        addNumberToJsonObject("EAS_AF", functionalAnnotationArray[pos++] , frequencyExAc, true, 'f');
+        addNumberToJsonObject("FIN_AC", functionalAnnotationArray[pos++] , frequencyExAc, true, 'l');
+        addNumberToJsonObject("FIN_AF", functionalAnnotationArray[pos++] , frequencyExAc, true, 'f');
+        addNumberToJsonObject("NFE_AC", functionalAnnotationArray[pos++] , frequencyExAc, true, 'l');
+        addNumberToJsonObject("NFE_AF", functionalAnnotationArray[pos++] , frequencyExAc, true, 'f');
+        addNumberToJsonObject("SAS_AC", functionalAnnotationArray[pos++] , frequencyExAc, true, 'l');
+        addNumberToJsonObject("SAS_AF", functionalAnnotationArray[pos++] , frequencyExAc, true, 'f');
         String ExAC_nonTCGA_AC = functionalAnnotationArray[pos++];
         String ExAC_nonTCGA_AF = functionalAnnotationArray[pos++];
         // 89
@@ -568,7 +588,7 @@ public class VepHelper {
 //        String aaalt = functionalAnnotationArray[pos++];
         addStrToJsonObject("aaAlt", functionalAnnotationArray[pos++], funcAnnotation, false);
         //String aapos = functionalAnnotationArray[pos++];
-        addNumberToJsonObject("aaPos", functionalAnnotationArray[pos++] , funcAnnotation, false);
+        addStrToJsonObject("aaPos", functionalAnnotationArray[pos++] , funcAnnotation, false);
 //        String aaref = functionalAnnotationArray[pos++];
         addStrToJsonObject("aaRef", functionalAnnotationArray[pos++], funcAnnotation, false);
 //        String alt = functionalAnnotationArray[pos++];
@@ -607,48 +627,47 @@ public class VepHelper {
 //        String genename = functionalAnnotationArray[pos++];
         addStrToJsonObject("geneName", functionalAnnotationArray[pos++], funcAnnotation, false);
 
-        addNumberToJsonObject("AC", functionalAnnotationArray[pos++] , frequencyGnomadEx, true);
-        addNumberToJsonObject("AF", functionalAnnotationArray[pos++] , frequencyGnomadEx, true);
-        addNumberToJsonObject("AFR_AC", functionalAnnotationArray[pos++] , frequencyGnomadEx, true);
-        addNumberToJsonObject("AFR_AF", functionalAnnotationArray[pos++] , frequencyGnomadEx, true);
+        addNumberToJsonObject("AC", functionalAnnotationArray[pos++] , frequencyGnomadEx, true, 'l');
+        addNumberToJsonObject("AF", functionalAnnotationArray[pos++] , frequencyGnomadEx, true, 'f');
+        addNumberToJsonObject("AFR_AC", functionalAnnotationArray[pos++] , frequencyGnomadEx, true, 'l');
+        addNumberToJsonObject("AFR_AF", functionalAnnotationArray[pos++] , frequencyGnomadEx, true, 'f');
 
         String gnomAD_exomes_AFR_AN = functionalAnnotationArray[pos++];
         String gnomAD_exomes_AFR_nhomalt = functionalAnnotationArray[pos++];
 
-        addNumberToJsonObject("AMR_AC", functionalAnnotationArray[pos++] , frequencyGnomadEx, true);
-        addNumberToJsonObject("AMR_AF", functionalAnnotationArray[pos++] , frequencyGnomadEx, true);
+        addNumberToJsonObject("AMR_AC", functionalAnnotationArray[pos++] , frequencyGnomadEx, true, 'l');
+        addNumberToJsonObject("AMR_AF", functionalAnnotationArray[pos++] , frequencyGnomadEx, true, 'f');
         // 249
         String gnomAD_exomes_AMR_AN = functionalAnnotationArray[pos++];
         String gnomAD_exomes_AMR_nhomalt = functionalAnnotationArray[pos++];
         String gnomAD_exomes_AN = functionalAnnotationArray[pos++];
 
-        addNumberToJsonObject("ASJ_AC", functionalAnnotationArray[pos++] , frequencyGnomadEx, true);
-        addNumberToJsonObject("ASJ_AF", functionalAnnotationArray[pos++] , frequencyGnomadEx, true);
+        addNumberToJsonObject("ASJ_AC", functionalAnnotationArray[pos++] , frequencyGnomadEx, true, 'l');
+        addNumberToJsonObject("ASJ_AF", functionalAnnotationArray[pos++] , frequencyGnomadEx, true, 'f');
         String gnomAD_exomes_ASJ_AN = functionalAnnotationArray[pos++];
         String gnomAD_exomes_ASJ_nhomalt = functionalAnnotationArray[pos++];
-        String gnomAD_exomes_EAS_AC = functionalAnnotationArray[pos++];
-
-        addNumberToJsonObject("EAS_AF", functionalAnnotationArray[pos++] , frequencyGnomadEx, true);
-        addNumberToJsonObject("EAS_AN", functionalAnnotationArray[pos++] , frequencyGnomadEx, true);
+        addNumberToJsonObject("EAS_AC", functionalAnnotationArray[pos++] , frequencyGnomadEx, true, 'l');
+        addNumberToJsonObject("EAS_AF", functionalAnnotationArray[pos++] , frequencyGnomadEx, true, 'f');
+        String gnomAD_exomes_EAS_AN = functionalAnnotationArray[pos++];
         // 259
         String gnomAD_exomes_EAS_nhomalt = functionalAnnotationArray[pos++];
 
-        addNumberToJsonObject("FIN_AC", functionalAnnotationArray[pos++] , frequencyGnomadEx, true);
-        addNumberToJsonObject("FIN_AF", functionalAnnotationArray[pos++] , frequencyGnomadEx, true);
+        addNumberToJsonObject("FIN_AC", functionalAnnotationArray[pos++] , frequencyGnomadEx, true, 'l');
+        addNumberToJsonObject("FIN_AF", functionalAnnotationArray[pos++] , frequencyGnomadEx, true, 'f');
         String gnomAD_exomes_FIN_AN = functionalAnnotationArray[pos++];
         String gnomAD_exomes_FIN_nhomalt = functionalAnnotationArray[pos++];
-        addNumberToJsonObject("NFE_AC", functionalAnnotationArray[pos++] , frequencyGnomadEx, true);
-        addNumberToJsonObject("NFE_AF", functionalAnnotationArray[pos++] , frequencyGnomadEx, true);
+        addNumberToJsonObject("NFE_AC", functionalAnnotationArray[pos++] , frequencyGnomadEx, true, 'l');
+        addNumberToJsonObject("NFE_AF", functionalAnnotationArray[pos++] , frequencyGnomadEx, true, 'f');
         String gnomAD_exomes_NFE_AN = functionalAnnotationArray[pos++];
         String gnomAD_exomes_NFE_nhomalt = functionalAnnotationArray[pos++];
         // 269
-        addNumberToJsonObject("POPMAX_AC", functionalAnnotationArray[pos++] , frequencyGnomadEx, true);
+        addNumberToJsonObject("POPMAX_AC", functionalAnnotationArray[pos++] , frequencyGnomadEx, true, 'l');
         // 269
-        addNumberToJsonObject("POPMAX_AF", functionalAnnotationArray[pos++] , frequencyGnomadEx, true);
+        addNumberToJsonObject("POPMAX_AF", functionalAnnotationArray[pos++] , frequencyGnomadEx, true, 'f');
         String gnomAD_exomes_POPMAX_AN = functionalAnnotationArray[pos++];
         String gnomAD_exomes_POPMAX_nhomalt = functionalAnnotationArray[pos++];
-        addNumberToJsonObject("SAS_AC", functionalAnnotationArray[pos++] , frequencyGnomadEx, true);
-        addNumberToJsonObject("SAS_AF", functionalAnnotationArray[pos++] , frequencyGnomadEx, true);
+        addNumberToJsonObject("SAS_AC", functionalAnnotationArray[pos++] , frequencyGnomadEx, true, 'l');
+        addNumberToJsonObject("SAS_AF", functionalAnnotationArray[pos++] , frequencyGnomadEx, true, 'f');
         String gnomAD_exomes_SAS_AN = functionalAnnotationArray[pos++];
         String gnomAD_exomes_SAS_nhomalt = functionalAnnotationArray[pos++];
         String gnomAD_exomes_controls_AC = functionalAnnotationArray[pos++];
@@ -693,15 +712,15 @@ public class VepHelper {
         String gnomAD_exomes_controls_nhomalt = functionalAnnotationArray[pos++];
         String gnomAD_exomes_flag = functionalAnnotationArray[pos++];
         String gnomAD_exomes_nhomalt = functionalAnnotationArray[pos++];
-        addNumberToJsonObject("AC", functionalAnnotationArray[pos++] , frequencyGnomadGen, true);
-        addNumberToJsonObject("AF", functionalAnnotationArray[pos++] , frequencyGnomadGen, true);
-        addNumberToJsonObject("AFR_AC", functionalAnnotationArray[pos++] , frequencyGnomadGen, true);
-        addNumberToJsonObject("AFR_AF", functionalAnnotationArray[pos++] , frequencyGnomadGen, true);
+        addNumberToJsonObject("AC", functionalAnnotationArray[pos++] , frequencyGnomadGen, true, 'l');
+        addNumberToJsonObject("AF", functionalAnnotationArray[pos++] , frequencyGnomadGen, true, 'f');
+        addNumberToJsonObject("AFR_AC", functionalAnnotationArray[pos++] , frequencyGnomadGen, true, 'l');
+        addNumberToJsonObject("AFR_AF", functionalAnnotationArray[pos++] , frequencyGnomadGen, true, 'f');
         String gnomAD_genomes_AFR_AN = functionalAnnotationArray[pos++];
         // 319
         String gnomAD_genomes_AFR_nhomalt = functionalAnnotationArray[pos++];
-        addNumberToJsonObject("AMR_AC", functionalAnnotationArray[pos++] , frequencyGnomadGen, true);
-        addNumberToJsonObject("AMR_AF", functionalAnnotationArray[pos++] , frequencyGnomadGen, true);
+        addNumberToJsonObject("AMR_AC", functionalAnnotationArray[pos++] , frequencyGnomadGen, true, 'l');
+        addNumberToJsonObject("AMR_AF", functionalAnnotationArray[pos++] , frequencyGnomadGen, true, 'f');
         String gnomAD_genomes_AMR_AN = functionalAnnotationArray[pos++];
         String gnomAD_genomes_AMR_nhomalt = functionalAnnotationArray[pos++];
         String gnomAD_genomes_AN = functionalAnnotationArray[pos++];
@@ -710,21 +729,21 @@ public class VepHelper {
         String gnomAD_genomes_ASJ_AN = functionalAnnotationArray[pos++];
         String gnomAD_genomes_ASJ_nhomalt = functionalAnnotationArray[pos++];
         // 329
-        addNumberToJsonObject("EAS_AC", functionalAnnotationArray[pos++] , frequencyGnomadGen, true);
-        addNumberToJsonObject("EAS_AF", functionalAnnotationArray[pos++] , frequencyGnomadGen, true);
+        addNumberToJsonObject("EAS_AC", functionalAnnotationArray[pos++] , frequencyGnomadGen, true, 'l');
+        addNumberToJsonObject("EAS_AF", functionalAnnotationArray[pos++] , frequencyGnomadGen, true, 'f');
         String gnomAD_genomes_EAS_AN = functionalAnnotationArray[pos++];
         String gnomAD_genomes_EAS_nhomalt = functionalAnnotationArray[pos++];
         String gnomAD_genomes_FIN_AC = functionalAnnotationArray[pos++];
         String gnomAD_genomes_FIN_AF = functionalAnnotationArray[pos++];
         String gnomAD_genomes_FIN_AN = functionalAnnotationArray[pos++];
         String gnomAD_genomes_FIN_nhomalt = functionalAnnotationArray[pos++];
-        addNumberToJsonObject("NFE_AC", functionalAnnotationArray[pos++] , frequencyGnomadGen, true);
-        addNumberToJsonObject("NFE_AF", functionalAnnotationArray[pos++] , frequencyGnomadGen, true);
+        addNumberToJsonObject("NFE_AC", functionalAnnotationArray[pos++] , frequencyGnomadGen, true, 'l');
+        addNumberToJsonObject("NFE_AF", functionalAnnotationArray[pos++] , frequencyGnomadGen, true, 'f');
         // 339
         String gnomAD_genomes_NFE_AN = functionalAnnotationArray[pos++];
         String gnomAD_genomes_NFE_nhomalt = functionalAnnotationArray[pos++];
-        addNumberToJsonObject("POPMAX_AC", functionalAnnotationArray[pos++] , frequencyGnomadGen, true);
-        addNumberToJsonObject("POPMAX_AF", functionalAnnotationArray[pos++] , frequencyGnomadGen, true);
+        addNumberToJsonObject("POPMAX_AC", functionalAnnotationArray[pos++] , frequencyGnomadGen, true, 'l');
+        addNumberToJsonObject("POPMAX_AF", functionalAnnotationArray[pos++] , frequencyGnomadGen, true, 'f');
         String gnomAD_genomes_POPMAX_AN = functionalAnnotationArray[pos++];
         String gnomAD_genomes_POPMAX_nhomalt = functionalAnnotationArray[pos++];
         String gnomAD_genomes_controls_AC = functionalAnnotationArray[pos++];
@@ -822,15 +841,20 @@ public class VepHelper {
 
     }
 
-    private static boolean addNumberToJsonObject(String name, String var, JSONObject jsonObject, boolean withAvailability) {
+    private static boolean addNumberToJsonObject(String name, String var, JSONObject jsonObject, boolean withAvailability, char type) {
         boolean avail = false;
-        if (var.length()>0 && !".".equalsIgnoreCase(var)) {
+        if (var != null && !var.trim().isEmpty() && !".".equalsIgnoreCase(var)) {
             try {
-                jsonObject.put(name, NF.parse(var));
+                if (type == 'l') {
+                    jsonObject.put(name, new BigDecimal(var).longValue());
+                } else {
+                    jsonObject.put(name, new BigDecimal(var).doubleValue());
+                }
                 avail = true;
                 if (withAvailability) jsonObject.put("available", avail);
-            } catch (ParseException parseException) {
-                parseException.printStackTrace();
+            } catch (NumberFormatException nfe) {
+                nfe.printStackTrace();
+                toPrint = true;
                 if (withAvailability) jsonObject.put("available", avail);
             }
         } else if (withAvailability) {
@@ -861,6 +885,18 @@ public class VepHelper {
     }
 
     private static boolean addStrToJsonObject(String name, String var, JSONObject jsonObject, boolean withAvailability) {
+        boolean avail = false;
+        if (var.length()>0 && !".".equalsIgnoreCase(var)) {
+            jsonObject.put(name, var);
+            avail = true;
+            if (withAvailability) jsonObject.put("available", avail);
+        } else if (withAvailability) {
+            jsonObject.put("available", avail);
+        }
+        return avail;
+
+    }
+    private static boolean addStrToSetObject(String name, String var, JSONObject jsonObject, boolean withAvailability) {
         boolean avail = false;
         if (var.length()>0 && !".".equalsIgnoreCase(var)) {
             jsonObject.put(name, var);
@@ -909,6 +945,15 @@ public class VepHelper {
 
 
         return prop;
+    }
+
+    public static JSONArray addDonorArrayToDonorArray(JSONArray previous, JSONArray newOne) {
+
+        for (int i = 0; i<newOne.length(); i++) {
+            previous.put(newOne.get(i));
+        }
+        return previous;
+
     }
 
 }

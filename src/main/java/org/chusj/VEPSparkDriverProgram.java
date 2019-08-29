@@ -22,6 +22,8 @@ import java.io.InputStream;
 import java.security.MessageDigest;
 import java.util.Properties;
 
+import static org.chusj.VepHelper.addDonorArrayToDonorArray;
+
 public class VEPSparkDriverProgram {
 
     public static RestHighLevelClient client;
@@ -68,6 +70,8 @@ public class VEPSparkDriverProgram {
         //JavaRDD<Integer> lineCharacters = lines.map(s -> s.length());
         /* reduces operation -> Calculating total characters */
 
+        Properties pedigreeProps = VepHelper.getPropertiesFromFile("pedigree.properties");
+
         try (RestHighLevelClient clientTry = new RestHighLevelClient(
                 RestClient.builder(
                         new HttpHost("localhost", 9200, "http")))) {
@@ -75,36 +79,164 @@ public class VEPSparkDriverProgram {
             client = clientTry;
             connectToMemCached();
 
-            lines.foreach((a) -> buildAndStoreJsonObj(a, familyId, patientId, studyId, type, projectId, sequencingStrategy, esLoad));
+            lines.foreach((a) -> buildAndStoreJsonObj(a, esLoad, pedigreeProps));
         }
         sc.close();
         client.close();
     }
 
 
-    public static void buildAndStoreJsonObj(String extractedLine, String familyId, String patientId, String studyId,
-                                            String type, String projectId, String sequencingStrategy, String esLoad) throws IOException {
+    public static void buildAndStoreJsonObj(String extractedLine, String esLoad, Properties pedigreeProps) throws IOException {
 
 
-        //String[] pedigree = {"14140,P","14141,M", "14142,F"};
-        Properties pedigreeProps = VepHelper.getPropertiesFromFile("pedigree.properties");
         JSONObject propertiesOneMutation = VepHelper.processVcfDataLine(extractedLine, "dn,dq", pedigreeProps);
-        propertiesOneMutation.put("assemblyVersion", "GRCh38");
-        propertiesOneMutation.put("annotationTool", "VEP");
-        propertiesOneMutation.put("annotationToolVersion", 96.3);
 
         // extract donor info if not found
         //String qual = (String) propertiesOneMutation.remove("qual");
         //String filter = (String) propertiesOneMutation.remove("filter");
+        if (propertiesOneMutation == null) return;
+        JSONArray donorArray = (JSONArray) propertiesOneMutation.remove("donor");
+
+        JSONArray newDonorArray;
+        // verify if variant already exist
+        boolean toMapping = false;
+        boolean toIndex = false;
+        boolean toMemcached = false;
+        boolean checkES = false;
+        String msg= "";
 
 
 
+        String uid = (String) propertiesOneMutation.get("id");
+        String dnaChanges = (String) propertiesOneMutation.get("mutationId");
 
+        String patientIdList = pedigreeProps.getProperty("patientId");
+
+        JSONArray previousDonorArray = null;
+        String donorArrayStr = (String) mcc.get(uid);
+        if (donorArrayStr != null) {
+            previousDonorArray = new JSONArray(donorArrayStr);
+            if (previousDonorArray != null && previousDonorArray.length() > 0) {
+
+                boolean donorFound = checkForDonor(donorArray, patientIdList);
+
+                if (!donorFound) {
+                    // add new donor(s) to previous one
+                    msg += "m0";
+                    //donorArray.put(newDonor);
+                    //previousDonorArray.put(donorArray);
+                    addDonorArrayToDonorArray(previousDonorArray, donorArray);
+                    toIndex = true;
+                    toMemcached = true;
+
+                } else {
+                    msg += "m1"; //already present - no update needed - no check ES
+
+                }
+                System.out.print(msg);
+            } else {
+                //donorArray = new JSONArray();
+                //donorArray.put(newDonor);
+                toMemcached = true;
+                checkES = true;
+            }
+        } else {
+            // might need to check ES
+            toMemcached = true;
+            checkES = true;
+        }
+
+        if (checkES) {
+            GetRequest getRequest = new GetRequest("mutations", "_doc", uid);
+
+            if (client.exists(getRequest, RequestOptions.DEFAULT)) {
+
+                GetResponse getResponse = client.get(getRequest, RequestOptions.DEFAULT);
+
+                if (getResponse.isExists()) {
+
+                    JSONObject obj = new JSONObject(getResponse.getSourceAsString());
+
+                    //JSONObject props = (JSONObject) obj.get("_source");
+
+                    String mutationId = (String) obj.get("mutationId");
+                    //msg += mutationId;
+
+                    if (!mutationId.equalsIgnoreCase(dnaChanges)) {
+                        // collision detected
+                        msg = "(" + dnaChanges + ";" + uid + ";";
+                        System.err.println("collision="+msg);
+                    }
+                    try {
+                        previousDonorArray = (JSONArray) obj.get("donor");
+                    } catch (Exception e) {
+                        previousDonorArray = new JSONArray();
+                    }
+
+                    boolean donorFound = checkForDonor(previousDonorArray, patientIdList);
+
+                    if (!donorFound) {
+                        // add new donor to previous one
+                        msg += "e0";
+                        //System.out.print("0)");
+                        addDonorArrayToDonorArray(previousDonorArray, donorArray);
+                        toIndex = true;
+
+                    } else {
+                        msg += "e1";
+                        // nothing - might have to update
+                        if (toMemcached) {
+                            addDonorArrayToDonorArray(previousDonorArray, donorArray);
+                        }
+                    }
+                    System.out.print(msg);
+                } else { // mutation not found
+
+                    previousDonorArray = donorArray;
+                    toIndex = true;
+                }
+            } else { // index not created yet
+                toMapping = true;
+                toIndex = true;
+                previousDonorArray = donorArray;
+
+            }
+        }
+
+        if (toMapping) {
+            // have to put mapping TODO (currently done manually on Kibana)
+        }
+        boolean indexingSuccess = false;
+        if (toIndex) {
+            //int retry = 0;
+            //if (donorArray==null) donorArray = new JSONArray();
+
+            propertiesOneMutation.put("donor", previousDonorArray);
+            //mutationCentricIndexjson.put("properties", propertiesOneMutation);
+            for (int i=0; i< 3; i++) {
+                try {
+                    index(propertiesOneMutation.toString(), client, uid, "mutations");
+                    indexingSuccess = true;
+                    break;
+                } catch (Exception e) {
+                    System.err.println("*********** Try #"+i+" failed...");
+                    continue;
+                }
+            }
+
+            if (!indexingSuccess) System.err.println("#########\n\n\n######### Unable to index " + uid + "\n############");
+
+        }
+        if (toMemcached && indexingSuccess) {
+            mcc.set(uid,
+                    previousDonorArray.toString());
+        }
 
     }
 
+
     public static void index(String object, RestHighLevelClient client, String uid, String index) throws Exception {
-        IndexRequest request = new IndexRequest("variants", "family", uid);
+        IndexRequest request = new IndexRequest("mutations", "_doc", uid);
 
         request.source(object, XContentType.JSON);
         //IndexResponse indexResponse;
@@ -124,6 +256,19 @@ public class VEPSparkDriverProgram {
         String result = null;
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hash = digest.digest(data.getBytes("UTF-8"));
+            return bytesToHex(hash);
+        } catch(Exception ex) {
+            ex.printStackTrace();
+        }
+        return result;
+    }
+
+    public static String getSHA1Hash(String data) {
+        String result = null;
+
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-1");
             byte[] hash = digest.digest(data.getBytes("UTF-8"));
             return bytesToHex(hash);
         } catch(Exception ex) {
@@ -154,13 +299,17 @@ public class VEPSparkDriverProgram {
         System.err.println("*********** Connected to Memcached");
     }
 
-    public static boolean checkForDonor(JSONArray donorArray, String patientId) {
+    public static boolean checkForDonor(JSONArray donorArray, String patientIdList) {
 
+
+        String[] patientIds = patientIdList.split(",");
         for (int i = 0; i < donorArray.length(); i++) {
             JSONObject currentDonor = (JSONObject) donorArray.get(i);
             String donorId = (String) currentDonor.get("donorId");
-            if (patientId.equalsIgnoreCase(donorId)) {
-                return true;
+            for (String patientId: patientIds) {
+                if (patientId.equalsIgnoreCase(donorId)) {
+                    return true;
+                }
             }
         }
         return false;
