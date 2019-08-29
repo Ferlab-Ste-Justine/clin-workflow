@@ -110,7 +110,7 @@ public class VEPSparkDriverProgram {
         String uid = (String) propertiesOneMutation.get("id");
         String dnaChanges = (String) propertiesOneMutation.get("mutationId");
 
-        String patientIdList = pedigreeProps.getProperty("patientId");
+        String donorIdList = pedigreeProps.getProperty("pedigree");
 
         JSONArray previousDonorArray = null;
         String donorArrayStr = (String) mcc.get(uid);
@@ -118,7 +118,7 @@ public class VEPSparkDriverProgram {
             previousDonorArray = new JSONArray(donorArrayStr);
             if (previousDonorArray != null && previousDonorArray.length() > 0) {
 
-                boolean donorFound = checkForDonor(donorArray, patientIdList);
+                boolean donorFound = checkForDonor(donorArray, donorIdList);
 
                 if (!donorFound) {
                     // add new donor(s) to previous one
@@ -173,7 +173,7 @@ public class VEPSparkDriverProgram {
                         previousDonorArray = new JSONArray();
                     }
 
-                    boolean donorFound = checkForDonor(previousDonorArray, patientIdList);
+                    boolean donorFound = checkForDonor(previousDonorArray, donorIdList);
 
                     if (!donorFound) {
                         // add new donor to previous one

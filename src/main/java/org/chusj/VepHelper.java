@@ -9,7 +9,6 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.text.NumberFormat;
-import java.text.ParseException;
 import java.util.*;
 
 import static org.chusj.VEPSparkDriverProgram.getSHA1Hash;
