@@ -212,7 +212,8 @@
             },
             "gq": {
               "type": "long"
-            }
+            },
+            "lastUpdate": { "type" : "date" }
           }
         },
         "bdExt" : {
@@ -239,6 +240,7 @@
             }
           }
         },
+        "lastAnnotationUpdate": { "type" : "date" },
         "functionalAnnotations": {
           "properties": {
             "predictions": {
@@ -603,7 +605,7 @@
               }
             },
             "strand": {
-              "type": "long"
+              "type": "byte"
             },
             "aaLen": {
               "type": "long"

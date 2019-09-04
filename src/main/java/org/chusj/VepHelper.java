@@ -9,6 +9,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.text.NumberFormat;
+import java.time.LocalDate;
 import java.util.*;
 
 import static org.chusj.VEPSparkDriverProgram.getSHA1Hash;
@@ -83,7 +84,7 @@ public class VepHelper {
             avgFuncAnnoPerMutation = (float) countFuncAnnoPerMutation / countMutation;
         }
 
-        //System.out.println("lastOne="+lastOne.toString(2));
+        System.out.println("lastOne="+lastOne.toString(2));
 
         System.out.println("\navgFuncAnnoPerMutation="+avgFuncAnnoPerMutation+"  mutationCount="+ countMutation);
     }
@@ -128,6 +129,10 @@ public class VepHelper {
         propertiesOneMutation.put("assemblyVersion", pedigreeProps.getProperty("assemblyVersion"));
         propertiesOneMutation.put("annotationTool", pedigreeProps.getProperty("annotationTool"));
         propertiesOneMutation.put("annotationToolVersion", pedigreeProps.getProperty("annotationToolVersion"));
+
+        LocalDate localDate = LocalDate.now();
+        propertiesOneMutation.put("lastAnnotationUpdate", localDate);
+
 
         int nbDonor = pedigree.length;
         JSONObject[] arrayDonor = new JSONObject[nbDonor];
@@ -222,6 +227,7 @@ public class VepHelper {
 
         for (int i=0; i< nbDonor; i++) {
 
+            arrayDonor[i].put("lastUpdate", localDate);
             arrayDonor[i].put("phenotypes", phenotypesArray);
             addNumberToJsonObject("quality", qual, arrayDonor[i], false, 'f');
             arrayDonor[i].put("filter", filter);
