@@ -376,6 +376,9 @@
             "cdnaPos": {
               "type": "text"
             },
+            "cdnaChange": {
+              "type": "text"
+            },
             "cdsLen": {
               "type": "long"
             },

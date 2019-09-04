@@ -130,11 +130,9 @@ public class VepHelper {
         String sequencingStrategy = pedigreeProps.getProperty("sequencingStrategy");
         propertiesOneMutation.put("assemblyVersion", pedigreeProps.getProperty("assemblyVersion"));
         propertiesOneMutation.put("annotationTool", pedigreeProps.getProperty("annotationTool"));
-//        propertiesOneMutation.put("annotationToolVersion", pedigreeProps.getProperty("annotationToolVersion"));
 
         LocalDate localDate = LocalDate.now();
         propertiesOneMutation.put("lastAnnotationUpdate", localDate);
-
 
         int nbDonor = pedigree.length;
         JSONObject[] arrayDonor = new JSONObject[nbDonor];
@@ -329,7 +327,7 @@ public class VepHelper {
         JSONObject prediction = new JSONObject();
 
 
-
+        String cdnaChange;
 
         //0 - Allele|Consequence|IMPACT|SYMBOL|Gene|Feature_type|Feature|BIOTYPE|EXON|INTRON
         addStrToJsonObject("allele", functionalAnnotationArray[pos++], funcAnnotation, false);
@@ -348,12 +346,13 @@ public class VepHelper {
         // 9 - HGVSc|HGVSp|cDNA_position|CDS_position|Protein_position|Amino_acids|Codons|Existing_variation|DISTANCE|STRAND
         addStrToJsonObject("hgvsC", functionalAnnotationArray[pos++], funcAnnotation, false);
         addStrToJsonObject("hgvsP", functionalAnnotationArray[pos++], funcAnnotation, false);
-        addStrToJsonObject("cdnaPos", functionalAnnotationArray[pos++] , funcAnnotation, false);
+        String cdnaPos = functionalAnnotationArray[pos++];
+        addStrToJsonObject("cdnaPos", cdnaPos , funcAnnotation, false);
         addStrToJsonObject("cdsPos", functionalAnnotationArray[pos++] , funcAnnotation, false);
         //String Protein_position = functionalAnnotationArray[pos++];
         addStrToJsonObject("ProteinPos", functionalAnnotationArray[pos++] , funcAnnotation, false);
         String Amino_acids = functionalAnnotationArray[pos++];
-        //addNumberToJsonObject("aaLen", functionalAnnotationArray[pos++] , funcAnnotation, false);
+        addStrToJsonObject("aminoAcids", Amino_acids , funcAnnotation, false);
 //        String Codons = functionalAnnotationArray[pos++];
         addStrToJsonObject("codons", functionalAnnotationArray[pos++], funcAnnotation, false);
         String Existing_variation = functionalAnnotationArray[pos++];
@@ -595,12 +594,12 @@ public class VepHelper {
         String VEST4_rankscore = functionalAnnotationArray[pos++];
         String VEST4_score = functionalAnnotationArray[pos++];
         String VindijiaNeandertal = functionalAnnotationArray[pos++];
-//        String aaalt = functionalAnnotationArray[pos++];
-        addStrToJsonObject("aaAlt", functionalAnnotationArray[pos++], funcAnnotation, false);
+        String aaalt = functionalAnnotationArray[pos++];
+        addStrToJsonObject("aaAlt", aaalt, funcAnnotation, false);
         //String aapos = functionalAnnotationArray[pos++];
         addStrToJsonObject("aaPos", functionalAnnotationArray[pos++] , funcAnnotation, false);
-//        String aaref = functionalAnnotationArray[pos++];
-        addStrToJsonObject("aaRef", functionalAnnotationArray[pos++], funcAnnotation, false);
+        String aaref = functionalAnnotationArray[pos++];
+        addStrToJsonObject("aaRef", aaref, funcAnnotation, false);
         String alt = functionalAnnotationArray[pos++];
 //        addStrToJsonObject("alt", functionalAnnotationArray[pos++], funcAnnotation, false);
         String bStatistic = functionalAnnotationArray[pos++];
@@ -816,8 +815,8 @@ public class VepHelper {
         String phyloP30way_mammalian_rankscore = functionalAnnotationArray[pos++];
         String pos_1_based = functionalAnnotationArray[pos++];
         // 399
-//        String ref = functionalAnnotationArray[pos++];
-        addStrToJsonObject("ref", functionalAnnotationArray[pos++], funcAnnotation, false);
+        String ref = functionalAnnotationArray[pos++];
+        addStrToJsonObject("ref", ref, funcAnnotation, false);
 //        String refcodon = functionalAnnotationArray[pos++];
         addStrToJsonObject("ref_codon", functionalAnnotationArray[pos++], funcAnnotation, false);
         String rs_dbSNP151 = functionalAnnotationArray[pos++];
@@ -829,8 +828,11 @@ public class VepHelper {
 
         /* population frequencies Json Obj */
 
+        cdnaChange = ref + cdnaPos + alt;
+        addStrToJsonObject("cdnaChange", cdnaChange , funcAnnotation, false);
 
-
+        String aaChange = aaref + "xyz" + aaalt;
+        addStrToJsonObject("aaChange", aaChange , funcAnnotation, false);
         frequencies.put("1000Gp3", frequency1000Gp3);
         frequencies.put("ExAc", frequencyExAc);
         frequencies.put("gnomAD_exomes", frequencyGnomadEx);
