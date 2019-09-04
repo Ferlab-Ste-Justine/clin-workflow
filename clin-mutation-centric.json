@@ -322,288 +322,6 @@
                 }
               }
             },
-            "frequencies": {
-              "properties": {
-                "1000Gp3": {
-                  "properties": {
-                    "AC": {
-                      "type": "long"
-                    },
-                    "AF": {
-                      "type": "double"
-                    },
-                    "AFR_AC": {
-                      "type": "long"
-                    },
-                    "AFR_AF": {
-                      "type": "double"
-                    },
-                    "AMR_AC": {
-                      "type": "long"
-                    },
-                    "AMR_AF": {
-                      "type": "double"
-                    },
-                    "EAS_AC": {
-                      "type": "long"
-                    },
-                    "EAS_AF": {
-                      "type": "double"
-                    },
-                    "EUR_AC": {
-                      "type": "long"
-                    },
-                    "EUR_AF": {
-                      "type": "double"
-                    },
-                    "SAS_AC": {
-                      "type": "long"
-                    },
-                    "SAS_AF": {
-                      "type": "double"
-                    },
-                    "available": {
-                      "type": "boolean"
-                    }
-                  }
-                },
-                "ESP6500": {
-                  "properties": {
-                    "AA_AC": {
-                      "type": "long"
-                    },
-                    "AA_AF": {
-                      "type": "double"
-                    },
-                    "EA_AC": {
-                      "type": "long"
-                    },
-                    "EA_AF": {
-                      "type": "double"
-                    },
-                    "available": {
-                      "type": "boolean"
-                    }
-                  }
-                },
-                "ExAc": {
-                  "properties": {
-                    "AC": {
-                      "type": "long"
-                    },
-                    "ADJ_AC": {
-                      "type": "long"
-                    },
-                    "ADJ_AF": {
-                      "type": "double"
-                    },
-                    "AF": {
-                      "type": "double"
-                    },
-                    "AFR_AC": {
-                      "type": "long"
-                    },
-                    "AFR_AF": {
-                      "type": "double"
-                    },
-                    "AMR_AC": {
-                      "type": "long"
-                    },
-                    "AMR_AF": {
-                      "type": "double"
-                    },
-                    "EAS_AC": {
-                      "type": "long"
-                    },
-                    "EAS_AF": {
-                      "type": "double"
-                    },
-                    "FIN_AC": {
-                      "type": "long"
-                    },
-                    "FIN_AF": {
-                      "type": "double"
-                    },
-                    "NFE_AC": {
-                      "type": "long"
-                    },
-                    "NFE_AF": {
-                      "type": "double"
-                    },
-                    "SAS_AC": {
-                      "type": "long"
-                    },
-                    "SAS_AF": {
-                      "type": "double"
-                    },
-                    "available": {
-                      "type": "boolean"
-                    }
-                  }
-                },
-                "gnomAD_exomes": {
-                  "properties": {
-                    "POPMAX_AC": {
-                      "type": "long"
-                    },
-                    "POPMAX_AF": {
-                      "type": "double"
-                    },
-                    "AC": {
-                      "type": "long"
-                    },
-                    "AF": {
-                      "type": "double"
-                    },
-                    "AFR_AC": {
-                      "type": "long"
-                    },
-                    "AFR_AF": {
-                      "type": "double"
-                    },
-                    "AFR_AN": {
-                      "type": "long"
-                    },
-                    "AMR_AC": {
-                      "type": "long"
-                    },
-                    "AMR_AF": {
-                      "type": "double"
-                    },
-                    "AMR_AN": {
-                      "type": "long"
-                    },
-                    "AN": {
-                      "type": "long"
-                    },
-                    "ASJ_AC": {
-                      "type": "long"
-                    },
-                    "ASJ_AF": {
-                      "type": "double"
-                    },
-                    "ASJ_AN": {
-                      "type": "long"
-                    },
-                    "EAS_AC": {
-                      "type": "long"
-                    },
-                    "EAS_AF": {
-                      "type": "double"
-                    },
-                    "EAS_AN": {
-                      "type": "long"
-                    },
-                    "FIN_AC": {
-                      "type": "long"
-                    },
-                    "FIN_AF": {
-                      "type": "double"
-                    },
-                    "FIN_AN": {
-                      "type": "long"
-                    },
-                    "NFE_AC": {
-                      "type": "long"
-                    },
-                    "NFE_AF": {
-                      "type": "double"
-                    },
-                    "NFE_AN": {
-                      "type": "long"
-                    },
-                    "SAS_AC": {
-                      "type": "long"
-                    },
-                    "SAS_AF": {
-                      "type": "double"
-                    },
-                    "SAS_AN": {
-                      "type": "long"
-                    },
-                    "available": {
-                      "type": "boolean"
-                    }
-                  }
-                },
-                "gnomAD_genomes": {
-                  "properties": {
-                    "POPMAX_AC": {
-                      "type": "long"
-                    },
-                    "POPMAX_AF": {
-                      "type": "double"
-                    },
-                    "AC": {
-                      "type": "long"
-                    },
-                    "AF": {
-                      "type": "double"
-                    },
-                    "AFR_AC": {
-                      "type": "long"
-                    },
-                    "AFR_AF": {
-                      "type": "double"
-                    },
-                    "AFR_AN": {
-                      "type": "long"
-                    },
-                    "AMR_AC": {
-                      "type": "long"
-                    },
-                    "AMR_AF": {
-                      "type": "double"
-                    },
-                    "AMR_AN": {
-                      "type": "long"
-                    },
-                    "AN": {
-                      "type": "long"
-                    },
-                    "ASJ_AC": {
-                      "type": "long"
-                    },
-                    "ASJ_AF": {
-                      "type": "double"
-                    },
-                    "ASJ_AN": {
-                      "type": "long"
-                    },
-                    "EAS_AC": {
-                      "type": "long"
-                    },
-                    "EAS_AF": {
-                      "type": "double"
-                    },
-                    "EAS_AN": {
-                      "type": "long"
-                    },
-                    "FIN_AC": {
-                      "type": "long"
-                    },
-                    "FIN_AF": {
-                      "type": "double"
-                    },
-                    "FIN_AN": {
-                      "type": "long"
-                    },
-                    "NFE_AC": {
-                      "type": "long"
-                    },
-                    "NFE_AF": {
-                      "type": "double"
-                    },
-                    "NFE_AN": {
-                      "type": "long"
-                    },
-                    "available": {
-                      "type": "boolean"
-                    }
-                  }
-                }
-              }
-            },
             "strand": {
               "type": "byte"
             },
@@ -942,6 +660,288 @@
             "keyword": {
               "type": "keyword",
               "ignore_above": 256
+            }
+          }
+        },
+        "frequencies": {
+          "properties": {
+            "1000Gp3": {
+              "properties": {
+                "AC": {
+                  "type": "long"
+                },
+                "AF": {
+                  "type": "double"
+                },
+                "AFR_AC": {
+                  "type": "long"
+                },
+                "AFR_AF": {
+                  "type": "double"
+                },
+                "AMR_AC": {
+                  "type": "long"
+                },
+                "AMR_AF": {
+                  "type": "double"
+                },
+                "EAS_AC": {
+                  "type": "long"
+                },
+                "EAS_AF": {
+                  "type": "double"
+                },
+                "EUR_AC": {
+                  "type": "long"
+                },
+                "EUR_AF": {
+                  "type": "double"
+                },
+                "SAS_AC": {
+                  "type": "long"
+                },
+                "SAS_AF": {
+                  "type": "double"
+                },
+                "available": {
+                  "type": "boolean"
+                }
+              }
+            },
+            "ESP6500": {
+              "properties": {
+                "AA_AC": {
+                  "type": "long"
+                },
+                "AA_AF": {
+                  "type": "double"
+                },
+                "EA_AC": {
+                  "type": "long"
+                },
+                "EA_AF": {
+                  "type": "double"
+                },
+                "available": {
+                  "type": "boolean"
+                }
+              }
+            },
+            "ExAc": {
+              "properties": {
+                "AC": {
+                  "type": "long"
+                },
+                "ADJ_AC": {
+                  "type": "long"
+                },
+                "ADJ_AF": {
+                  "type": "double"
+                },
+                "AF": {
+                  "type": "double"
+                },
+                "AFR_AC": {
+                  "type": "long"
+                },
+                "AFR_AF": {
+                  "type": "double"
+                },
+                "AMR_AC": {
+                  "type": "long"
+                },
+                "AMR_AF": {
+                  "type": "double"
+                },
+                "EAS_AC": {
+                  "type": "long"
+                },
+                "EAS_AF": {
+                  "type": "double"
+                },
+                "FIN_AC": {
+                  "type": "long"
+                },
+                "FIN_AF": {
+                  "type": "double"
+                },
+                "NFE_AC": {
+                  "type": "long"
+                },
+                "NFE_AF": {
+                  "type": "double"
+                },
+                "SAS_AC": {
+                  "type": "long"
+                },
+                "SAS_AF": {
+                  "type": "double"
+                },
+                "available": {
+                  "type": "boolean"
+                }
+              }
+            },
+            "gnomAD_exomes": {
+              "properties": {
+                "POPMAX_AC": {
+                  "type": "long"
+                },
+                "POPMAX_AF": {
+                  "type": "double"
+                },
+                "AC": {
+                  "type": "long"
+                },
+                "AF": {
+                  "type": "double"
+                },
+                "AFR_AC": {
+                  "type": "long"
+                },
+                "AFR_AF": {
+                  "type": "double"
+                },
+                "AFR_AN": {
+                  "type": "long"
+                },
+                "AMR_AC": {
+                  "type": "long"
+                },
+                "AMR_AF": {
+                  "type": "double"
+                },
+                "AMR_AN": {
+                  "type": "long"
+                },
+                "AN": {
+                  "type": "long"
+                },
+                "ASJ_AC": {
+                  "type": "long"
+                },
+                "ASJ_AF": {
+                  "type": "double"
+                },
+                "ASJ_AN": {
+                  "type": "long"
+                },
+                "EAS_AC": {
+                  "type": "long"
+                },
+                "EAS_AF": {
+                  "type": "double"
+                },
+                "EAS_AN": {
+                  "type": "long"
+                },
+                "FIN_AC": {
+                  "type": "long"
+                },
+                "FIN_AF": {
+                  "type": "double"
+                },
+                "FIN_AN": {
+                  "type": "long"
+                },
+                "NFE_AC": {
+                  "type": "long"
+                },
+                "NFE_AF": {
+                  "type": "double"
+                },
+                "NFE_AN": {
+                  "type": "long"
+                },
+                "SAS_AC": {
+                  "type": "long"
+                },
+                "SAS_AF": {
+                  "type": "double"
+                },
+                "SAS_AN": {
+                  "type": "long"
+                },
+                "available": {
+                  "type": "boolean"
+                }
+              }
+            },
+            "gnomAD_genomes": {
+              "properties": {
+                "POPMAX_AC": {
+                  "type": "long"
+                },
+                "POPMAX_AF": {
+                  "type": "double"
+                },
+                "AC": {
+                  "type": "long"
+                },
+                "AF": {
+                  "type": "double"
+                },
+                "AFR_AC": {
+                  "type": "long"
+                },
+                "AFR_AF": {
+                  "type": "double"
+                },
+                "AFR_AN": {
+                  "type": "long"
+                },
+                "AMR_AC": {
+                  "type": "long"
+                },
+                "AMR_AF": {
+                  "type": "double"
+                },
+                "AMR_AN": {
+                  "type": "long"
+                },
+                "AN": {
+                  "type": "long"
+                },
+                "ASJ_AC": {
+                  "type": "long"
+                },
+                "ASJ_AF": {
+                  "type": "double"
+                },
+                "ASJ_AN": {
+                  "type": "long"
+                },
+                "EAS_AC": {
+                  "type": "long"
+                },
+                "EAS_AF": {
+                  "type": "double"
+                },
+                "EAS_AN": {
+                  "type": "long"
+                },
+                "FIN_AC": {
+                  "type": "long"
+                },
+                "FIN_AF": {
+                  "type": "double"
+                },
+                "FIN_AN": {
+                  "type": "long"
+                },
+                "NFE_AC": {
+                  "type": "long"
+                },
+                "NFE_AF": {
+                  "type": "double"
+                },
+                "NFE_AN": {
+                  "type": "long"
+                },
+                "available": {
+                  "type": "boolean"
+                }
+              }
             }
           }
         }

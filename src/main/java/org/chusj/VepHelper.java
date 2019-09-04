@@ -217,14 +217,18 @@ public class VepHelper {
         JSONObject variant_class = new JSONObject();
 
         JSONArray functionalAnnotations = new JSONArray();
+        JSONObject frequencies = null;
+        JSONObject funcAnnotation;
 
         //System.out.println("\ndna="+dnaChanges);
         for (String s : csqArray) {
-            functionalAnnotations.put(processVepAnnotations(s, dbExtId, dbExt, variant_class));
+            funcAnnotation = processVepAnnotations(s, dbExtId, dbExt, variant_class);
+            frequencies = (JSONObject) funcAnnotation.remove("frequencies");
+            functionalAnnotations.put(funcAnnotation);
         }
 
         propertiesOneMutation.put("type",  variant_class.get("type"));
-
+        propertiesOneMutation.put("frequencies", frequencies);
         propertiesOneMutation.put("functionalAnnotations", functionalAnnotations);
 
         for (int i=0; i< nbDonor; i++) {
