@@ -130,7 +130,7 @@ public class VepHelper {
         String sequencingStrategy = pedigreeProps.getProperty("sequencingStrategy");
         propertiesOneMutation.put("assemblyVersion", pedigreeProps.getProperty("assemblyVersion"));
         propertiesOneMutation.put("annotationTool", pedigreeProps.getProperty("annotationTool"));
-        propertiesOneMutation.put("annotationToolVersion", pedigreeProps.getProperty("annotationToolVersion"));
+//        propertiesOneMutation.put("annotationToolVersion", pedigreeProps.getProperty("annotationToolVersion"));
 
         LocalDate localDate = LocalDate.now();
         propertiesOneMutation.put("lastAnnotationUpdate", localDate);
@@ -177,7 +177,7 @@ public class VepHelper {
 //        if (del) propertiesOneMutation.put("type", "DEL");
 //        if (mixed) propertiesOneMutation.put("type", "MIXED");
 
-        propertiesOneMutation.put("alt", alt);
+        propertiesOneMutation.put("altAllele", alt);
 
         String[] gt = lineValueArray[pos++].split(",");
         String[] gq = lineValueArray[pos++].split(",");
@@ -204,15 +204,15 @@ public class VepHelper {
         countFuncAnnoPerMutation += csqArray.length;
 
         String chrPos = chrom.substring(3); // remove 'chr'
-        String mutation = reference + ">" + alt.split(",")[0];
-        String dnaChanges = "chr" + chrPos + ":g." + position + mutation;
-        String uid = getMD5Hash(dnaChanges);
+        String dnaChange = reference + ">" + alt.split(",")[0];
+        String mutationId = "chr" + chrPos + ":g." + position + dnaChange;
+        String uid = getMD5Hash(mutationId);
 
         propertiesOneMutation.put("id", uid);
-        propertiesOneMutation.put("mutationId", dnaChanges);
-        propertiesOneMutation.put("mutation", mutation);
+        propertiesOneMutation.put("mutationId", mutationId);
+        propertiesOneMutation.put("dnaChange", dnaChange);
         propertiesOneMutation.put("chrom", chrPos);
-        propertiesOneMutation.put("reference", reference);
+        propertiesOneMutation.put("refAllele", reference);
 
         JSONObject variant_class = new JSONObject();
 
@@ -220,7 +220,6 @@ public class VepHelper {
         JSONObject frequencies = null;
         JSONObject funcAnnotation;
 
-        //System.out.println("\ndna="+dnaChanges);
         for (String s : csqArray) {
             funcAnnotation = processVepAnnotations(s, dbExtId, dbExt, variant_class);
             frequencies = (JSONObject) funcAnnotation.remove("frequencies");
@@ -602,8 +601,8 @@ public class VepHelper {
         addStrToJsonObject("aaPos", functionalAnnotationArray[pos++] , funcAnnotation, false);
 //        String aaref = functionalAnnotationArray[pos++];
         addStrToJsonObject("aaRef", functionalAnnotationArray[pos++], funcAnnotation, false);
-//        String alt = functionalAnnotationArray[pos++];
-        addStrToJsonObject("alt", functionalAnnotationArray[pos++], funcAnnotation, false);
+        String alt = functionalAnnotationArray[pos++];
+//        addStrToJsonObject("alt", functionalAnnotationArray[pos++], funcAnnotation, false);
         String bStatistic = functionalAnnotationArray[pos++];
         // 219
         String bStatistic_rankscore = functionalAnnotationArray[pos++];

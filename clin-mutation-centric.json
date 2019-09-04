@@ -5,7 +5,7 @@
   "mappings": {
     "_doc": {
       "properties": {
-        "alt": {
+        "altAllele": {
           "type": "text",
           "fields": {
             "keyword": {
@@ -615,7 +615,7 @@
             }
           }
         },
-        "mutation": {
+        "dnaChange": {
           "type": "text",
           "fields": {
             "keyword": {
@@ -642,7 +642,7 @@
             }
           }
         },
-        "reference": {
+        "refAllele": {
           "type": "text",
           "fields": {
             "keyword": {
