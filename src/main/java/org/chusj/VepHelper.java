@@ -13,6 +13,8 @@ import java.time.LocalDate;
 import java.util.*;
 
 import static org.chusj.VEPSparkDriverProgram.getSHA1Hash;
+import static org.chusj.VEPSparkDriverProgram.getMD5Hash;
+
 
 public class VepHelper {
 
@@ -204,7 +206,7 @@ public class VepHelper {
         String chrPos = chrom.substring(3); // remove 'chr'
         String mutation = reference + ">" + alt.split(",")[0];
         String dnaChanges = "chr" + chrPos + ":g." + position + mutation;
-        String uid = getSHA1Hash(dnaChanges);
+        String uid = getMD5Hash(dnaChanges);
 
         propertiesOneMutation.put("id", uid);
         propertiesOneMutation.put("mutationId", dnaChanges);

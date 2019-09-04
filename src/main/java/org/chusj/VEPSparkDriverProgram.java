@@ -277,6 +277,19 @@ public class VEPSparkDriverProgram {
         return result;
     }
 
+    public static String getMD5Hash(String data) {
+        String result = null;
+
+        try {
+            MessageDigest digest = MessageDigest.getInstance("MD5");
+            byte[] hash = digest.digest(data.getBytes("UTF-8"));
+            return bytesToHex(hash);
+        } catch(Exception ex) {
+            ex.printStackTrace();
+        }
+        return result;
+    }
+
     public static String bytesToHex(byte[] hash) {
         return DatatypeConverter.printHexBinary(hash);
     }
