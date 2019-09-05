@@ -325,6 +325,7 @@ public class VepHelper {
         JSONObject frequencyGnomadEx = new JSONObject();
         JSONObject frequencyGnomadGen = new JSONObject();
         JSONObject prediction = new JSONObject();
+        JSONObject conservation = new JSONObject();
 
 
         String cdnaChange;
@@ -496,6 +497,7 @@ public class VepHelper {
         String GENCODE_basic = functionalAnnotationArray[pos++];
         String GERPpp_NR = functionalAnnotationArray[pos++];
         String GERPpp_RS = functionalAnnotationArray[pos++];
+        addStrToJsonObject("GERP", GERPpp_RS, conservation, true);
         String GERPpp_RS_rankscore = functionalAnnotationArray[pos++];
         String GM12878_confidence_value = functionalAnnotationArray[pos++];
         String GM12878_fitCons_rankscore = functionalAnnotationArray[pos++];
@@ -527,6 +529,8 @@ public class VepHelper {
         String LRT_converted_rankscore = functionalAnnotationArray[pos++];
         String LRT_pred = functionalAnnotationArray[pos++];
         String LRT_score = functionalAnnotationArray[pos++];
+        addStrToJsonObject("LRT_pred", LRT_pred, prediction, true);
+        addStrToJsonObject("LRT_score", LRT_score, prediction, true);
         String M_CAP_pred = functionalAnnotationArray[pos++];
         String M_CAP_rankscore = functionalAnnotationArray[pos++];
         String M_CAP_score = functionalAnnotationArray[pos++];
@@ -548,8 +552,11 @@ public class VepHelper {
         String MutPred_rankscore = functionalAnnotationArray[pos++].trim();
         String MutPred_score = functionalAnnotationArray[pos++].trim();
         String MutationAssessor_pred = functionalAnnotationArray[pos++].trim();
+        addStrToJsonObject("MutationAssessor_pred", MutationAssessor_pred, prediction, true);
         String MutationAssessor_rankscore = functionalAnnotationArray[pos++].trim();
+
         String MutationAssessor_score = functionalAnnotationArray[pos++].trim();
+        addStrToJsonObject("MutationAssessor_score", MutationAssessor_score, prediction, true);
         String MutationTaster_AAE = functionalAnnotationArray[pos++].trim();
         String MutationTaster_converted_rankscore = functionalAnnotationArray[pos++].trim();
         String MutationTaster_model = functionalAnnotationArray[pos++].trim();
@@ -805,12 +812,14 @@ public class VepHelper {
         String phastCons17way_primate = functionalAnnotationArray[pos++];
         // 389
         String phastCons17way_primate_rankscore = functionalAnnotationArray[pos++];
+        addStrToJsonObject("PhastCons", phastCons17way_primate_rankscore, conservation, true);
         String phastCons30way_mammalian = functionalAnnotationArray[pos++];
         String phastCons30way_mammalian_rankscore = functionalAnnotationArray[pos++];
         String phyloP100way_vertebrate = functionalAnnotationArray[pos++];
         String phyloP100way_vertebrate_rankscore = functionalAnnotationArray[pos++];
         String phyloP17way_primate = functionalAnnotationArray[pos++];
         String phyloP17way_primate_rankscore = functionalAnnotationArray[pos++];
+        addStrToJsonObject("PhyloP", phyloP17way_primate_rankscore, conservation, true);
         String phyloP30way_mammalian = functionalAnnotationArray[pos++];
         String phyloP30way_mammalian_rankscore = functionalAnnotationArray[pos++];
         String pos_1_based = functionalAnnotationArray[pos++];
@@ -840,6 +849,7 @@ public class VepHelper {
         frequencies.put("ESP6500", frequencyEsp6500);
         funcAnnotation.put("frequencies", frequencies);
         funcAnnotation.put("predictions", prediction);
+        funcAnnotation.put("conservationsScores", conservation);
         //funcAnnotation.put("properties", funcAnnoProperties);
         //funcAnnotation.(funcAnnoProperties);
 

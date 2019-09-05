@@ -245,6 +245,42 @@
           "properties": {
             "predictions": {
               "properties": {
+                "MutationAssessor_pred": {
+                  "type": "text",
+                  "fields": {
+                    "keyword": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  }
+                },
+                "MutationAssessor_score": {
+                  "type": "text",
+                  "fields": {
+                    "keyword": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  }
+                },
+                "LRT_pred": {
+                  "type": "text",
+                  "fields": {
+                    "keyword": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  }
+                },
+                "LRT_score": {
+                  "type": "text",
+                  "fields": {
+                    "keyword": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  }
+                },
                 "FATHMM": {
                   "type": "text",
                   "fields": {
@@ -320,7 +356,40 @@
                 "available": {
                   "type": "boolean"
                 }
-              }
+              },
+              "conservationsScores": {
+                "properties": {
+                  "GERP": {
+                    "type": "text",
+                    "fields": {
+                      "keyword": {
+                        "type": "keyword",
+                        "ignore_above": 256
+                      }
+                    }
+                  },
+                  "PhastCons": {
+                    "type": "text",
+                    "fields": {
+                      "keyword": {
+                        "type": "keyword",
+                        "ignore_above": 256
+                      }
+                    }
+                  },
+                  "PhyloP": {
+                    "type": "text",
+                    "fields": {
+                      "keyword": {
+                        "type": "keyword",
+                        "ignore_above": 256
+                      }
+                    }
+                  },
+                  "available": {
+                    "type": "boolean"
+                  }
+                }
             },
             "strand": {
               "type": "byte"
