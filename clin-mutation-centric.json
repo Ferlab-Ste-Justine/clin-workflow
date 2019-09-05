@@ -220,23 +220,64 @@
           "type": "nested",
           "include_in_parent": true,
           "properties": {
-            "dbSNP": {
-              "type": "boolean"
+            "clinvarIds": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              }
             },
-            "ensembl": {
-              "type": "boolean"
+            "clinvar_trait": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              }
             },
-            "omim": {
-              "type": "boolean"
+            "clinvar_clinsig": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              }
             },
-            "orphanet": {
-              "type": "boolean"
+            "omimIds": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              }
             },
-            "clinvar": {
-              "type": "boolean"
+            "orphanetIds": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              }
             },
             "pubmed": {
-              "type": "boolean"
+              "type": "nested",
+              "properties" :{
+                "id" : {
+                  "type": "text",
+                  "fields": {
+                    "keyword": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  }
+                }
+              }
             }
           }
         },
@@ -425,7 +466,7 @@
                 }
               }
             },
-            "ensembl_geneid": {
+            "geneAffectedId": {
               "type": "text",
               "fields": {
                 "keyword": {
@@ -434,7 +475,7 @@
                 }
               }
             },
-            "pubmed": {
+            "geneAffectedSymbol": {
               "type": "text",
               "fields": {
                 "keyword": {
@@ -443,79 +484,7 @@
                 }
               }
             },
-            "clinvar_id": {
-              "type": "text",
-              "fields": {
-                "keyword": {
-                  "type": "keyword",
-                  "ignore_above": 256
-                }
-              }
-            },
-            "clinvar_trait": {
-              "type": "text",
-              "fields": {
-                "keyword": {
-                  "type": "keyword",
-                  "ignore_above": 256
-                }
-              }
-            },
-            "clinvar_OMIM_id": {
-              "type": "text",
-              "fields": {
-                "keyword": {
-                  "type": "keyword",
-                  "ignore_above": 256
-                }
-              }
-            },
-            "clinvar_Orphanet_id": {
-              "type": "text",
-              "fields": {
-                "keyword": {
-                  "type": "keyword",
-                  "ignore_above": 256
-                }
-              }
-            },
-            "clinvar_clnsig": {
-              "type": "text",
-              "fields": {
-                "keyword": {
-                  "type": "keyword",
-                  "ignore_above": 256
-                }
-              }
-            },
-            "clinvar_hgvs": {
-              "type": "text",
-              "fields": {
-                "keyword": {
-                  "type": "keyword",
-                  "ignore_above": 256
-                }
-              }
-            },
-            "gene": {
-              "type": "text",
-              "fields": {
-                "keyword": {
-                  "type": "keyword",
-                  "ignore_above": 256
-                }
-              }
-            },
-            "geneName": {
-              "type": "text",
-              "fields": {
-                "keyword": {
-                  "type": "keyword",
-                  "ignore_above": 256
-                }
-              }
-            },
-            "geneId": {
+            "transcriptId": {
               "type": "text",
               "fields": {
                 "keyword": {
@@ -556,15 +525,6 @@
             }
           }
         },
-        "lossOfFunctionEffect": {
-          "type": "text",
-          "fields": {
-            "keyword": {
-              "type": "keyword",
-              "ignore_above": 256
-            }
-          }
-        },
         "dnaChange": {
           "type": "text",
           "fields": {
@@ -575,15 +535,6 @@
           }
         },
         "mutationId": {
-          "type": "text",
-          "fields": {
-            "keyword": {
-              "type": "keyword",
-              "ignore_above": 256
-            }
-          }
-        },
-        "nonsenseMediatedDecayEffects": {
           "type": "text",
           "fields": {
             "keyword": {
