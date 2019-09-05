@@ -329,9 +329,11 @@ public class VepHelper {
 
 
         String cdnaChange;
+        String placeHolder;
 
         //0 - Allele|Consequence|IMPACT|SYMBOL|Gene|Feature_type|Feature|BIOTYPE|EXON|INTRON
-        addStrToJsonObject("allele", functionalAnnotationArray[pos++], funcAnnotation, false);
+        placeHolder = functionalAnnotationArray[pos++];
+//        addStrToJsonObject("allele", functionalAnnotationArray[pos++], funcAnnotation, false);
 //        String Consequence = functionalAnnotationArray[pos++];
         addStrToJsonObject("consequence", functionalAnnotationArray[pos++], funcAnnotation, false);
         addStrToJsonObject("impact", functionalAnnotationArray[pos++], funcAnnotation, false);
@@ -340,24 +342,28 @@ public class VepHelper {
         addStrToJsonObject("featureType", functionalAnnotationArray[pos++], funcAnnotation, false);
         addStrToJsonObject("featureId", functionalAnnotationArray[pos++], funcAnnotation, false);
         addStrToJsonObject("biotype", functionalAnnotationArray[pos++], funcAnnotation, false);
-        //String EXON = functionalAnnotationArray[pos++];
-        addStrToJsonObject("exon", functionalAnnotationArray[pos++], funcAnnotation, false);
-        //String INTRON = functionalAnnotationArray[pos++];
-        addStrToJsonObject("intron", functionalAnnotationArray[pos++], funcAnnotation, false);
+        String EXON = functionalAnnotationArray[pos++];
+//        addStrToJsonObject("exon", functionalAnnotationArray[pos++], funcAnnotation, false);
+        String INTRON = functionalAnnotationArray[pos++];
+//        addStrToJsonObject("intron", functionalAnnotationArray[pos++], funcAnnotation, false);
         // 9 - HGVSc|HGVSp|cDNA_position|CDS_position|Protein_position|Amino_acids|Codons|Existing_variation|DISTANCE|STRAND
-        addStrToJsonObject("hgvsC", functionalAnnotationArray[pos++], funcAnnotation, false);
-        addStrToJsonObject("hgvsP", functionalAnnotationArray[pos++], funcAnnotation, false);
+        placeHolder = functionalAnnotationArray[pos++];
+        placeHolder = functionalAnnotationArray[pos++];
+//        addStrToJsonObject("hgvsC", functionalAnnotationArray[pos++], funcAnnotation, false);
+//        addStrToJsonObject("hgvsP", functionalAnnotationArray[pos++], funcAnnotation, false);
         String cdnaPos = functionalAnnotationArray[pos++];
-        addStrToJsonObject("cdnaPos", cdnaPos , funcAnnotation, false);
-        addStrToJsonObject("cdsPos", functionalAnnotationArray[pos++] , funcAnnotation, false);
-        //String Protein_position = functionalAnnotationArray[pos++];
-        addStrToJsonObject("ProteinPos", functionalAnnotationArray[pos++] , funcAnnotation, false);
+//        addStrToJsonObject("cdnaPos", cdnaPos , funcAnnotation, false);
+        placeHolder = functionalAnnotationArray[pos++];
+//        addStrToJsonObject("cdsPos", functionalAnnotationArray[pos++] , funcAnnotation, false);
+        String Protein_position = functionalAnnotationArray[pos++];
+//        addStrToJsonObject("ProteinPos", functionalAnnotationArray[pos++] , funcAnnotation, false);
         String Amino_acids = functionalAnnotationArray[pos++];
-        addStrToJsonObject("aminoAcids", Amino_acids , funcAnnotation, false);
-//        String Codons = functionalAnnotationArray[pos++];
-        addStrToJsonObject("codons", functionalAnnotationArray[pos++], funcAnnotation, false);
+//        addStrToJsonObject("aminoAcids", Amino_acids , funcAnnotation, false);
+        String Codons = functionalAnnotationArray[pos++];
+//        addStrToJsonObject("codons", functionalAnnotationArray[pos++], funcAnnotation, false);
         String Existing_variation = functionalAnnotationArray[pos++];
-        addNumberToJsonObject("distance", functionalAnnotationArray[pos++] , funcAnnotation, false, 'l');
+        placeHolder = functionalAnnotationArray[pos++];
+//        addNumberToJsonObject("distance", functionalAnnotationArray[pos++] , funcAnnotation, false, 'l');
         addNumberToJsonObject("strand", functionalAnnotationArray[pos++] , funcAnnotation, false, 'l'); // can be empty
         //19 - |FLAGS|VARIANT_CLASS|SYMBOL_SOURCE
         String FLAGS = functionalAnnotationArray[pos++];
@@ -602,11 +608,11 @@ public class VepHelper {
         String VEST4_score = functionalAnnotationArray[pos++];
         String VindijiaNeandertal = functionalAnnotationArray[pos++];
         String aaalt = functionalAnnotationArray[pos++];
-        addStrToJsonObject("aaAlt", aaalt, funcAnnotation, false);
-        //String aapos = functionalAnnotationArray[pos++];
-        addStrToJsonObject("aaPos", functionalAnnotationArray[pos++] , funcAnnotation, false);
+//        addStrToJsonObject("aaAlt", aaalt, funcAnnotation, false);
+        String aapos = functionalAnnotationArray[pos++];
+//        addStrToJsonObject("aaPos", functionalAnnotationArray[pos++] , funcAnnotation, false);
         String aaref = functionalAnnotationArray[pos++];
-        addStrToJsonObject("aaRef", aaref, funcAnnotation, false);
+//        addStrToJsonObject("aaRef", aaref, funcAnnotation, false);
         String alt = functionalAnnotationArray[pos++];
 //        addStrToJsonObject("alt", functionalAnnotationArray[pos++], funcAnnotation, false);
         String bStatistic = functionalAnnotationArray[pos++];
@@ -825,9 +831,9 @@ public class VepHelper {
         String pos_1_based = functionalAnnotationArray[pos++];
         // 399
         String ref = functionalAnnotationArray[pos++];
-        addStrToJsonObject("ref", ref, funcAnnotation, false);
-//        String refcodon = functionalAnnotationArray[pos++];
-        addStrToJsonObject("ref_codon", functionalAnnotationArray[pos++], funcAnnotation, false);
+//        addStrToJsonObject("ref", ref, funcAnnotation, false);
+        String refcodon = functionalAnnotationArray[pos++];
+//        addStrToJsonObject("ref_codon", functionalAnnotationArray[pos++], funcAnnotation, false);
         String rs_dbSNP151 = functionalAnnotationArray[pos++];
         // 402
 
@@ -840,7 +846,7 @@ public class VepHelper {
         cdnaChange = ref + cdnaPos + alt;
         addStrToJsonObject("cdnaChange", cdnaChange , funcAnnotation, false);
 
-        String aaChange = aaref + "xyz" + aaalt;
+        String aaChange = aaref + aapos + aaalt;
         addStrToJsonObject("aaChange", aaChange , funcAnnotation, false);
         frequencies.put("1000Gp3", frequency1000Gp3);
         frequencies.put("ExAc", frequencyExAc);

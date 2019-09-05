@@ -356,79 +356,44 @@
                 "available": {
                   "type": "boolean"
                 }
-              },
-              "conservationsScores": {
-                "properties": {
-                  "GERP": {
-                    "type": "text",
-                    "fields": {
-                      "keyword": {
-                        "type": "keyword",
-                        "ignore_above": 256
-                      }
+              }
+            },
+            "conservationsScores": {
+              "properties": {
+                "GERP": {
+                  "type": "text",
+                  "fields": {
+                    "keyword": {
+                      "type": "keyword",
+                      "ignore_above": 256
                     }
-                  },
-                  "PhastCons": {
-                    "type": "text",
-                    "fields": {
-                      "keyword": {
-                        "type": "keyword",
-                        "ignore_above": 256
-                      }
-                    }
-                  },
-                  "PhyloP": {
-                    "type": "text",
-                    "fields": {
-                      "keyword": {
-                        "type": "keyword",
-                        "ignore_above": 256
-                      }
-                    }
-                  },
-                  "available": {
-                    "type": "boolean"
                   }
+                },
+                "PhastCons": {
+                  "type": "text",
+                  "fields": {
+                    "keyword": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  }
+                },
+                "PhyloP": {
+                  "type": "text",
+                  "fields": {
+                    "keyword": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  }
+                },
+                "available": {
+                  "type": "boolean"
                 }
+              }
             },
             "strand": {
               "type": "byte"
-            },
-            "aaLen": {
-              "type": "long"
-            },
-            "aaAlt": {
-              "type": "text",
-              "fields": {
-                "keyword": {
-                  "type": "keyword",
-                  "ignore_above": 256
-                }
-              }
-            },
-            "aaRef": {
-              "type": "text",
-              "fields": {
-                "keyword": {
-                  "type": "keyword",
-                  "ignore_above": 256
-                }
-              }
-            },
-            "aaPos": {
-              "type": "text"
-            },
-            "ProteinPos": {
-              "type": "text"
-            },
-            "allele": {
-              "type": "text",
-              "fields": {
-                "keyword": {
-                  "type": "keyword",
-                  "ignore_above": 256
-                }
-              }
             },
             "biotype": {
               "type": "text",
@@ -439,32 +404,8 @@
                 }
               }
             },
-            "cdnaLen": {
-              "type": "long"
-            },
-            "cdnaPos": {
-              "type": "text"
-            },
             "cdnaChange": {
               "type": "text"
-            },
-            "cdsLen": {
-              "type": "long"
-            },
-            "cdsPos": {
-              "type": "text"
-            },
-            "distance": {
-              "type": "long"
-            },
-            "alt": {
-              "type": "text",
-              "fields": {
-                "keyword": {
-                  "type": "keyword",
-                  "ignore_above": 256
-                }
-              }
             },
             "featureId": {
               "type": "text",
@@ -476,24 +417,6 @@
               }
             },
             "featureType": {
-              "type": "text",
-              "fields": {
-                "keyword": {
-                  "type": "keyword",
-                  "ignore_above": 256
-                }
-              }
-            },
-            "ref": {
-              "type": "text",
-              "fields": {
-                "keyword": {
-                  "type": "keyword",
-                  "ignore_above": 256
-                }
-              }
-            },
-            "ref_codon": {
               "type": "text",
               "fields": {
                 "keyword": {
@@ -593,51 +516,6 @@
               }
             },
             "geneId": {
-              "type": "text",
-              "fields": {
-                "keyword": {
-                  "type": "keyword",
-                  "ignore_above": 256
-                }
-              }
-            },
-            "intron": {
-              "type": "text",
-              "fields": {
-                "keyword": {
-                  "type": "keyword",
-                  "ignore_above": 256
-                }
-              }
-            },
-            "exon": {
-              "type": "text",
-              "fields": {
-                "keyword": {
-                  "type": "keyword",
-                  "ignore_above": 256
-                }
-              }
-            },
-            "codons": {
-              "type": "text",
-              "fields": {
-                "keyword": {
-                  "type": "keyword",
-                  "ignore_above": 256
-                }
-              }
-            },
-            "hgvsC": {
-              "type": "text",
-              "fields": {
-                "keyword": {
-                  "type": "keyword",
-                  "ignore_above": 256
-                }
-              }
-            },
-            "hgvsP": {
               "type": "text",
               "fields": {
                 "keyword": {
