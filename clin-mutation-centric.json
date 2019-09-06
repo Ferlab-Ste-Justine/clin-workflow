@@ -220,7 +220,83 @@
           "type": "nested",
           "include_in_parent": true,
           "properties": {
-            "clinvarIds": {
+            "clinvar": {
+              "type": "nested",
+              "properties" :{
+                "id" : {
+                  "type": "text",
+                  "fields": {
+                    "keyword": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  }
+                }
+              }
+            },
+            "omim": {
+              "type": "nested",
+              "properties" :{
+                "id" : {
+                  "type": "text",
+                  "fields": {
+                    "keyword": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  }
+                }
+              }
+            },
+            "orphanet": {
+              "type": "nested",
+              "properties" :{
+                "id" : {
+                  "type": "text",
+                  "fields": {
+                    "keyword": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  }
+                }
+              }
+            },
+            "pubmed": {
+              "type": "nested",
+              "properties" :{
+                "id" : {
+                  "type": "text",
+                  "fields": {
+                    "keyword": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  }
+                }
+              }
+            },
+            "ensembl": {
+              "type": "nested",
+              "properties" :{
+                "id" : {
+                  "type": "text",
+                  "fields": {
+                    "keyword": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "clinvar" : {
+          "type": "nested",
+          "include_in_parent": true,
+          "properties": {
+            "clinvar_id": {
               "type": "text",
               "fields": {
                 "keyword": {
@@ -247,7 +323,7 @@
                 }
               }
             },
-            "omimIds": {
+            "phenotypeList": {
               "type": "text",
               "fields": {
                 "keyword": {
@@ -256,7 +332,22 @@
                 }
               }
             },
-            "orphanetIds": {
+            "phenotypeIDS": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              }
+            }
+          }
+        },
+        "genes" : {
+          "type": "nested",
+          "include_in_parent": true,
+          "properties": {
+            "geneSymbol": {
               "type": "text",
               "fields": {
                 "keyword": {
@@ -265,17 +356,21 @@
                 }
               }
             },
-            "pubmed": {
-              "type": "nested",
-              "properties" :{
-                "id" : {
-                  "type": "text",
-                  "fields": {
-                    "keyword": {
-                      "type": "keyword",
-                      "ignore_above": 256
-                    }
-                  }
+            "biotype": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              }
+            },
+            "ensemblId": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
                 }
               }
             }

@@ -31,7 +31,10 @@ public class VepHelper {
     private static final int PUBMED = 5;
     private static final int CLINVAR_SIG = 6;
     private static final int CLINVAR_TRAIT = 7;
-    private static final int GENES = 8;
+    private static final int TYPES = 8;
+    private static final int GENES = 9;
+    private static final int PHENO = 10;
+
 
 
 
@@ -111,9 +114,9 @@ public class VepHelper {
             return null; // Meta data line
         }
         // System.out.println("lineValueArray.length="+lineValueArray.length);
-        //boolean db_snp ; clinvarIds, omimIds, emsemblIds, orphanetIds , pubmedIds, clinvarSig, trait, genes
+        //boolean db_snp ; clinvarIds, omimIds, emsemblIds, orphanetIds , pubmedIds, clinvarSig, Types, PHENO, trait, genes
 
-        boolean[] dbExt = {false, false, false, false, false, false, false, false, false};
+        boolean[] dbExt = {false, false, false, false, false, false, false, false, false, false, false};
         List<Set<String>> dbExtId = new ArrayList<>();
 
         for (int i=0; i<dbExt.length; i++) {
@@ -121,10 +124,15 @@ public class VepHelper {
         }
 
 
+        Set<Gene> geneSet = new HashSet<>();
+
         JSONObject propertiesOneMutation = new JSONObject();
         JSONArray donorArray = new JSONArray();
         JSONArray phenotypesArray = new JSONArray();
-        JSONObject bdExtArray = new JSONObject();
+        JSONObject bdExtObj = new JSONObject();
+        JSONObject clinvarObj = new JSONObject();
+        JSONObject geneObj = new JSONObject();
+        JSONArray geneArray = new JSONArray();
 
         String[] pedigree = pedigreeProps.getProperty("pedigree").split(",");
         String familyId = pedigreeProps.getProperty("familyId");
@@ -149,7 +157,7 @@ public class VepHelper {
 
         String dbSNP_ID = lineValueArray[pos++];
         if (addStrToJsonObject("dbSNP_ID", dbSNP_ID, propertiesOneMutation, false)) {
-            // bdExtArray.put( new JSONObject().put("dbSNP",
+            // bdExtObj.put( new JSONObject().put("dbSNP",
             dbExt[DBSNP] =  true;
             addStrToListSet(dbExtId, DBSNP, dbSNP_ID);
         }
@@ -225,12 +233,14 @@ public class VepHelper {
         JSONObject funcAnnotation;
 
         for (String s : csqArray) {
-            funcAnnotation = processVepAnnotations(s, dbExtId, dbExt, variant_class);
+            funcAnnotation = processVepAnnotations(s, dbExtId, dbExt, geneSet);
             frequencies = (JSONObject) funcAnnotation.remove("frequencies");
             functionalAnnotations.put(funcAnnotation);
         }
 
-        propertiesOneMutation.put("type",  variant_class.get("type"));
+        //propertiesOneMutation.put("type",  variant_class.get("type"));
+        String types = toStringList(dbExtId.get(TYPES));
+        propertiesOneMutation.put("type",  types);
         propertiesOneMutation.put("frequencies", frequencies);
         propertiesOneMutation.put("functionalAnnotations", functionalAnnotations);
 
@@ -283,41 +293,63 @@ public class VepHelper {
 
         }
 
-//        bdExtArray.put( new JSONObject().put("dbSNP", dbExt[DBSNP] ));
-        String dbsnps = toStringList(dbExtId.get(DBSNP));
-        if (!dbsnps.isEmpty()) bdExtArray.put( "dbSNPIds", dbsnps );
-//        bdExtArray.put( new JSONObject().put("clinvar", dbExt[CLINVAR] ));
+//        bdExtObj.put( new JSONObject().put("dbSNP", dbExt[DBSNP] ));
+        addSetsToArrayToObj(dbExtId, DBSNP, bdExtObj, "dbSNP", "id");
+//        bdExtObj.put( new JSONObject().put("clinvar", dbExt[CLINVAR] ));
+//        bdExtObj.put( new JSONObject().put("ensembl", dbExt[ENSEMBL] ));
         String clinvarids = toStringList(dbExtId.get(CLINVAR));
-        if (!clinvarids.isEmpty()) bdExtArray.put( "clinvarIds", clinvarids);
-//        bdExtArray.put( new JSONObject().put("ensembl", dbExt[ENSEMBL] ));
-        String ensids = toStringList(dbExtId.get(ENSEMBL));
-        if (!ensids.isEmpty()) bdExtArray.put( "ensemblIds", ensids );
-//        bdExtArray.put( new JSONObject().put("omim", dbExt[OMIM] ));
-        String omimids =  toStringList(dbExtId.get(OMIM));
-        if (!omimids.isEmpty()) bdExtArray.put( "omimIds", omimids );
-//        bdExtArray.put( new JSONObject().put("orphanet", dbExt[ORPHANET] ));
-        String orphaids = toStringList(dbExtId.get(ORPHANET));
-        if (!orphaids.isEmpty()) bdExtArray.put( "orphanetIds", orphaids );
-//        bdExtArray.put( new JSONObject().put("pubmed", dbExt[PUBMED] ));
-        Set<String> setStr = dbExtId.get(PUBMED);
-        JSONArray pubMedIds = new JSONArray();
-        for (String id : setStr) {
+        clinvarObj.put("clinvar_id", clinvarids);
+        addSetsToArrayToObj(dbExtId, CLINVAR, bdExtObj, "clinvar", "id");
+//        String ensids = toStringList(dbExtId.get(ENSEMBL));
+        addSetsToArrayToObj(dbExtId, ENSEMBL, bdExtObj, "ensembl", "id");
+//        String omimids =  toStringList(dbExtId.get(OMIM));
+//        if (!omimids.isEmpty()) bdExtObj.put( "omimIds", omimids );
+        addSetsToArrayToObj(dbExtId, OMIM, bdExtObj, "omim", "id");
+//        bdExtObj.put( new JSONObject().put("orphanet", dbExt[ORPHANET] ));
+//        String orphaids = toStringList(dbExtId.get(ORPHANET));
+//        if (!orphaids.isEmpty()) bdExtObj.put( "orphanetIds", orphaids );
+        addSetsToArrayToObj(dbExtId, ORPHANET, bdExtObj, "orphanet", "id");
+//        bdExtObj.put( new JSONObject().put("pubmed", dbExt[PUBMED] ));
+//        Set<String> setStr = dbExtId.get(PUBMED);
+        addSetsToArrayToObj(dbExtId, PUBMED, bdExtObj, "pubmed", "id");
 
-            JSONObject pubMedId = new JSONObject().put("id", id);
-            pubMedIds.put(pubMedId);
+//        if (!genes.isEmpty()) bdExtObj.put( "Genes",  genes);
+        // setup of gene array ( can be rarely more than one but can happen )
+//        int numberGenes = dbExtId.get(GENES).size();
+//        String[] genes = toStringList(dbExtId.get(GENES)).split(",");
+//        String[] ensemblIds = toStringList(dbExtId.get(ENSEMBL)).split(",");
+//
+//        for (int i = 0; i < numberGenes; i++) {
+//            geneObj = new JSONObject();
+//            geneObj.put("geneSymbol", genes[i]);
+//            geneObj.put("EnsemblID", ensemblIds[i]);
+//            geneArray.put(geneObj);
+//
+//        }
 
+        for (Gene gene: geneSet) {
+            geneObj = new JSONObject();
+            geneObj.put("geneSymbol", gene.getGeneSymbol());
+            geneObj.put("ensemblId", gene.getEnsemblId());
+            geneObj.put("biotype", gene.getBiotype());
+            geneArray.put(geneObj);
         }
-        bdExtArray.put("pubmed", pubMedIds);
 
-        String genes = toStringList(dbExtId.get(GENES));
-        if (!genes.isEmpty()) bdExtArray.put( "Genes",  genes);
+
         String clsig = toStringList(dbExtId.get(CLINVAR_SIG));
-        if (!clsig.isEmpty()) bdExtArray.put( "clinvar_clinsig", clsig );
+        clinvarObj.put( "clinvar_clinsig", clsig );
         String cltraits = toStringList(dbExtId.get(CLINVAR_TRAIT));
-        if (!cltraits.isEmpty()) bdExtArray.put( "clinvar_trait", cltraits );
+        clinvarObj.put( "clinvar_trait", cltraits );
 
+        String phenoStr = toStringList(dbExtId.get(PHENO));
+        clinvarObj.put( "phenotypeIDS", phenoStr );
+
+
+
+        propertiesOneMutation.put("bdExt", bdExtObj);
+        propertiesOneMutation.put("clinvar", clinvarObj);
         propertiesOneMutation.put("donor", donorArray);
-        propertiesOneMutation.put("bdExt", bdExtArray);
+        propertiesOneMutation.put("genes", geneArray);
 
         if (dbExt[DBSNP] || dbExt[CLINVAR]  || dbExt[OMIM] || dbExt[ORPHANET]  )
             lastOne = propertiesOneMutation;
@@ -326,7 +358,7 @@ public class VepHelper {
 
     }
 
-    private static JSONObject processVepAnnotations(String csqLine, List<Set<String>> dbExtId, boolean[] dbExt, JSONObject variant_class ) {
+    private static JSONObject processVepAnnotations(String csqLine, List<Set<String>> dbExtId, boolean[] dbExt, Set<Gene> geneSet ) {
 
         //System.out.print("\n"+csqLine);
         String[] functionalAnnotationArray = csqLine.split("[|]", -1);
@@ -375,19 +407,20 @@ public class VepHelper {
         addStrToJsonObject("transcriptId", functionalAnnotationArray[pos++], funcAnnotation, false);
         addStrToJsonObject("featureType", functionalAnnotationArray[pos++], funcAnnotation, false);
         addStrToJsonObject("featureId", functionalAnnotationArray[pos++], funcAnnotation, false);
-        addStrToJsonObject("biotype", functionalAnnotationArray[pos++], funcAnnotation, false);
+        String biotype = functionalAnnotationArray[pos++];
+        addStrToJsonObject("biotype", biotype, funcAnnotation, false);
         String EXON = functionalAnnotationArray[pos++];
 //        addStrToJsonObject("exon", functionalAnnotationArray[pos++], funcAnnotation, false);
         String INTRON = functionalAnnotationArray[pos++];
 //        addStrToJsonObject("intron", functionalAnnotationArray[pos++], funcAnnotation, false);
         // 9 - HGVSc|HGVSp|cDNA_position|CDS_position|Protein_position|Amino_acids|Codons|Existing_variation|DISTANCE|STRAND
-        placeHolder = functionalAnnotationArray[pos++];
-        placeHolder = functionalAnnotationArray[pos++];
+        String HGVSc = functionalAnnotationArray[pos++];
+        String HGVSp = functionalAnnotationArray[pos++];
 //        addStrToJsonObject("hgvsC", functionalAnnotationArray[pos++], funcAnnotation, false);
 //        addStrToJsonObject("hgvsP", functionalAnnotationArray[pos++], funcAnnotation, false);
         String cdnaPos = functionalAnnotationArray[pos++];
 //        addStrToJsonObject("cdnaPos", cdnaPos , funcAnnotation, false);
-        placeHolder = functionalAnnotationArray[pos++];
+        String CDS_position = functionalAnnotationArray[pos++];
 //        addStrToJsonObject("cdsPos", functionalAnnotationArray[pos++] , funcAnnotation, false);
         String Protein_position = functionalAnnotationArray[pos++];
 //        addStrToJsonObject("ProteinPos", functionalAnnotationArray[pos++] , funcAnnotation, false);
@@ -396,16 +429,20 @@ public class VepHelper {
         String Codons = functionalAnnotationArray[pos++];
 //        addStrToJsonObject("codons", functionalAnnotationArray[pos++], funcAnnotation, false);
         String Existing_variation = functionalAnnotationArray[pos++];
-        placeHolder = functionalAnnotationArray[pos++];
+        String DISTANCE = functionalAnnotationArray[pos++];
 //        addNumberToJsonObject("distance", functionalAnnotationArray[pos++] , funcAnnotation, false, 'l');
         addNumberToJsonObject("strand", functionalAnnotationArray[pos++] , funcAnnotation, false, 'l'); // can be empty
         //19 - |FLAGS|VARIANT_CLASS|SYMBOL_SOURCE
         String FLAGS = functionalAnnotationArray[pos++];
         //+1
-        //String VARIANT_CLASS = functionalAnnotationArray[pos++];
+        String VARIANT_CLASS = functionalAnnotationArray[pos++];
         //System.out.print("-vclass="+VARIANT_CLASS);
         //JSONObject variant_class = new JSONObject();
-        addStrToJsonObject("type", functionalAnnotationArray[pos++], variant_class, false);
+        //addStrToJsonObject("type", VARIANT_CLASS, variant_class, false);
+        if (!VARIANT_CLASS.isEmpty()) {
+            dbExt[TYPES] = true;
+            addStrToListSet(dbExtId, TYPES, VARIANT_CLASS);
+        }
         String SYMBOL_SOURCE = functionalAnnotationArray[pos++];
         // HGNC_ID|CANONICAL|GIVEN_REF|USED_REF|BAM_EDIT|
         String HGNC_ID = functionalAnnotationArray[pos++];
@@ -417,9 +454,15 @@ public class VepHelper {
 
         // +4 CLIN_SIG|SOMATIC|PHENO|PUBMED
 
-        String CLIN_SIG = functionalAnnotationArray[pos++];
+        String CLIN_SIGStr = functionalAnnotationArray[pos++];
+
         String SOMATIC = functionalAnnotationArray[pos++];
-        String PHENO = functionalAnnotationArray[pos++];
+
+        String PHENOStr = functionalAnnotationArray[pos++];
+        if (!PHENOStr.isEmpty()) {
+            dbExt[PHENO] = true;
+            addStrToListSet(dbExtId, PHENO, PHENOStr);
+        }
         String pubmed = functionalAnnotationArray[pos++];
 
         if (!pubmed.isEmpty()) {
@@ -474,11 +517,14 @@ public class VepHelper {
         String Eigen_raw_coding = functionalAnnotationArray[pos++];
         String Eigen_raw_coding_rankscore = functionalAnnotationArray[pos++];
         String ens = functionalAnnotationArray[pos++];
+        String geneEns = null;
         if (!ens.isEmpty()) {
             dbExt[ENSEMBL] = true;
             addStrToListSet(dbExtId, ENSEMBL, ens);
             addStrToJsonObject("geneAffectedId", toStringList(dbExtId.get(ENSEMBL)), funcAnnotation, false);
+            geneEns = ens.split("&")[0];
         }
+
         // 69 -
         String Ensembl_proteinid = functionalAnnotationArray[pos++];
         String Ensembl_transcriptid = functionalAnnotationArray[pos++];
@@ -923,6 +969,14 @@ public class VepHelper {
 
 //        System.out.print("\n");
 
+        //Gene gene1 = new Gene(geneEns,geneName, biotype);
+        if (geneEns != null) {
+            geneSet.add(new Gene(geneEns, geneName, biotype));
+        }
+        // verify if already present
+
+
+
         return funcAnnotation;
 
     }
@@ -1057,12 +1111,28 @@ public class VepHelper {
 
     public static String toStringList(Set<String> setStr) {
         String newStringList = null;
-
         newStringList = setStr.stream().reduce("", (x,y) -> (x.isEmpty() ? x : x + ",") + y);
-
-
-
         return newStringList;
     }
 
+
+    public static void addSetsToArrayToObj(List<Set<String>> setList, int position, JSONObject jsonObject, String name, String objName) {
+        JSONArray newIdArray = new JSONArray();
+        for (String id: setList.get(position)) {
+            newIdArray.put(new JSONObject().put(objName, id));
+        }
+        jsonObject.put(name, newIdArray);
+    }
 }
+
+
+/*
+JSONArray pubMedIds = new JSONArray();
+        for (String id : setStr) {
+
+            JSONObject pubMedId = new JSONObject().put("id", id);
+            pubMedIds.put(pubMedId);
+
+        }
+        bdExtArray.put("pubmed", pubMedIds);
+ */
