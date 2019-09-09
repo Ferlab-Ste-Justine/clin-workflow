@@ -4,9 +4,23 @@ import org.scalatest.FunSuite
 
 class etlTest extends FunSuite  {
 
-  test("testing zygosity") {
+  test("Testing zygosity") {
 
     assert(testZygo() == true)
+
+  }
+
+  test("Testing impact score") {
+
+    assert(
+    VepHelper.getImpactScore("HIGH") == 4 &&
+      VepHelper.getImpactScore("MODIFIER") == 1 &&
+      VepHelper.getImpactScore("MODERATE") == 3 &&
+      VepHelper.getImpactScore("LOW") == 2 &&
+      VepHelper.getImpactScore("high") == 4 &&
+      VepHelper.getImpactScore("BOB") == 0 &&
+      VepHelper.getImpactScore("") == 0 &&
+      VepHelper.getImpactScore(null) == 0)
 
   }
 

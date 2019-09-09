@@ -222,6 +222,7 @@
           "properties": {
             "clinvar": {
               "type": "nested",
+              "include_in_parent": true,
               "properties" :{
                 "id" : {
                   "type": "text",
@@ -236,6 +237,7 @@
             },
             "omim": {
               "type": "nested",
+              "include_in_parent": true,
               "properties" :{
                 "id" : {
                   "type": "text",
@@ -250,6 +252,7 @@
             },
             "orphanet": {
               "type": "nested",
+              "include_in_parent": true,
               "properties" :{
                 "id" : {
                   "type": "text",
@@ -264,6 +267,7 @@
             },
             "pubmed": {
               "type": "nested",
+              "include_in_parent": true,
               "properties" :{
                 "id" : {
                   "type": "text",
@@ -278,6 +282,7 @@
             },
             "ensembl": {
               "type": "nested",
+              "include_in_parent": true,
               "properties" :{
                 "id" : {
                   "type": "text",
@@ -940,7 +945,8 @@
               }
             }
           }
-        }
+        },
+        "impactScore": {"type": "byte"}
       }
     }
   }

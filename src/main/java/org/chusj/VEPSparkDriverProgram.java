@@ -29,6 +29,7 @@ public class VEPSparkDriverProgram {
     public static RestHighLevelClient client;
     public static SockIOPool pool;
     public static MemCachedClient mcc;
+    private static String MEMCACHED_SERVER = "localhost:11212";
 
 
     public static void main(String args[]) throws Exception {
@@ -295,7 +296,7 @@ public class VEPSparkDriverProgram {
     }
 
     public static void connectToMemCached() {
-        String[] servers = {"localhost:11211"};
+        String[] servers = {MEMCACHED_SERVER};
         pool = SockIOPool.getInstance();
         pool.setServers( servers );
         pool.setFailover( true );

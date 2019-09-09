@@ -109,6 +109,7 @@ public class VepHelper {
         // dynamic positioning system -- pos counter++
         toPrint = false;
         int pos = 0;
+        int impactScore = 0;
         String chrom = lineValueArray[pos++];
         if ("CHROM".equalsIgnoreCase(chrom)) {
             return null; // Meta data line
@@ -226,18 +227,22 @@ public class VepHelper {
         propertiesOneMutation.put("chrom", chrPos);
         propertiesOneMutation.put("refAllele", reference);
 
-        JSONObject variant_class = new JSONObject();
-
         JSONArray functionalAnnotations = new JSONArray();
         JSONObject frequencies = null;
         JSONObject funcAnnotation;
 
+        impactScore = 0;
         for (String s : csqArray) {
+
             funcAnnotation = processVepAnnotations(s, dbExtId, dbExt, geneSet);
             frequencies = (JSONObject) funcAnnotation.remove("frequencies");
             functionalAnnotations.put(funcAnnotation);
+            String funcAnnotationImpact = (String) funcAnnotation.get("impact");
+            int funcAnnotationScore = getImpactScore(funcAnnotationImpact);
+            if (funcAnnotationScore > impactScore ) impactScore = funcAnnotationScore;
         }
 
+        propertiesOneMutation.put("impactScore", impactScore);
         //propertiesOneMutation.put("type",  variant_class.get("type"));
         String types = toStringList(dbExtId.get(TYPES));
         propertiesOneMutation.put("type",  types);
@@ -401,7 +406,8 @@ public class VepHelper {
 //        addStrToJsonObject("allele", functionalAnnotationArray[pos++], funcAnnotation, false);
 //        String Consequence = functionalAnnotationArray[pos++];
         addStrToJsonObject("consequence", functionalAnnotationArray[pos++], funcAnnotation, false);
-        addStrToJsonObject("impact", functionalAnnotationArray[pos++], funcAnnotation, false);
+        String impact = functionalAnnotationArray[pos++];
+        addStrToJsonObject("impact", impact, funcAnnotation, false);
         String gene = functionalAnnotationArray[pos++];
 //        addStrToJsonObject("gene", , funcAnnotation, false);
         addStrToJsonObject("transcriptId", functionalAnnotationArray[pos++], funcAnnotation, false);
@@ -1071,6 +1077,18 @@ public class VepHelper {
         }
         return "UNK";
 
+    }
+
+    public static int getImpactScore(String impact) {
+        if (impact == null) return 0;
+        switch (impact.toUpperCase()) {
+            case "HIGH" : return 4;
+            case "MODERATE" : return 3;
+            case "LOW" : return 2;
+            case "MODIFIER" : return 1;
+            default: return 0;
+
+        }
     }
 
 
