@@ -131,6 +131,7 @@ public class VepHelper {
         JSONArray donorArray = new JSONArray();
         JSONArray phenotypesArray = new JSONArray();
         JSONObject bdExtObj = new JSONObject();
+        JSONArray bdExtArray = new JSONArray();
         JSONObject clinvarObj = new JSONObject();
         JSONObject geneObj = new JSONObject();
         JSONArray geneArray = new JSONArray();
@@ -141,6 +142,8 @@ public class VepHelper {
         String[] relation = pedigreeProps.getProperty("relation").split(",");
         String studyId = pedigreeProps.getProperty("studyId");
         String sequencingStrategy = pedigreeProps.getProperty("sequencingStrategy");
+        String organizationId = pedigreeProps.getProperty("organizationId");
+        String practitionerId = pedigreeProps.getProperty("practitionerId");
         propertiesOneMutation.put("assemblyVersion", pedigreeProps.getProperty("assemblyVersion"));
         propertiesOneMutation.put("annotationTool", pedigreeProps.getProperty("annotationTool"));
 
@@ -287,11 +290,13 @@ public class VepHelper {
             addNumberToJsonObject("mqRankSum", mqRankSum, arrayDonor[i], false, 'f'); //".8116E1"
             addNumberToJsonObject("depth", dpS, arrayDonor[i], false, 'l');
             addNumberToJsonObject("readPosRankSum", readPosRankSum, arrayDonor[i], false, 'f');
-            arrayDonor[i].put("donorId", pedigree[i]);
+            arrayDonor[i].put("specimenId", pedigree[i]);
             arrayDonor[i].put("patientId", patientId[i]);
             arrayDonor[i].put("familyId", familyId);
             arrayDonor[i].put("relation", relation[i]);
             arrayDonor[i].put("studyId", studyId);
+            arrayDonor[i].put("practitionerId", practitionerId);
+            arrayDonor[i].put("organizationId", organizationId);
             arrayDonor[i].put("sequencingStrategy", sequencingStrategy);
 
             donorArray.put(arrayDonor[i]);
@@ -317,6 +322,9 @@ public class VepHelper {
 //        bdExtObj.put( new JSONObject().put("pubmed", dbExt[PUBMED] ));
 //        Set<String> setStr = dbExtId.get(PUBMED);
         addSetsToArrayToObj(dbExtId, PUBMED, bdExtObj, "pubmed", "id");
+
+        //addSetsToArrayofObj(dbExtId, PUBMED, pubmedArray, "pubmed");
+
 
 //        if (!genes.isEmpty()) bdExtObj.put( "Genes",  genes);
         // setup of gene array ( can be rarely more than one but can happen )
@@ -344,16 +352,19 @@ public class VepHelper {
         String clsig = toStringList(dbExtId.get(CLINVAR_SIG));
         clinvarObj.put( "clinvar_clinsig", clsig );
         String cltraits = toStringList(dbExtId.get(CLINVAR_TRAIT));
-        clinvarObj.put( "clinvar_trait", cltraits );
+        //clinvarObj.put( "clinvar_trait", cltraits );
+        addSetsToArrayToObj(dbExtId, CLINVAR_TRAIT, clinvarObj, "clinvar_trait", "id");
 
-        String phenoStr = toStringList(dbExtId.get(PHENO));
-        clinvarObj.put( "phenotypeIDS", phenoStr );
+
+        //String phenoStr = toStringList(dbExtId.get(PHENO));
+        //clinvarObj.put( "phenotypeIDS", phenoStr );
 
 
 
         propertiesOneMutation.put("bdExt", bdExtObj);
+        //propertiesOneMutation.put("extDBs", extDb);
         propertiesOneMutation.put("clinvar", clinvarObj);
-        propertiesOneMutation.put("donor", donorArray);
+        propertiesOneMutation.put("donors", donorArray);
         propertiesOneMutation.put("genes", geneArray);
 
         if (dbExt[DBSNP] || dbExt[CLINVAR]  || dbExt[OMIM] || dbExt[ORPHANET]  )
@@ -1137,10 +1148,13 @@ public class VepHelper {
     public static void addSetsToArrayToObj(List<Set<String>> setList, int position, JSONObject jsonObject, String name, String objName) {
         JSONArray newIdArray = new JSONArray();
         for (String id: setList.get(position)) {
-            newIdArray.put(new JSONObject().put(objName, id));
+            newIdArray.put(id);
         }
-        jsonObject.put(name, newIdArray);
+        if (newIdArray.length() > 0 ) {
+            jsonObject.put(name, newIdArray);
+        }
     }
+
 }
 
 

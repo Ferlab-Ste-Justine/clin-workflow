@@ -50,7 +50,7 @@
             }
           }
         },
-        "donor": {
+        "donors": {
           "type": "nested",
           "include_in_parent": true,
           "properties": {
@@ -75,7 +75,7 @@
                 }
               }
             },
-            "donorId": {
+            "specimenId": {
               "type": "text",
               "fields": {
                 "keyword": {
@@ -213,7 +213,25 @@
             "gq": {
               "type": "long"
             },
-            "lastUpdate": { "type" : "date" }
+            "lastUpdate": { "type" : "date" },
+            "practitionerId": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              }
+            },
+            "organizationId": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              }
+            }
           }
         },
         "bdExt" : {
@@ -221,77 +239,47 @@
           "include_in_parent": true,
           "properties": {
             "clinvar": {
-              "type": "nested",
-              "include_in_parent": true,
-              "properties" :{
-                "id" : {
-                  "type": "text",
-                  "fields": {
-                    "keyword": {
-                      "type": "keyword",
-                      "ignore_above": 256
-                    }
-                  }
+              "type" : "text",
+              "fields" : {
+                "keyword" : {
+                  "type" : "keyword",
+                  "ignore_above" : 256
                 }
               }
             },
             "omim": {
-              "type": "nested",
-              "include_in_parent": true,
-              "properties" :{
-                "id" : {
-                  "type": "text",
-                  "fields": {
-                    "keyword": {
-                      "type": "keyword",
-                      "ignore_above": 256
-                    }
-                  }
+              "type" : "text",
+              "fields" : {
+                "keyword" : {
+                  "type" : "keyword",
+                  "ignore_above" : 256
                 }
               }
             },
             "orphanet": {
-              "type": "nested",
-              "include_in_parent": true,
-              "properties" :{
-                "id" : {
-                  "type": "text",
-                  "fields": {
-                    "keyword": {
-                      "type": "keyword",
-                      "ignore_above": 256
-                    }
-                  }
+              "type" : "text",
+              "fields" : {
+                "keyword" : {
+                  "type" : "keyword",
+                  "ignore_above" : 256
                 }
               }
             },
             "pubmed": {
-              "type": "nested",
-              "include_in_parent": true,
-              "properties" :{
-                "id" : {
-                  "type": "text",
-                  "fields": {
-                    "keyword": {
-                      "type": "keyword",
-                      "ignore_above": 256
-                    }
-                  }
+              "type" : "text",
+              "fields" : {
+                "keyword" : {
+                  "type" : "keyword",
+                  "ignore_above" : 256
                 }
               }
             },
             "ensembl": {
-              "type": "nested",
-              "include_in_parent": true,
-              "properties" :{
-                "id" : {
-                  "type": "text",
-                  "fields": {
-                    "keyword": {
-                      "type": "keyword",
-                      "ignore_above": 256
-                    }
-                  }
+              "type" : "text",
+              "fields" : {
+                "keyword" : {
+                  "type" : "keyword",
+                  "ignore_above" : 256
                 }
               }
             }
@@ -329,15 +317,6 @@
               }
             },
             "phenotypeList": {
-              "type": "text",
-              "fields": {
-                "keyword": {
-                  "type": "keyword",
-                  "ignore_above": 256
-                }
-              }
-            },
-            "phenotypeIDS": {
               "type": "text",
               "fields": {
                 "keyword": {

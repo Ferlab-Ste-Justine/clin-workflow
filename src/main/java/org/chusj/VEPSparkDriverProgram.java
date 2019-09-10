@@ -30,6 +30,7 @@ public class VEPSparkDriverProgram {
     public static SockIOPool pool;
     public static MemCachedClient mcc;
     private static String MEMCACHED_SERVER = "localhost:11212";
+    private static String INDEX_NAME = "mutations";
 
 
     public static void main(String args[]) throws Exception {
@@ -96,7 +97,7 @@ public class VEPSparkDriverProgram {
         //String qual = (String) propertiesOneMutation.remove("qual");
         //String filter = (String) propertiesOneMutation.remove("filter");
         if (propertiesOneMutation == null) return;
-        JSONArray donorArray = (JSONArray) propertiesOneMutation.remove("donor");
+        JSONArray donorArray = (JSONArray) propertiesOneMutation.remove("donors");
 
         JSONArray newDonorArray;
         // verify if variant already exist
@@ -111,7 +112,7 @@ public class VEPSparkDriverProgram {
         String uid = (String) propertiesOneMutation.get("id");
         String dnaChanges = (String) propertiesOneMutation.get("mutationId");
 
-        String donorIdList = pedigreeProps.getProperty("pedigree");
+        String specimenIdList = pedigreeProps.getProperty("pedigree");
 
         JSONArray previousDonorArray = null;
         String donorArrayStr = (String) mcc.get(uid);
@@ -119,7 +120,7 @@ public class VEPSparkDriverProgram {
             previousDonorArray = new JSONArray(donorArrayStr);
             if (previousDonorArray != null && previousDonorArray.length() > 0) {
 
-                boolean donorFound = checkForDonor(donorArray, donorIdList);
+                boolean donorFound = checkForSpecimen(donorArray, specimenIdList);
 
                 if (!donorFound) {
                     // add new donor(s) to previous one
@@ -169,12 +170,12 @@ public class VEPSparkDriverProgram {
                         System.err.println("collision="+msg);
                     }
                     try {
-                        previousDonorArray = (JSONArray) obj.get("donor");
+                        previousDonorArray = (JSONArray) obj.get("donors");
                     } catch (Exception e) {
                         previousDonorArray = new JSONArray();
                     }
 
-                    boolean donorFound = checkForDonor(previousDonorArray, donorIdList);
+                    boolean donorFound = checkForSpecimen(previousDonorArray, specimenIdList);
 
                     if (!donorFound) {
                         // add new donor to previous one
@@ -212,11 +213,11 @@ public class VEPSparkDriverProgram {
             //int retry = 0;
             //if (donorArray==null) donorArray = new JSONArray();
 
-            propertiesOneMutation.put("donor", previousDonorArray);
+            propertiesOneMutation.put("donors", previousDonorArray);
             //mutationCentricIndexjson.put("properties", propertiesOneMutation);
             for (int i=0; i< 3; i++) {
                 try {
-                    index(propertiesOneMutation.toString(), client, uid, "mutations");
+                    index(propertiesOneMutation.toString(), client, uid, INDEX_NAME);
                     indexingSuccess = true;
                     break;
                 } catch (Exception e) {
@@ -313,15 +314,15 @@ public class VEPSparkDriverProgram {
         System.err.println("*********** Connected to Memcached");
     }
 
-    public static boolean checkForDonor(JSONArray donorArray, String patientIdList) {
+    public static boolean checkForSpecimen(JSONArray donorArray, String specimenIdList) {
 
 
-        String[] patientIds = patientIdList.split(",");
+        String[] specimenIds = specimenIdList.split(",");
         for (int i = 0; i < donorArray.length(); i++) {
             JSONObject currentDonor = (JSONObject) donorArray.get(i);
-            String donorId = (String) currentDonor.get("donorId");
-            for (String patientId: patientIds) {
-                if (patientId.equalsIgnoreCase(donorId)) {
+            String specimen = (String) currentDonor.get("specimenId");
+            for (String specimenId: specimenIds) {
+                if (specimenId.equalsIgnoreCase(specimen)) {
                     return true;
                 }
             }
