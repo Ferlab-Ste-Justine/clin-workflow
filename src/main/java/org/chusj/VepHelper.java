@@ -12,6 +12,7 @@ import java.text.NumberFormat;
 import java.time.LocalDate;
 import java.util.*;
 
+import static org.chusj.RedisGeneSetHelper.getMembersForEnsId;
 import static org.chusj.VEPSparkDriverProgram.getMD5Hash;
 
 
@@ -20,6 +21,7 @@ public class VepHelper {
     private static float avgFuncAnnoPerMutation = 0.0f;
     private static int countFuncAnnoPerMutation = 0;
     private static int countMutation =0;
+    private static int countRedisCalls =0;
     private static NumberFormat NF = NumberFormat.getInstance();
     private static JSONObject lastOne;
     private static boolean toPrint = false;
@@ -95,10 +97,11 @@ public class VepHelper {
         System.out.println("lastOne="+lastOne.toString(2));
 
         System.out.println("\navgFuncAnnoPerMutation="+avgFuncAnnoPerMutation+"  mutationCount="+ countMutation);
+        System.out.println("redisCallsCount="+ countRedisCalls);
     }
 
 
-    public static JSONObject processVcfDataLine(String extractedLine, String OptionStr, Properties pedigreeProps) {
+    static JSONObject processVcfDataLine(String extractedLine, String OptionStr, Properties pedigreeProps) {
 
         //CHROM	POS	ID	REF	ALT	QUAL	FILTER	DP	MQ	MQRankSum
         // ReadPosRankSum	LOD	FractionInformativeReads	SNP	MNP	INS	DEL	MIXED	HOM	HET
@@ -109,7 +112,7 @@ public class VepHelper {
         // dynamic positioning system -- pos counter++
         toPrint = false;
         int pos = 0;
-        int impactScore = 0;
+        int impactScore;
         String chrom = lineValueArray[pos++];
         if ("CHROM".equalsIgnoreCase(chrom)) {
             return null; // Meta data line
@@ -133,7 +136,7 @@ public class VepHelper {
         JSONObject bdExtObj = new JSONObject();
         JSONArray bdExtArray = new JSONArray();
         JSONObject clinvarObj = new JSONObject();
-        JSONObject geneObj = new JSONObject();
+        JSONObject geneObj;
         JSONArray geneArray = new JSONArray();
 
         String[] pedigree = pedigreeProps.getProperty("pedigree").split(",");
@@ -214,8 +217,9 @@ public class VepHelper {
         String hetS = lineValueArray[pos++];
         String hiConfDeNovo = lineValueArray[pos++];
         String lodS = lineValueArray[pos++];
+        pos++;
+        String csq = lineValueArray[pos];
 
-        String csq = lineValueArray[pos++];
         String[] csqArray = csq.split(",");  // return functionalAnnotation array
         countFuncAnnoPerMutation += csqArray.length;
 
@@ -261,7 +265,7 @@ public class VepHelper {
             arrayDonor[i].put("gt", gt[i]);
             arrayDonor[i].put("zygosity", zygosity(gt[i]));
             addNumberToJsonObject("gq", gq[i], arrayDonor[i], false, 'l');
-            String adS = null;
+            String adS;
             // bug in snpSift Extract...  does not keep correctly unknown value . in GEN[*].AD
             // but in that regards, the information is so bad that it's okay to put 0,1 or 1,0
             if (ad.length < nbDonor * 2) {
@@ -345,6 +349,7 @@ public class VepHelper {
             geneObj.put("geneSymbol", gene.getGeneSymbol());
             geneObj.put("ensemblId", gene.getEnsemblId());
             geneObj.put("biotype", gene.getBiotype());
+            addGeneSetsToObj(gene.getEnsemblId(), geneObj);
             geneArray.put(geneObj);
         }
 
@@ -410,10 +415,9 @@ public class VepHelper {
 
 
         String cdnaChange;
-        String placeHolder;
 
         //0 - Allele|Consequence|IMPACT|SYMBOL|Gene|Feature_type|Feature|BIOTYPE|EXON|INTRON
-        placeHolder = functionalAnnotationArray[pos++];
+        String placeHolder = functionalAnnotationArray[pos++];
 //        addStrToJsonObject("allele", functionalAnnotationArray[pos++], funcAnnotation, false);
 //        String Consequence = functionalAnnotationArray[pos++];
         addStrToJsonObject("consequence", functionalAnnotationArray[pos++], funcAnnotation, false);
@@ -955,7 +959,9 @@ public class VepHelper {
 //        addStrToJsonObject("ref", ref, funcAnnotation, false);
         String refcodon = functionalAnnotationArray[pos++];
 //        addStrToJsonObject("ref_codon", functionalAnnotationArray[pos++], funcAnnotation, false);
-        String rs_dbSNP151 = functionalAnnotationArray[pos++];
+        pos++;
+        String rs_dbSNP151 = functionalAnnotationArray[pos];
+
         // 402
 
         //System.out.println("csqArray.length="+csqArray.length);
@@ -1090,7 +1096,7 @@ public class VepHelper {
 
     }
 
-    public static int getImpactScore(String impact) {
+    static int getImpactScore(String impact) {
         if (impact == null) return 0;
         switch (impact.toUpperCase()) {
             case "HIGH" : return 4;
@@ -1103,7 +1109,7 @@ public class VepHelper {
     }
 
 
-    public static Properties getPropertiesFromFile(String filename) {
+    static Properties getPropertiesFromFile(String filename) {
         Properties prop = new Properties();
 
         try (BufferedReader buf = new BufferedReader(new FileReader(filename))) {
@@ -1116,7 +1122,7 @@ public class VepHelper {
         return prop;
     }
 
-    public static JSONArray addDonorArrayToDonorArray(JSONArray previous, JSONArray newOne) {
+    static JSONArray addDonorArrayToDonorArray(JSONArray previous, JSONArray newOne) {
 
         for (int i = 0; i<newOne.length(); i++) {
             previous.put(newOne.get(i));
@@ -1125,27 +1131,23 @@ public class VepHelper {
 
     }
 
-    public static void addStrToListSet(List<Set<String>> setList, int position, String value) {
+    private static void addStrToListSet(List<Set<String>> setList, int position, String value) {
 
         // Extract the proper set
         Set<String> extractedSet = setList.get(position);
         String[] splitedStr = value.split("&");
-        for (String id: splitedStr ) {
-            extractedSet.add(id);
-        }
+        Collections.addAll(extractedSet, splitedStr);
         //extractedSet.add(value);
 
 
     }
 
-    public static String toStringList(Set<String> setStr) {
-        String newStringList = null;
-        newStringList = setStr.stream().reduce("", (x,y) -> (x.isEmpty() ? x : x + ",") + y);
-        return newStringList;
+    private static String toStringList(Set<String> setStr) {
+        return setStr.stream().reduce("", (x,y) -> (x.isEmpty() ? x : x + ",") + y);
     }
 
 
-    public static void addSetsToArrayToObj(List<Set<String>> setList, int position, JSONObject jsonObject, String name, String objName) {
+    private static void addSetsToArrayToObj(List<Set<String>> setList, int position, JSONObject jsonObject, String name, String objName) {
         JSONArray newIdArray = new JSONArray();
         for (String id: setList.get(position)) {
             newIdArray.put(id);
@@ -1153,6 +1155,35 @@ public class VepHelper {
         if (newIdArray.length() > 0 ) {
             jsonObject.put(name, newIdArray);
         }
+    }
+
+
+    private static void addGeneSetsToObj(String ensId, JSONObject jsonObject) {
+
+        countRedisCalls++;
+        Set<String> geneSets = getMembersForEnsId(ensId);
+        JSONArray hpoGeneSets = new JSONArray();
+        JSONArray orphanetGeneSets = new JSONArray();
+        JSONArray alias = new JSONArray();
+
+        geneSets.forEach( member -> {
+
+            if (member.startsWith("HP:")) {
+                hpoGeneSets.put(member);
+
+            } else if (member.startsWith("Orph:")) {
+                orphanetGeneSets.put(member);
+            } else if (member.startsWith("alias:")) {
+                alias.put(member.replace("alias:", ""));
+            }
+
+            jsonObject.put("hpo", hpoGeneSets);
+            jsonObject.put("orphanet", orphanetGeneSets);
+            jsonObject.put("alias", alias);
+
+        });
+
+
     }
 
 }
