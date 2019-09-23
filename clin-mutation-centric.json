@@ -102,15 +102,6 @@
                 }
               }
             },
-            "phenotypes": {
-              "type": "nested",
-              "include_in_parent": true,
-              "properties": {
-                "pheno": {
-                  "type": "keyword"
-                }
-              }
-            },
             "pid": {
               "type": "text",
               "fields": {
@@ -388,7 +379,7 @@
           }
         },
         "lastAnnotationUpdate": { "type" : "date" },
-        "functionalAnnotations": {
+        "consequences": {
           "properties": {
             "predictions": {
               "properties": {
@@ -554,6 +545,9 @@
             "cdnaChange": {
               "type": "text"
             },
+            "aaChange": {
+              "type": "text"
+            },
             "featureId": {
               "type": "text",
               "fields": {
@@ -590,7 +584,7 @@
                 }
               }
             },
-            "transcriptId": {
+            "ensemblTranscriptId": {
               "type": "text",
               "fields": {
                 "keyword": {
@@ -619,6 +613,40 @@
             },
             "canonical": {
               "type": "boolean"
+            },
+            "transcripts": {
+              "properties": {
+                "featureId": {
+                  "type": "text",
+                  "fields": {
+                    "keyword": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  }
+                },
+                "featureType": {
+                  "type": "text",
+                  "fields": {
+                    "keyword": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  }
+                },
+                "ensemblTranscriptId": {
+                  "type": "text",
+                  "fields": {
+                    "keyword": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  }
+                },
+                "canonical": {
+                  "type": "boolean"
+                }
+              }
             }
           }
         },

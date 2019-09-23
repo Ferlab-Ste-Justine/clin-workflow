@@ -39,7 +39,6 @@ public class VepHelper {
 
 
 
-
     public static void main(String[] args) throws Exception {
 
         String extractFile = args[0];
@@ -130,11 +129,13 @@ public class VepHelper {
 
         Set<Gene> geneSet = new HashSet<>();
 
+        Map<Integer, FunctionalAnnotation> faMap = new HashMap<>();
+
+
         JSONObject propertiesOneMutation = new JSONObject();
         JSONArray donorArray = new JSONArray();
         JSONArray phenotypesArray = new JSONArray();
         JSONObject bdExtObj = new JSONObject();
-        JSONArray bdExtArray = new JSONArray();
         JSONObject clinvarObj = new JSONObject();
         JSONObject geneObj;
         JSONArray geneArray = new JSONArray();
@@ -217,7 +218,7 @@ public class VepHelper {
         String hetS = lineValueArray[pos++];
         String hiConfDeNovo = lineValueArray[pos++];
         String lodS = lineValueArray[pos++];
-        pos++;
+
         String csq = lineValueArray[pos];
 
         String[] csqArray = csq.split(",");  // return functionalAnnotation array
@@ -233,28 +234,77 @@ public class VepHelper {
         propertiesOneMutation.put("dnaChange", dnaChange);
         propertiesOneMutation.put("chrom", chrPos);
         propertiesOneMutation.put("refAllele", reference);
+        propertiesOneMutation.put("start", Long.valueOf(position));
 
         JSONArray functionalAnnotations = new JSONArray();
         JSONObject frequencies = null;
         JSONObject funcAnnotation;
 
+
         impactScore = 0;
         for (String s : csqArray) {
 
             funcAnnotation = processVepAnnotations(s, dbExtId, dbExt, geneSet);
+
             frequencies = (JSONObject) funcAnnotation.remove("frequencies");
             functionalAnnotations.put(funcAnnotation);
-            String funcAnnotationImpact = (String) funcAnnotation.get("impact");
+            String funcAnnotationImpact = (String) funcAnnotation.remove("impact");
             int funcAnnotationScore = getImpactScore(funcAnnotationImpact);
             if (funcAnnotationScore > impactScore ) impactScore = funcAnnotationScore;
+
+            String gene = "";
+            String geneId = "";
+            if (!funcAnnotation.isNull("geneAffectedSymbol")) {
+                gene = (String) funcAnnotation.remove("geneAffectedSymbol");
+                geneId = (String) funcAnnotation.remove("geneAffectedId");
+            }
+            String consequence = (String) funcAnnotation.remove("consequence");
+            Long strand = null;
+            if (!funcAnnotation.isNull("strand")) {
+                strand = (long) funcAnnotation.remove("strand");
+            }
+            String aaChange = "";
+            if (!funcAnnotation.isNull("aaChange")) {
+                aaChange = (String) funcAnnotation.remove("aaChange");
+            }
+            String cdnaChange = "";
+            if (!funcAnnotation.isNull("cdnaChange")) {
+                cdnaChange = (String) funcAnnotation.remove("cdnaChange");
+            }
+            //FunctionalAnnotation(String gene, String aaChange, String consequence, String codingDNAChange, long strand)
+            JSONObject scores = (JSONObject) funcAnnotation.remove("conservationsScores");
+            JSONObject predictions = (JSONObject) funcAnnotation.remove("predictions");
+            String biotype = (String) funcAnnotation.remove("biotype");
+
+            FunctionalAnnotation functionalAnnotation = new FunctionalAnnotation(gene, aaChange, consequence, cdnaChange, strand);
+            functionalAnnotation.setGeneId(geneId);
+            functionalAnnotation.setImpact(funcAnnotationImpact);
+            functionalAnnotation.setScores(scores);
+            functionalAnnotation.setPredictions(predictions);
+            functionalAnnotation.setBiotype(biotype);
+
+
+            Integer hash = functionalAnnotation.hashCode();
+            if (faMap.containsKey(hash)) {
+                FunctionalAnnotation prevFA = faMap.get(hash);
+                prevFA.getTheRest().put(funcAnnotation);
+            } else {
+                JSONArray ja = new JSONArray();
+                ja.put(funcAnnotation);
+                functionalAnnotation.setTheRest(ja);
+                faMap.put(hash, functionalAnnotation);
+            }
         }
 
+        JSONArray consequences = new JSONArray();
+        faMap.forEach((k,v) -> consequences.put(v.getJsonObj()));
+
+        propertiesOneMutation.put("consequences", consequences);
         propertiesOneMutation.put("impactScore", impactScore);
         //propertiesOneMutation.put("type",  variant_class.get("type"));
         String types = toStringList(dbExtId.get(TYPES));
         propertiesOneMutation.put("type",  types);
         propertiesOneMutation.put("frequencies", frequencies);
-        propertiesOneMutation.put("functionalAnnotations", functionalAnnotations);
 
         for (int i=0; i< nbDonor; i++) {
 
@@ -307,42 +357,18 @@ public class VepHelper {
 
         }
 
-//        bdExtObj.put( new JSONObject().put("dbSNP", dbExt[DBSNP] ));
         addSetsToArrayToObj(dbExtId, DBSNP, bdExtObj, "dbSNP", "id");
-//        bdExtObj.put( new JSONObject().put("clinvar", dbExt[CLINVAR] ));
-//        bdExtObj.put( new JSONObject().put("ensembl", dbExt[ENSEMBL] ));
         String clinvarids = toStringList(dbExtId.get(CLINVAR));
         clinvarObj.put("clinvar_id", clinvarids);
         addSetsToArrayToObj(dbExtId, CLINVAR, bdExtObj, "clinvar", "id");
-//        String ensids = toStringList(dbExtId.get(ENSEMBL));
+
         addSetsToArrayToObj(dbExtId, ENSEMBL, bdExtObj, "ensembl", "id");
-//        String omimids =  toStringList(dbExtId.get(OMIM));
-//        if (!omimids.isEmpty()) bdExtObj.put( "omimIds", omimids );
+
         addSetsToArrayToObj(dbExtId, OMIM, bdExtObj, "omim", "id");
-//        bdExtObj.put( new JSONObject().put("orphanet", dbExt[ORPHANET] ));
-//        String orphaids = toStringList(dbExtId.get(ORPHANET));
-//        if (!orphaids.isEmpty()) bdExtObj.put( "orphanetIds", orphaids );
+
         addSetsToArrayToObj(dbExtId, ORPHANET, bdExtObj, "orphanet", "id");
-//        bdExtObj.put( new JSONObject().put("pubmed", dbExt[PUBMED] ));
-//        Set<String> setStr = dbExtId.get(PUBMED);
+
         addSetsToArrayToObj(dbExtId, PUBMED, bdExtObj, "pubmed", "id");
-
-        //addSetsToArrayofObj(dbExtId, PUBMED, pubmedArray, "pubmed");
-
-
-//        if (!genes.isEmpty()) bdExtObj.put( "Genes",  genes);
-        // setup of gene array ( can be rarely more than one but can happen )
-//        int numberGenes = dbExtId.get(GENES).size();
-//        String[] genes = toStringList(dbExtId.get(GENES)).split(",");
-//        String[] ensemblIds = toStringList(dbExtId.get(ENSEMBL)).split(",");
-//
-//        for (int i = 0; i < numberGenes; i++) {
-//            geneObj = new JSONObject();
-//            geneObj.put("geneSymbol", genes[i]);
-//            geneObj.put("EnsemblID", ensemblIds[i]);
-//            geneArray.put(geneObj);
-//
-//        }
 
         for (Gene gene: geneSet) {
             geneObj = new JSONObject();
@@ -357,13 +383,8 @@ public class VepHelper {
         String clsig = toStringList(dbExtId.get(CLINVAR_SIG));
         clinvarObj.put( "clinvar_clinsig", clsig );
         String cltraits = toStringList(dbExtId.get(CLINVAR_TRAIT));
-        //clinvarObj.put( "clinvar_trait", cltraits );
+
         addSetsToArrayToObj(dbExtId, CLINVAR_TRAIT, clinvarObj, "clinvar_trait", "id");
-
-
-        //String phenoStr = toStringList(dbExtId.get(PHENO));
-        //clinvarObj.put( "phenotypeIDS", phenoStr );
-
 
 
         propertiesOneMutation.put("bdExt", bdExtObj);
@@ -425,7 +446,7 @@ public class VepHelper {
         addStrToJsonObject("impact", impact, funcAnnotation, false);
         String gene = functionalAnnotationArray[pos++];
 //        addStrToJsonObject("gene", , funcAnnotation, false);
-        addStrToJsonObject("transcriptId", functionalAnnotationArray[pos++], funcAnnotation, false);
+        addStrToJsonObject("ensemblTranscriptId", functionalAnnotationArray[pos++], funcAnnotation, false);
         addStrToJsonObject("featureType", functionalAnnotationArray[pos++], funcAnnotation, false);
         addStrToJsonObject("featureId", functionalAnnotationArray[pos++], funcAnnotation, false);
         String biotype = functionalAnnotationArray[pos++];
@@ -959,13 +980,10 @@ public class VepHelper {
 //        addStrToJsonObject("ref", ref, funcAnnotation, false);
         String refcodon = functionalAnnotationArray[pos++];
 //        addStrToJsonObject("ref_codon", functionalAnnotationArray[pos++], funcAnnotation, false);
-        pos++;
+
         String rs_dbSNP151 = functionalAnnotationArray[pos];
 
         // 402
-
-        //System.out.println("csqArray.length="+csqArray.length);
-        //String[] functionalAnnotationArray = csqArray[i].split("|");
 
 
         /* population frequencies Json Obj */
@@ -983,22 +1001,10 @@ public class VepHelper {
         funcAnnotation.put("frequencies", frequencies);
         funcAnnotation.put("predictions", prediction);
         funcAnnotation.put("conservationsScores", conservation);
-        //funcAnnotation.put("properties", funcAnnoProperties);
-        //funcAnnotation.(funcAnnoProperties);
 
-
-        //if ((boolean) frequencyGnomadEx.get("available")) System.out.println(funcAnnotation.toString(2));
-        //if ((boolean) frequencyGnomadGen.get("available")) System.out.println(frequencyGnomadGen.toString(2));
-
-//        System.out.print("\n");
-
-        //Gene gene1 = new Gene(geneEns,geneName, biotype);
         if (geneEns != null) {
             geneSet.add(new Gene(geneEns, geneName, biotype));
         }
-        // verify if already present
-
-
 
         return funcAnnotation;
 
@@ -1187,15 +1193,3 @@ public class VepHelper {
     }
 
 }
-
-
-/*
-JSONArray pubMedIds = new JSONArray();
-        for (String id : setStr) {
-
-            JSONObject pubMedId = new JSONObject().put("id", id);
-            pubMedIds.put(pubMedId);
-
-        }
-        bdExtArray.put("pubmed", pubMedIds);
- */

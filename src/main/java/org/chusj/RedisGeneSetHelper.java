@@ -2,6 +2,7 @@ package org.chusj;
 
 import redis.clients.jedis.Jedis;
 
+import java.util.HashSet;
 import java.util.Set;
 
 public class RedisGeneSetHelper {
@@ -21,7 +22,17 @@ public class RedisGeneSetHelper {
 
     static Set<String> getMembersForEnsId(String ensId) {
 
-        return jedisClient.smembers("id:"+ensId);
+        Set<String> sMembers = new HashSet<>();
+        for (int i=0; i< 3; i++) {
+            try {
+                sMembers = jedisClient.smembers("id:"+ensId);
+                break;
+            } catch (Exception e) {
+                System.err.println("Redis call #"+i+" failed... Retrying...");
+            }
+        }
+
+        return sMembers;
 
     }
 }
