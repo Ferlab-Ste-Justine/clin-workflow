@@ -306,15 +306,6 @@
                   "ignore_above": 256
                 }
               }
-            },
-            "phenotypeList": {
-              "type": "text",
-              "fields": {
-                "keyword": {
-                  "type": "keyword",
-                  "ignore_above": 256
-                }
-              }
             }
           }
         },
@@ -359,6 +350,15 @@
               }
             },
             "hpo": {
+              "type" : "text",
+              "fields" : {
+                "keyword" : {
+                  "type" : "keyword",
+                  "ignore_above" : 256
+                }
+              }
+            },
+            "radboudumc": {
               "type" : "text",
               "fields" : {
                 "keyword" : {

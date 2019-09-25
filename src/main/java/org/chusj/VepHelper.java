@@ -14,6 +14,7 @@ import java.util.*;
 
 import static org.chusj.RedisGeneSetHelper.getMembersForEnsId;
 import static org.chusj.VEPSparkDriverProgram.getMD5Hash;
+import static org.chusj.VEPSparkDriverProgram.getSHA1Hash;
 
 
 public class VepHelper {
@@ -229,6 +230,7 @@ public class VepHelper {
         String mutationId = "chr" + chrPos + ":g." + position + dnaChange;
         String uid = getMD5Hash(mutationId);
 
+
         propertiesOneMutation.put("id", uid);
         propertiesOneMutation.put("mutationId", mutationId);
         propertiesOneMutation.put("dnaChange", dnaChange);
@@ -309,7 +311,7 @@ public class VepHelper {
         for (int i=0; i< nbDonor; i++) {
 
             arrayDonor[i].put("lastUpdate", localDate);
-            arrayDonor[i].put("phenotypes", phenotypesArray);
+            //arrayDonor[i].put("phenotypes", phenotypesArray);
             addNumberToJsonObject("quality", qual, arrayDonor[i], false, 'f');
             arrayDonor[i].put("filter", filter);
             arrayDonor[i].put("gt", gt[i]);
@@ -381,20 +383,24 @@ public class VepHelper {
 
 
         String clsig = toStringList(dbExtId.get(CLINVAR_SIG));
-        clinvarObj.put( "clinvar_clinsig", clsig );
+        if (!clsig.isEmpty()) { clinvarObj.put( "clinvar_clinsig", clsig ); }
         String cltraits = toStringList(dbExtId.get(CLINVAR_TRAIT));
 
         addSetsToArrayToObj(dbExtId, CLINVAR_TRAIT, clinvarObj, "clinvar_trait", "id");
 
 
         propertiesOneMutation.put("bdExt", bdExtObj);
-        //propertiesOneMutation.put("extDBs", extDb);
         propertiesOneMutation.put("clinvar", clinvarObj);
         propertiesOneMutation.put("donors", donorArray);
         propertiesOneMutation.put("genes", geneArray);
 
+        //uid = getSHA1Hash(familyId+ "@" + mutationId);
+
+        //propertiesOneMutation.put("_id", uid);
         if (dbExt[DBSNP] || dbExt[CLINVAR]  || dbExt[OMIM] || dbExt[ORPHANET]  )
             lastOne = propertiesOneMutation;
+
+
 
         return propertiesOneMutation;
 
@@ -1149,7 +1155,7 @@ public class VepHelper {
     }
 
     private static String toStringList(Set<String> setStr) {
-        return setStr.stream().reduce("", (x,y) -> (x.isEmpty() ? x : x + ",") + y);
+        return setStr.stream().reduce("", (x,y) -> (x.trim().isEmpty() ? x : x + ",") + y);
     }
 
 
@@ -1166,11 +1172,12 @@ public class VepHelper {
 
     private static void addGeneSetsToObj(String ensId, JSONObject jsonObject) {
 
-        countRedisCalls++;
+        //countRedisCalls++;
         Set<String> geneSets = getMembersForEnsId(ensId);
         JSONArray hpoGeneSets = new JSONArray();
         JSONArray orphanetGeneSets = new JSONArray();
         JSONArray alias = new JSONArray();
+        JSONArray radboudumc = new JSONArray();
 
         geneSets.forEach( member -> {
 
@@ -1181,11 +1188,14 @@ public class VepHelper {
                 orphanetGeneSets.put(member);
             } else if (member.startsWith("alias:")) {
                 alias.put(member.replace("alias:", ""));
+            } else if (member.startsWith("Rad:")) {
+                radboudumc.put(member);
             }
 
             jsonObject.put("hpo", hpoGeneSets);
             jsonObject.put("orphanet", orphanetGeneSets);
             jsonObject.put("alias", alias);
+            jsonObject.put("radboudumc", radboudumc);
 
         });
 
