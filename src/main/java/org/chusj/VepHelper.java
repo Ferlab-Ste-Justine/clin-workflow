@@ -14,7 +14,6 @@ import java.util.*;
 
 import static org.chusj.RedisGeneSetHelper.getMembersForEnsId;
 import static org.chusj.VEPSparkDriverProgram.getMD5Hash;
-import static org.chusj.VEPSparkDriverProgram.getSHA1Hash;
 
 
 public class VepHelper {
@@ -40,7 +39,13 @@ public class VepHelper {
 
 
 
+
     public static void main(String[] args) throws Exception {
+
+        if (args.length < 2) {
+            String[] newArgs = {"out10000-3.txt","3"};
+            args = newArgs;
+        }
 
         String extractFile = args[0];
         String nbPatient = args[1];
@@ -131,6 +136,7 @@ public class VepHelper {
         Set<Gene> geneSet = new HashSet<>();
 
         Map<Integer, FunctionalAnnotation> faMap = new HashMap<>();
+        Map<String, Transcript> deStructuredTranscript = new HashMap<>();
 
 
         JSONObject propertiesOneMutation = new JSONObject();
@@ -246,7 +252,7 @@ public class VepHelper {
         impactScore = 0;
         for (String s : csqArray) {
 
-            funcAnnotation = processVepAnnotations(s, dbExtId, dbExt, geneSet);
+            funcAnnotation = processVepAnnotations(s, dbExtId, dbExt, geneSet, deStructuredTranscript);
 
             frequencies = (JSONObject) funcAnnotation.remove("frequencies");
             functionalAnnotations.put(funcAnnotation);
@@ -275,14 +281,17 @@ public class VepHelper {
             }
             //FunctionalAnnotation(String gene, String aaChange, String consequence, String codingDNAChange, long strand)
             JSONObject scores = (JSONObject) funcAnnotation.remove("conservationsScores");
-            JSONObject predictions = (JSONObject) funcAnnotation.remove("predictions");
+            JSONObject predictions = null;
+            if (!funcAnnotation.isNull("predictions")) {
+                predictions = (JSONObject) funcAnnotation.remove("predictions");
+            }
             String biotype = (String) funcAnnotation.remove("biotype");
 
             FunctionalAnnotation functionalAnnotation = new FunctionalAnnotation(gene, aaChange, consequence, cdnaChange, strand);
             functionalAnnotation.setGeneId(geneId);
             functionalAnnotation.setImpact(funcAnnotationImpact);
             functionalAnnotation.setScores(scores);
-            functionalAnnotation.setPredictions(predictions);
+            if (predictions !=null) functionalAnnotation.setPredictions(predictions);
             functionalAnnotation.setBiotype(biotype);
 
 
@@ -397,7 +406,7 @@ public class VepHelper {
         //uid = getSHA1Hash(familyId+ "@" + mutationId);
 
         //propertiesOneMutation.put("_id", uid);
-        if (dbExt[DBSNP] || dbExt[CLINVAR]  || dbExt[OMIM] || dbExt[ORPHANET]  )
+        if ( dbExt[CLINVAR]  || dbExt[OMIM] || dbExt[ORPHANET]  ) //dbExt[DBSNP]
             lastOne = propertiesOneMutation;
 
 
@@ -406,7 +415,7 @@ public class VepHelper {
 
     }
 
-    private static JSONObject processVepAnnotations(String csqLine, List<Set<String>> dbExtId, boolean[] dbExt, Set<Gene> geneSet ) {
+    private static JSONObject processVepAnnotations(String csqLine, List<Set<String>> dbExtId, boolean[] dbExt, Set<Gene> geneSet, Map<String, Transcript> deStructuredTranscript ) {
 
         //System.out.print("\n"+csqLine);
         String[] functionalAnnotationArray = csqLine.split("[|]", -1);
@@ -444,17 +453,19 @@ public class VepHelper {
         String cdnaChange;
 
         //0 - Allele|Consequence|IMPACT|SYMBOL|Gene|Feature_type|Feature|BIOTYPE|EXON|INTRON
-        String placeHolder = functionalAnnotationArray[pos++];
-//        addStrToJsonObject("allele", functionalAnnotationArray[pos++], funcAnnotation, false);
+        String Allele = functionalAnnotationArray[pos++];
+        addStrToJsonObject("allele", Allele, funcAnnotation, false);
 //        String Consequence = functionalAnnotationArray[pos++];
         addStrToJsonObject("consequence", functionalAnnotationArray[pos++], funcAnnotation, false);
         String impact = functionalAnnotationArray[pos++];
         addStrToJsonObject("impact", impact, funcAnnotation, false);
-        String gene = functionalAnnotationArray[pos++];
+        String symbol = functionalAnnotationArray[pos++];
 //        addStrToJsonObject("gene", , funcAnnotation, false);
-        addStrToJsonObject("ensemblTranscriptId", functionalAnnotationArray[pos++], funcAnnotation, false);
+        String Gene = functionalAnnotationArray[pos++];
+        addStrToJsonObject("ensemblTranscriptId", Gene, funcAnnotation, false);
         addStrToJsonObject("featureType", functionalAnnotationArray[pos++], funcAnnotation, false);
-        addStrToJsonObject("featureId", functionalAnnotationArray[pos++], funcAnnotation, false);
+        String featureId = functionalAnnotationArray[pos++];
+        addStrToJsonObject("featureId", featureId , funcAnnotation, false);
         String biotype = functionalAnnotationArray[pos++];
         addStrToJsonObject("biotype", biotype, funcAnnotation, false);
         String EXON = functionalAnnotationArray[pos++];
@@ -482,7 +493,7 @@ public class VepHelper {
         addNumberToJsonObject("strand", functionalAnnotationArray[pos++] , funcAnnotation, false, 'l'); // can be empty
         //19 - |FLAGS|VARIANT_CLASS|SYMBOL_SOURCE
         String FLAGS = functionalAnnotationArray[pos++];
-        //+1
+        //20
         String VARIANT_CLASS = functionalAnnotationArray[pos++];
         //System.out.print("-vclass="+VARIANT_CLASS);
         //JSONObject variant_class = new JSONObject();
@@ -491,6 +502,7 @@ public class VepHelper {
             dbExt[TYPES] = true;
             addStrToListSet(dbExtId, TYPES, VARIANT_CLASS);
         }
+        //21
         String SYMBOL_SOURCE = functionalAnnotationArray[pos++];
         // HGNC_ID|CANONICAL|GIVEN_REF|USED_REF|BAM_EDIT|
         String HGNC_ID = functionalAnnotationArray[pos++];
@@ -564,18 +576,26 @@ public class VepHelper {
         String Eigen_pred_coding = functionalAnnotationArray[pos++];
         String Eigen_raw_coding = functionalAnnotationArray[pos++];
         String Eigen_raw_coding_rankscore = functionalAnnotationArray[pos++];
-        String ens = functionalAnnotationArray[pos++];
+        // Ensembl_geneid | Ensembl_proteinid | Ensembl_transcriptid
+        String Ensembl_geneid = functionalAnnotationArray[pos++];
         String geneEns = null;
-        if (!ens.isEmpty()) {
+        if (!Ensembl_geneid.isEmpty()) {
             dbExt[ENSEMBL] = true;
-            addStrToListSet(dbExtId, ENSEMBL, ens);
+            addStrToListSet(dbExtId, ENSEMBL, Ensembl_geneid);
             addStrToJsonObject("geneAffectedId", toStringList(dbExtId.get(ENSEMBL)), funcAnnotation, false);
-            geneEns = ens.split("&")[0];
+            geneEns = Ensembl_geneid.split("&")[0];
         }
 
+        //addStrToJsonObject("Ensembl_geneid_full", Ensembl_geneid, funcAnnotation, false);
         // 69 -
         String Ensembl_proteinid = functionalAnnotationArray[pos++];
+        //addStrToJsonObject("Ensembl_proteinid_full", Ensembl_proteinid, funcAnnotation, false);
         String Ensembl_transcriptid = functionalAnnotationArray[pos++];
+        //addStrToJsonObject("Ensembl_transcriptid_full", Ensembl_transcriptid, funcAnnotation, false);
+
+
+
+
         addNumberToJsonObject("AC", functionalAnnotationArray[pos++] , frequencyExAc, true, 'l');
         addNumberToJsonObject("AF", functionalAnnotationArray[pos++] , frequencyExAc, true, 'f');
         addNumberToJsonObject("AFR_AC", functionalAnnotationArray[pos++] , frequencyExAc, true, 'l');
@@ -630,8 +650,8 @@ public class VepHelper {
         String ExAC_nonpsych_SAS_AF = functionalAnnotationArray[pos++];
         // 119
         String FATHMM_converted_rankscore = functionalAnnotationArray[pos++];
-        addStrToJsonObject("FATHMM", functionalAnnotationArray[pos++], prediction, true);
-        addStrToJsonObject("FATHMM_score", functionalAnnotationArray[pos++], prediction, true);
+        String FATHMM = functionalAnnotationArray[pos++];
+        String FATHMM_score = functionalAnnotationArray[pos++];
         String GENCODE_basic = functionalAnnotationArray[pos++];
         String GERPpp_NR = functionalAnnotationArray[pos++];
         String GERPpp_RS = functionalAnnotationArray[pos++];
@@ -667,8 +687,6 @@ public class VepHelper {
         String LRT_converted_rankscore = functionalAnnotationArray[pos++];
         String LRT_pred = functionalAnnotationArray[pos++];
         String LRT_score = functionalAnnotationArray[pos++];
-        addStrToJsonObject("LRT_pred", LRT_pred, prediction, true);
-        addStrToJsonObject("LRT_score", LRT_score, prediction, true);
         String M_CAP_pred = functionalAnnotationArray[pos++];
         String M_CAP_rankscore = functionalAnnotationArray[pos++];
         String M_CAP_score = functionalAnnotationArray[pos++];
@@ -690,11 +708,8 @@ public class VepHelper {
         String MutPred_rankscore = functionalAnnotationArray[pos++].trim();
         String MutPred_score = functionalAnnotationArray[pos++].trim();
         String MutationAssessor_pred = functionalAnnotationArray[pos++].trim();
-        addStrToJsonObject("MutationAssessor_pred", MutationAssessor_pred, prediction, true);
         String MutationAssessor_rankscore = functionalAnnotationArray[pos++].trim();
-
         String MutationAssessor_score = functionalAnnotationArray[pos++].trim();
-        addStrToJsonObject("MutationAssessor_score", MutationAssessor_score, prediction, true);
         String MutationTaster_AAE = functionalAnnotationArray[pos++].trim();
         String MutationTaster_converted_rankscore = functionalAnnotationArray[pos++].trim();
         String MutationTaster_model = functionalAnnotationArray[pos++].trim();
@@ -704,12 +719,12 @@ public class VepHelper {
         String PROVEAN_converted_rankscore = functionalAnnotationArray[pos++].trim();
         String PROVEAN_pred = functionalAnnotationArray[pos++].trim();
         String PROVEAN_score = functionalAnnotationArray[pos++].trim();
-        addStrToJsonObject("Polyphen2_HDIV", functionalAnnotationArray[pos++].trim(), prediction, true);
+        String Polyphen2_HDIV = functionalAnnotationArray[pos++].trim();
         String Polyphen2_HDIV_rankscore = functionalAnnotationArray[pos++].trim();
-        addStrToJsonObject("Polyphen2_HDIV_score", functionalAnnotationArray[pos++], prediction, true);
-        addStrToJsonObject("Polyphen2_HVAR_pred", functionalAnnotationArray[pos++].trim(), prediction, true);
+        String Polyphen2_HDIV_score = functionalAnnotationArray[pos++];
+        String Polyphen2_HVAR_pred = functionalAnnotationArray[pos++].trim();
         String Polyphen2_HVAR_rankscore = functionalAnnotationArray[pos++].trim();
-        addStrToJsonObject("Polyphen2_HVAR_score", functionalAnnotationArray[pos++], prediction, true);
+        String Polyphen2_HVAR_score = functionalAnnotationArray[pos++];
         String PrimateAI_pred = functionalAnnotationArray[pos++].trim();
         // 189
         String PrimateAI_rankscore = functionalAnnotationArray[pos++].trim();
@@ -721,9 +736,9 @@ public class VepHelper {
         String SIFT4G_pred = functionalAnnotationArray[pos++].trim();
         String SIFT4G_score = functionalAnnotationArray[pos++].trim();
         String SIFT_converted_rankscore = functionalAnnotationArray[pos++].trim();
-        addStrToJsonObject("SIFT", functionalAnnotationArray[pos++], prediction, true);
+        String SIFT = functionalAnnotationArray[pos++];
         // 199
-        addStrToJsonObject("SIFT_score", functionalAnnotationArray[pos++].trim(), prediction, true);
+        String SIFT_score = functionalAnnotationArray[pos++].trim();
         String SiPhy_29way_logOdds = functionalAnnotationArray[pos++].trim();
         String SiPhy_29way_logOdds_rankscore = functionalAnnotationArray[pos++].trim();
         String SiPhy_29way_pi = functionalAnnotationArray[pos++].trim();
@@ -988,24 +1003,80 @@ public class VepHelper {
 //        addStrToJsonObject("ref_codon", functionalAnnotationArray[pos++], funcAnnotation, false);
 
         String rs_dbSNP151 = functionalAnnotationArray[pos];
-
-        // 402
+        if (!rs_dbSNP151.isEmpty()) {
+            dbExt[DBSNP] = true;
+            addStrToListSet(dbExtId, DBSNP, rs_dbSNP151);
+        }
+        // 408
 
 
         /* population frequencies Json Obj */
 
+        // Create a map of Map<TranscriptIdFull, deStructuredTranscript>
+        /*
+        public Transcript(  ) {
+         */
+
+        if (deStructuredTranscript.isEmpty() && !Ensembl_transcriptid.trim().isEmpty()) {
+
+            String[] ensemblTranscriptIdArray = Ensembl_transcriptid.split("&");
+            int length = ensemblTranscriptIdArray.length;
+            String[] ensemblProteinIdArray = Ensembl_proteinid.split("&");
+            String[] aaPosArray = aapos.split("&");
+            String[] FATHMM_scoreArray = (FATHMM_score.isEmpty()) ? fillArray(length) : FATHMM_score.split("&");
+            String[] FATHMMArray = (FATHMM.isEmpty()) ? fillArray(length) : FATHMM.split("&");
+            String[] SIFTArray = SIFT.split("&");
+            String[] SIFT_scoreArray = SIFT_score.split("&");
+            String[] MutationAssessor_predArray = MutationAssessor_pred.split("&");
+            String[] MutationAssessor_scoreArray = MutationAssessor_score.split("&");
+            String[] Polyphen2_HDIVArray = Polyphen2_HDIV.split("&");
+            String[] Polyphen2_HDIV_scoreArray = Polyphen2_HDIV_score.split("&");
+            String[] Polyphen2_HVAR_predArray = Polyphen2_HVAR_pred.split("&");
+            String[] Polyphen2_HVAR_scoreArray = Polyphen2_HVAR_score.split("&");
+            //String[] LRT_predArray = LRT_pred.split("&");
+            //String[] LRT_scoreArray = LRT_score.split("&");
+
+
+
+
+            for (int i=0; i < ensemblTranscriptIdArray.length; i++) {
+                String tid = ensemblTranscriptIdArray[i];
+                try {
+                    deStructuredTranscript.put(tid, new Transcript(tid, aaPosArray[i], FATHMMArray[i], SIFTArray[i],
+                            ensemblProteinIdArray[i], Polyphen2_HVAR_scoreArray[i], MutationAssessor_scoreArray[i],
+                            Polyphen2_HDIVArray[i], Polyphen2_HDIV_scoreArray[i], LRT_pred, FATHMM_scoreArray[i],
+                            MutationAssessor_predArray[i], Polyphen2_HVAR_predArray[i], LRT_score, SIFT_scoreArray[i]));
+                } catch (ArrayIndexOutOfBoundsException aioe) {
+                    System.err.println("something can be empty");
+                    aioe.printStackTrace();
+                    System.exit(1);
+                }
+            }
+        }
+
+        if (deStructuredTranscript.containsKey(featureId)) {
+            Transcript transcript = deStructuredTranscript.get(featureId);
+            String aaChange = aaref + transcript.getAaPosition() + aaalt;
+            addStrToJsonObject("aaChange", aaChange , funcAnnotation, false);
+
+
+            prediction = transcript.getPrediction();
+            if ( (boolean) prediction.get("available") ) {
+                funcAnnotation.put("predictions", prediction);
+            }
+
+        }
+
+
         cdnaChange = ref + cdnaPos + alt;
         addStrToJsonObject("cdnaChange", cdnaChange , funcAnnotation, false);
 
-        String aaChange = aaref + aapos + aaalt;
-        addStrToJsonObject("aaChange", aaChange , funcAnnotation, false);
         frequencies.put("1000Gp3", frequency1000Gp3);
         frequencies.put("ExAc", frequencyExAc);
         frequencies.put("gnomAD_exomes", frequencyGnomadEx);
         frequencies.put("gnomAD_genomes", frequencyGnomadGen);
         frequencies.put("ESP6500", frequencyEsp6500);
         funcAnnotation.put("frequencies", frequencies);
-        funcAnnotation.put("predictions", prediction);
         funcAnnotation.put("conservationsScores", conservation);
 
         if (geneEns != null) {
@@ -1059,9 +1130,9 @@ public class VepHelper {
         return avail;
     }
 
-    private static boolean addStrToJsonObject(String name, String var, JSONObject jsonObject, boolean withAvailability) {
+    static boolean addStrToJsonObject(String name, String var, JSONObject jsonObject, boolean withAvailability) {
         boolean avail = false;
-        if (var.length()>0 && !".".equalsIgnoreCase(var)) {
+        if (var != null && var.length()>0 && !".".equalsIgnoreCase(var)) {
             jsonObject.put(name, var);
             avail = true;
             if (withAvailability) jsonObject.put("available", avail);
@@ -1198,8 +1269,12 @@ public class VepHelper {
             jsonObject.put("radboudumc", radboudumc);
 
         });
+    }
 
-
+    private static String[] fillArray(int size) {
+        String[] array = new String[size];
+        Arrays.fill(array, "");
+        return array;
     }
 
 }

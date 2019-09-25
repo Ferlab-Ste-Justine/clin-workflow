@@ -140,9 +140,9 @@ public class FunctionalAnnotation {
     JSONObject getJsonObj() {
 
         JSONObject fa = new JSONObject();
-        fa.put("geneAffectedSymbol", gene);
-        fa.put("geneAffectedId", geneId);
-        fa.put("aaChange", aaChange);
+        if (!gene.isEmpty()) fa.put("geneAffectedSymbol", gene);
+        if (!geneId.isEmpty()) fa.put("geneAffectedId", geneId);
+        if (!aaChange.isEmpty()) fa.put("aaChange", aaChange);
         fa.put("consequence", consequence);
         fa.put("codingDNAChange", codingDNAChange);
         fa.put("impact", impact);

@@ -35,4 +35,22 @@ public class RedisGeneSetHelper {
         return sMembers;
 
     }
+
+    static Set<String> getIdsForGeneSymbol(String geneSymbol) {
+
+        Set<String> sMembers = new HashSet<>();
+        for (int i=0; i< 3; i++) {
+            try {
+                sMembers = jedisClient.smembers("gene:"+geneSymbol);
+                break;
+            } catch (Exception e) {
+                System.err.println("Redis call #"+i+" failed... Retrying...");
+            }
+        }
+
+        return sMembers;
+
+    }
+
+
 }
