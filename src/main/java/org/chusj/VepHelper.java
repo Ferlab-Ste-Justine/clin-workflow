@@ -655,7 +655,7 @@ public class VepHelper {
         String GENCODE_basic = functionalAnnotationArray[pos++];
         String GERPpp_NR = functionalAnnotationArray[pos++];
         String GERPpp_RS = functionalAnnotationArray[pos++];
-        addStrToJsonObject("GERP", GERPpp_RS, conservation, true);
+        addNumberToJsonObject("GERP", GERPpp_RS, conservation, true, 'f');
         String GERPpp_RS_rankscore = functionalAnnotationArray[pos++];
         String GM12878_confidence_value = functionalAnnotationArray[pos++];
         String GM12878_fitCons_rankscore = functionalAnnotationArray[pos++];
@@ -985,14 +985,14 @@ public class VepHelper {
         String phastCons17way_primate = functionalAnnotationArray[pos++];
         // 389
         String phastCons17way_primate_rankscore = functionalAnnotationArray[pos++];
-        addStrToJsonObject("PhastCons", phastCons17way_primate_rankscore, conservation, true);
+        addNumberToJsonObject("PhastCons", phastCons17way_primate_rankscore, conservation, true, 'f');
         String phastCons30way_mammalian = functionalAnnotationArray[pos++];
         String phastCons30way_mammalian_rankscore = functionalAnnotationArray[pos++];
         String phyloP100way_vertebrate = functionalAnnotationArray[pos++];
         String phyloP100way_vertebrate_rankscore = functionalAnnotationArray[pos++];
         String phyloP17way_primate = functionalAnnotationArray[pos++];
         String phyloP17way_primate_rankscore = functionalAnnotationArray[pos++];
-        addStrToJsonObject("PhyloP", phyloP17way_primate_rankscore, conservation, true);
+        addNumberToJsonObject("PhyloP", phyloP17way_primate_rankscore, conservation, true, 'f');
         String phyloP30way_mammalian = functionalAnnotationArray[pos++];
         String phyloP30way_mammalian_rankscore = functionalAnnotationArray[pos++];
         String pos_1_based = functionalAnnotationArray[pos++];
@@ -1087,7 +1087,7 @@ public class VepHelper {
 
     }
 
-    private static boolean addNumberToJsonObject(String name, String var, JSONObject jsonObject, boolean withAvailability, char type) {
+    static boolean addNumberToJsonObject(String name, String var, JSONObject jsonObject, boolean withAvailability, char type) {
         boolean avail = false;
         if (var != null && !var.trim().isEmpty() && !".".equalsIgnoreCase(var)) {
             try {

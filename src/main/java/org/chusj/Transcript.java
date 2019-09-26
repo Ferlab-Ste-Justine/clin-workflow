@@ -2,6 +2,7 @@ package org.chusj;
 
 import org.json.JSONObject;
 
+import static org.chusj.VepHelper.addNumberToJsonObject;
 import static org.chusj.VepHelper.addStrToJsonObject;
 
 public class Transcript {
@@ -170,15 +171,15 @@ public class Transcript {
         addStrToJsonObject("FATHMM_score", FATHMM_score, prediction, true);
         addStrToJsonObject("FATHMM", FATHMM, prediction, true);
         addStrToJsonObject("SIFT", SIFT, prediction, true);
-        addStrToJsonObject("SIFT_score", SIFT_score, prediction, true);
+        addNumberToJsonObject("SIFT_score", SIFT_score, prediction, true, 'f');
         addStrToJsonObject("MutationAssessor_pred", MutationAssessor_pred, prediction, true);
-        addStrToJsonObject("MutationAssessor_score", MutationAssessor_score, prediction, true);
+        addNumberToJsonObject("MutationAssessor_score", MutationAssessor_score, prediction, true, 'f');
         addStrToJsonObject("Polyphen2_HDIV", Polyphen2_HDIV, prediction, true);
-        addStrToJsonObject("Polyphen2_HDIV_score", Polyphen2_HDIV_score, prediction, true);
+        addNumberToJsonObject("Polyphen2_HDIV_score", Polyphen2_HDIV_score, prediction, true, 'f');
         addStrToJsonObject("Polyphen2_HVAR_pred", Polyphen2_HVAR_pred, prediction, true);
-        addStrToJsonObject("Polyphen2_HVAR_score", Polyphen2_HVAR_score, prediction, true);
+        addNumberToJsonObject("Polyphen2_HVAR_score", Polyphen2_HVAR_score, prediction, true, 'f');
         addStrToJsonObject("LRT_pred", LRT_pred, prediction, true);
-        addStrToJsonObject("LRT_score", LRT_score, prediction, true);
+        addNumberToJsonObject("LRT_score", LRT_score, prediction, true, 'f');
 
 
         return prediction;

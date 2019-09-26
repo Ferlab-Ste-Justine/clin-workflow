@@ -393,13 +393,7 @@
                   }
                 },
                 "MutationAssessor_score": {
-                  "type": "text",
-                  "fields": {
-                    "keyword": {
-                      "type": "keyword",
-                      "ignore_above": 256
-                    }
-                  }
+                  "type": "float"
                 },
                 "LRT_pred": {
                   "type": "text",
@@ -411,13 +405,7 @@
                   }
                 },
                 "LRT_score": {
-                  "type": "text",
-                  "fields": {
-                    "keyword": {
-                      "type": "keyword",
-                      "ignore_above": 256
-                    }
-                  }
+                  "type": "float"
                 },
                 "FATHMM": {
                   "type": "text",
@@ -429,13 +417,7 @@
                   }
                 },
                 "FATHMM_score": {
-                  "type": "text",
-                  "fields": {
-                    "keyword": {
-                      "type": "keyword",
-                      "ignore_above": 256
-                    }
-                  }
+                  "type": "float"
                 },
                 "Polyphen2_HDIV": {
                   "type": "text",
@@ -447,13 +429,7 @@
                   }
                 },
                 "Polyphen2_HDIV_score": {
-                  "type": "text",
-                  "fields": {
-                    "keyword": {
-                      "type": "keyword",
-                      "ignore_above": 256
-                    }
-                  }
+                  "type": "float"
                 },
                 "Polyphen2_HVAR": {
                   "type": "text",
@@ -465,13 +441,7 @@
                   }
                 },
                 "Polyphen2_HVAR_score": {
-                  "type": "text",
-                  "fields": {
-                    "keyword": {
-                      "type": "keyword",
-                      "ignore_above": 256
-                    }
-                  }
+                  "type": "float"
                 },
                 "SIFT": {
                   "type": "text",
@@ -483,13 +453,7 @@
                   }
                 },
                 "SIFT_score": {
-                  "type": "text",
-                  "fields": {
-                    "keyword": {
-                      "type": "keyword",
-                      "ignore_above": 256
-                    }
-                  }
+                  "type": "float"
                 },
                 "available": {
                   "type": "boolean"
@@ -499,31 +463,13 @@
             "conservationsScores": {
               "properties": {
                 "GERP": {
-                  "type": "text",
-                  "fields": {
-                    "keyword": {
-                      "type": "keyword",
-                      "ignore_above": 256
-                    }
-                  }
+                  "type": "float"
                 },
                 "PhastCons": {
-                  "type": "text",
-                  "fields": {
-                    "keyword": {
-                      "type": "keyword",
-                      "ignore_above": 256
-                    }
-                  }
+                  "type": "float"
                 },
                 "PhyloP": {
-                  "type": "text",
-                  "fields": {
-                    "keyword": {
-                      "type": "keyword",
-                      "ignore_above": 256
-                    }
-                  }
+                  "type": "float"
                 },
                 "available": {
                   "type": "boolean"
