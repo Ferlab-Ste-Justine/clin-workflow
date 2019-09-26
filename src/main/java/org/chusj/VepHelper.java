@@ -254,7 +254,10 @@ public class VepHelper {
 
             funcAnnotation = processVepAnnotations(s, dbExtId, dbExt, geneSet, deStructuredTranscript);
 
-            frequencies = (JSONObject) funcAnnotation.remove("frequencies");
+            if (!funcAnnotation.isNull("frequencies")) {
+                frequencies = (JSONObject) funcAnnotation.remove("frequencies");
+
+            }
             functionalAnnotations.put(funcAnnotation);
             String funcAnnotationImpact = (String) funcAnnotation.remove("impact");
             int funcAnnotationScore = getImpactScore(funcAnnotationImpact);
@@ -315,7 +318,7 @@ public class VepHelper {
         //propertiesOneMutation.put("type",  variant_class.get("type"));
         String types = toStringList(dbExtId.get(TYPES));
         propertiesOneMutation.put("type",  types);
-        propertiesOneMutation.put("frequencies", frequencies);
+        if (frequencies != null ) propertiesOneMutation.put("frequencies", frequencies);
 
         for (int i=0; i< nbDonor; i++) {
 
@@ -370,7 +373,10 @@ public class VepHelper {
 
         addSetsToArrayToObj(dbExtId, DBSNP, bdExtObj, "dbSNP", "id");
         String clinvarids = toStringList(dbExtId.get(CLINVAR));
-        clinvarObj.put("clinvar_id", clinvarids);
+        if (!clinvarids.isEmpty()) {
+            clinvarObj.put("clinvar_id", clinvarids);
+            propertiesOneMutation.put("clinvar", clinvarObj);
+        }
         addSetsToArrayToObj(dbExtId, CLINVAR, bdExtObj, "clinvar", "id");
 
         addSetsToArrayToObj(dbExtId, ENSEMBL, bdExtObj, "ensembl", "id");
@@ -399,7 +405,7 @@ public class VepHelper {
 
 
         propertiesOneMutation.put("bdExt", bdExtObj);
-        propertiesOneMutation.put("clinvar", clinvarObj);
+
         propertiesOneMutation.put("donors", donorArray);
         propertiesOneMutation.put("genes", geneArray);
 
@@ -454,7 +460,7 @@ public class VepHelper {
 
         //0 - Allele|Consequence|IMPACT|SYMBOL|Gene|Feature_type|Feature|BIOTYPE|EXON|INTRON
         String Allele = functionalAnnotationArray[pos++];
-        addStrToJsonObject("allele", Allele, funcAnnotation, false);
+        //addStrToJsonObject("allele", Allele, funcAnnotation, false);
 //        String Consequence = functionalAnnotationArray[pos++];
         addStrToJsonObject("consequence", functionalAnnotationArray[pos++], funcAnnotation, false);
         String impact = functionalAnnotationArray[pos++];
@@ -1013,9 +1019,7 @@ public class VepHelper {
         /* population frequencies Json Obj */
 
         // Create a map of Map<TranscriptIdFull, deStructuredTranscript>
-        /*
-        public Transcript(  ) {
-         */
+
 
         if (deStructuredTranscript.isEmpty() && !Ensembl_transcriptid.trim().isEmpty()) {
 
@@ -1035,8 +1039,6 @@ public class VepHelper {
             String[] Polyphen2_HVAR_scoreArray = Polyphen2_HVAR_score.split("&");
             //String[] LRT_predArray = LRT_pred.split("&");
             //String[] LRT_scoreArray = LRT_score.split("&");
-
-
 
 
             for (int i=0; i < ensemblTranscriptIdArray.length; i++) {
@@ -1070,13 +1072,28 @@ public class VepHelper {
 
         cdnaChange = ref + cdnaPos + alt;
         addStrToJsonObject("cdnaChange", cdnaChange , funcAnnotation, false);
-
-        frequencies.put("1000Gp3", frequency1000Gp3);
-        frequencies.put("ExAc", frequencyExAc);
-        frequencies.put("gnomAD_exomes", frequencyGnomadEx);
-        frequencies.put("gnomAD_genomes", frequencyGnomadGen);
-        frequencies.put("ESP6500", frequencyEsp6500);
-        funcAnnotation.put("frequencies", frequencies);
+        boolean freqAvail = false;
+        if ((boolean) frequency1000Gp3.get("available")) {
+            frequencies.put("1000Gp3", frequency1000Gp3);
+            freqAvail = true;
+        }
+        if ((boolean) frequencyExAc.get("available")) {
+            frequencies.put("ExAc", frequencyExAc);
+            freqAvail = true;
+        }
+        if ((boolean) frequencyGnomadEx.get("available")) {
+            frequencies.put("gnomAD_exomes", frequencyGnomadEx);
+            freqAvail = true;
+        }
+        if ((boolean) frequencyGnomadGen.get("available")) {
+            frequencies.put("gnomAD_genomes", frequencyGnomadGen);
+            freqAvail = true;
+        }
+        if ((boolean) frequencyEsp6500.get("available")) {
+            frequencies.put("ESP6500", frequencyEsp6500);
+            freqAvail = true;
+        }
+        if (freqAvail) funcAnnotation.put("frequencies", frequencies);
         funcAnnotation.put("conservationsScores", conservation);
 
         if (geneEns != null) {

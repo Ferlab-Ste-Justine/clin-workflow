@@ -8,6 +8,7 @@ import java.util.Set;
 public class RedisGeneSetHelper {
 
     private static Jedis jedisClient = new Jedis();
+    private static final int NUMBER_OF_RETRY = 3;
 
     public static void main(String[] args) {
 
@@ -22,15 +23,24 @@ public class RedisGeneSetHelper {
 
     static Set<String> getMembersForEnsId(String ensId) {
 
+
         Set<String> sMembers = new HashSet<>();
-        for (int i=0; i< 3; i++) {
+        for (int i=0; i< NUMBER_OF_RETRY; i++)
             try {
-                sMembers = jedisClient.smembers("id:"+ensId);
+                sMembers = jedisClient.smembers("id:" + ensId);
                 break;
             } catch (Exception e) {
-                System.err.println("Redis call #"+i+" failed... Retrying...");
+                if (i<NUMBER_OF_RETRY) {
+                    System.err.println("Redis cle #" + i + " failed... Retrying...");
+                try {
+                    Thread.sleep(400);
+                } catch (InterruptedException e1) {
+                    e1.printStackTrace();
+                }
+                } else {
+                    System.err.println("Redis call failed "+NUMBER_OF_RETRY + " times");
+                }
             }
-        }
 
         return sMembers;
 
