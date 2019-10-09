@@ -23,7 +23,7 @@ public class FunctionalAnnotation {
         return biotype;
     }
 
-    public void setBiotype(String biotype) {
+    void setBiotype(String biotype) {
         this.biotype = biotype;
     }
 
@@ -62,7 +62,7 @@ public class FunctionalAnnotation {
         this.strand = strand;
     }
 
-    public String getGene() {
+    private String getGene() {
         return gene;
     }
 
@@ -141,7 +141,7 @@ public class FunctionalAnnotation {
 
         JSONObject fa = new JSONObject();
         if (!gene.isEmpty()) fa.put("geneAffectedSymbol", gene);
-        if (!geneId.isEmpty()) fa.put("geneAffectedId", geneId);
+        if (geneId != null && !geneId.isEmpty()) fa.put("geneAffectedId", geneId);
         if (!aaChange.isEmpty()) fa.put("aaChange", aaChange);
         fa.put("consequence", consequence);
         if (!codingDNAChange.isEmpty()) fa.put("codingDNAChange", codingDNAChange);
@@ -150,8 +150,14 @@ public class FunctionalAnnotation {
             fa.put("strand", strand);
         }
         fa.put("transcripts", theRest);
-        if (scores != null && (boolean) scores.get("available")) fa.put("conservationsScores", scores);
-        if (predictions != null && (boolean) predictions.get("available")) fa.put("predictions", predictions);
+        if (scores != null && (boolean) scores.get("available")) {
+            scores.remove("available");
+            fa.put("conservationsScores", scores);
+        }
+        if (predictions != null ) { //&& !predictions.isNull("available")
+            fa.remove("available");
+            fa.put("predictions", predictions);
+        }
         fa.put("biotype", biotype);
 
 

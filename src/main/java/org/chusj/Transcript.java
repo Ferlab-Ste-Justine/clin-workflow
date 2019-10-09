@@ -42,6 +42,7 @@ public class Transcript {
         Polyphen2_HVAR_pred = polyphen2_HVAR_pred;
         this.LRT_score = LRT_score;
         this.SIFT_score = SIFT_score;
+
     }
 
     public Transcript() {
@@ -165,10 +166,10 @@ public class Transcript {
 
 
 
-    public JSONObject getPrediction() {
+    JSONObject getPrediction() {
         JSONObject prediction = new JSONObject();
 
-        addStrToJsonObject("FATHMM_score", FATHMM_score, prediction, true);
+        addNumberToJsonObject("FATHMM_score", FATHMM_score, prediction, true, 'f');
         addStrToJsonObject("FATHMM", FATHMM, prediction, true);
         addStrToJsonObject("SIFT", SIFT, prediction, true);
         addNumberToJsonObject("SIFT_score", SIFT_score, prediction, true, 'f');

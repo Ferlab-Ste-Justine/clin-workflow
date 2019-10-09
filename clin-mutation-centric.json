@@ -41,15 +41,6 @@
             }
           }
         },
-        "dbSNP_ID": {
-          "type": "text",
-          "fields": {
-            "keyword": {
-              "type": "keyword",
-              "ignore_above": 256
-            }
-          }
-        },
         "donors": {
           "type": "nested",
           "include_in_parent": true,
@@ -59,12 +50,6 @@
             },
             "mq": {
               "type": "long"
-            },
-            "mqRankSum": {
-              "type": "float"
-            },
-            "readPosRankSum": {
-              "type": "float"
             },
             "filter": {
               "type": "text",
@@ -102,7 +87,7 @@
                 }
               }
             },
-            "pid": {
+            "relation": {
               "type": "text",
               "fields": {
                 "keyword": {
@@ -110,9 +95,6 @@
                   "ignore_above": 256
                 }
               }
-            },
-            "quality": {
-              "type": "float"
             },
             "sequencingStrategy": {
               "type": "text",
@@ -124,15 +106,6 @@
               }
             },
             "studyId": {
-              "type": "text",
-              "fields": {
-                "keyword": {
-                  "type": "keyword",
-                  "ignore_above": 256
-                }
-              }
-            },
-            "type": {
               "type": "text",
               "fields": {
                 "keyword": {
@@ -165,33 +138,9 @@
             "dp": {
               "type": "long"
             },
-            "mb": {
-              "type": "text",
-              "fields": {
-                "keyword": {
-                  "type": "keyword",
-                  "ignore_above": 256
-                }
-              }
-            },
-            "f1r2": {
-              "type": "text",
-              "fields": {
-                "keyword": {
-                  "type": "keyword",
-                  "ignore_above": 256
-                }
-              }
-            },
-            "f2r1": {
-              "type": "text",
-              "fields": {
-                "keyword": {
-                  "type": "keyword",
-                  "ignore_above": 256
-                }
-              }
-            },
+            "genotypeFamily": {
+              "type": "text"
+              },
             "gt": {
               "type": "text",
               "fields": {
@@ -222,6 +171,15 @@
                   "ignore_above": 256
                 }
               }
+            }
+          }
+        },
+        "specimenList": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword",
+              "ignore_above": 256
             }
           }
         },
@@ -264,15 +222,30 @@
                   "ignore_above" : 256
                 }
               }
+            }
+          }
+        },
+        "availableDbExt" : {
+          "type": "nested",
+          "include_in_parent": true,
+          "properties": {
+            "clinvar": {
+              "type": "boolean"
             },
-            "ensembl": {
-              "type" : "text",
-              "fields" : {
-                "keyword" : {
-                  "type" : "keyword",
-                  "ignore_above" : 256
-                }
-              }
+            "omim": {
+              "type": "boolean"
+            },
+            "orphanet":{
+              "type": "boolean"
+            },
+            "pubmed": {
+              "type": "boolean"
+            },
+            "hpo" : {
+              "type": "boolean"
+            },
+            "radboudumc" : {
+              "type": "boolean"
             }
           }
         },
@@ -493,24 +466,6 @@
             },
             "aaChange": {
               "type": "text"
-            },
-            "featureId": {
-              "type": "text",
-              "fields": {
-                "keyword": {
-                  "type": "keyword",
-                  "ignore_above": 256
-                }
-              }
-            },
-            "featureType": {
-              "type": "text",
-              "fields": {
-                "keyword": {
-                  "type": "keyword",
-                  "ignore_above": 256
-                }
-              }
             },
             "geneAffectedId": {
               "type": "text",

@@ -6,7 +6,7 @@ class etlTest extends FunSuite  {
 
   test("Testing zygosity") {
 
-    assert(testZygo() == true)
+    assert(testZygo())
 
   }
 
@@ -27,7 +27,8 @@ class etlTest extends FunSuite  {
 
   def testZygo(): Boolean = {
 
-    VepHelper.zygosity("0/0") == "HOM REF" &&
+      VepHelper.zygosity("0/0") == "HOM REF" &&
+      VepHelper.zygosity("0|0") == "HOM REF" &&
       VepHelper.zygosity("0/1") == "HET REF" &&
       VepHelper.zygosity("1/2") == "HET ALT" &&
       VepHelper.zygosity("1/1") == "HOM ALT" &&

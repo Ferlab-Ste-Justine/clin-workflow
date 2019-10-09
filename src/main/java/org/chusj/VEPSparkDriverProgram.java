@@ -9,19 +9,28 @@ import org.apache.spark.api.java.JavaSparkContext;
 import org.elasticsearch.action.get.GetRequest;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.index.IndexRequest;
+import org.elasticsearch.action.update.UpdateRequest;
+import org.elasticsearch.action.update.UpdateResponse;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestHighLevelClient;
+import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.common.xcontent.XContentType;
+import org.elasticsearch.index.engine.Engine;
+import org.elasticsearch.script.Script;
+import org.elasticsearch.script.ScriptType;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
 import javax.xml.bind.DatatypeConverter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
-import java.util.Properties;
+import java.util.*;
 
+import static java.util.Collections.singletonMap;
 import static org.chusj.VepHelper.addDonorArrayToDonorArray;
 
 public class VEPSparkDriverProgram {
@@ -35,23 +44,19 @@ public class VEPSparkDriverProgram {
 
     public static void main(String[] args) throws Exception {
 
-        if (args.length != 12 ) {
-            throw new Exception("Missing params; need extractFile patientId familyId projectId studyId sequencingStrategy type(P|M|F) ES_LOAD(Y|N) " +
+        if (args.length != 7 ) {
+            throw new Exception("Missing params; need extractFile pedigreePropertiesFile ES_UPSERT (true|false) " +
                     "sparkMaster local[nbWorkers] 8g nbPartitions");
         }
 
         String extractFile = args[0];
-        String patientId = args[1];
-        String familyId = args[2];
-        String projectId = args[3];
-        String studyId = args[4];
-        String sequencingStrategy = args[5];
-        String type = args[6];
-        String esLoad = args[7];
-        String sparkMaster = args[8];
-        String localThread = args[9];
-        String memory = args[10];
-        int nbPartitions = Integer.valueOf(args[11]);
+        String pedigreePropsFile = args[1];
+
+        boolean esUpsert = Boolean.valueOf(args[2]);
+        String sparkMaster = args[3];
+        String localThread = args[4];
+        String memory = args[5];
+        int nbPartitions = Integer.valueOf(args[6]);
 //        int localTi = Integer.valueOf(localThread);
 
         /* Define Spark Configuration */
@@ -72,7 +77,7 @@ public class VEPSparkDriverProgram {
         //JavaRDD<Integer> lineCharacters = lines.map(s -> s.length());
         /* reduces operation -> Calculating total characters */
 
-        Properties pedigreeProps = VepHelper.getPropertiesFromFile("pedigree.properties");
+        Properties pedigreeProps = VepHelper.getPropertiesFromFile(pedigreePropsFile);
         pedigreeProps.forEach( (k,v) -> System.out.println(k+"="+v) );
 
         try (RestHighLevelClient clientTry = new RestHighLevelClient(
@@ -82,14 +87,14 @@ public class VEPSparkDriverProgram {
             client = clientTry;
             connectToMemCached();
 
-            lines.foreach((a) -> buildAndStoreJsonObj(a, esLoad, pedigreeProps));
+            lines.foreach((a) -> buildAndStoreJsonObj(a, esUpsert, pedigreeProps));
         }
         sc.close();
         client.close();
     }
 
 
-    private static void buildAndStoreJsonObj(String extractedLine, String esLoad, Properties pedigreeProps) throws IOException {
+    private static void buildAndStoreJsonObj(String extractedLine, boolean esUpsert, Properties pedigreeProps) throws IOException {
 
 
         JSONObject propertiesOneMutation = VepHelper.processVcfDataLine(extractedLine, "dn,dq", pedigreeProps);
@@ -112,15 +117,17 @@ public class VEPSparkDriverProgram {
 
 
 
-        //String uid = (String) propertiesOneMutation.get("id");
+        String uid = (String) propertiesOneMutation.get("id");
         String dnaChanges = (String) propertiesOneMutation.get("mutationId");
 
         String specimenIdList = pedigreeProps.getProperty("pedigree");
         String familyId = pedigreeProps.getProperty("familyId");
 
-        String uid = getSHA1Hash(familyId+ "@" + dnaChanges);
+        //String uid = getSHA1Hash(familyId+ "@" + dnaChanges);
 
         JSONArray previousDonorArray = null;
+        JSONArray specimentList;
+
 
         if (checkMemcached) {
 
@@ -226,15 +233,19 @@ public class VEPSparkDriverProgram {
 //                previousDonorArray = donorArray;
 //            }
 
-            //propertiesOneMutation.put("donors", previousDonorArray);
-            //mutationCentricIndexjson.put("properties", propertiesOneMutation);
+            previousDonorArray = (JSONArray) propertiesOneMutation.get("donors");
+            specimentList = (JSONArray) propertiesOneMutation.get("specimenList");
             for (int i=0; i< 3; i++) {
                 try {
-                    index(propertiesOneMutation.toString(), client, uid, INDEX_NAME);
+                    if (esUpsert) {
+                        upsert(propertiesOneMutation.toString(), client, uid, previousDonorArray, specimentList);
+                    } else {
+                        index(propertiesOneMutation.toString(), client, uid, INDEX_NAME);
+                    }
                     indexingSuccess = true;
                     break;
                 } catch (Exception e) {
-                    System.err.println("*******Indexation try #"+i+" failed...");
+                    System.err.println("*******Indexation try #"+i+" failed..."+e);
                 }
             }
 
@@ -261,6 +272,11 @@ public class VEPSparkDriverProgram {
             //System.out.print("."+indexResponse.status().getStatus()+".");
         } catch (Exception e) {
             System.err.println("E="+e.getMessage()+"-"+uid);
+            try {
+                Thread.sleep(200);
+            } catch (InterruptedException e1) {
+                e1.printStackTrace();
+            }
             //indexResponse = client.index(request, RequestOptions.DEFAULT);
             throw new Exception(e);
         }
@@ -268,11 +284,89 @@ public class VEPSparkDriverProgram {
         System.out.print(".");
     }
 
+    private static void upsert(String object, RestHighLevelClient client, String uid, JSONArray donors, JSONArray specimenList) throws Exception {
+
+
+
+        Map<String, Object> parameters = new HashMap<>();
+        Map<String, Object> donorMap = null;//= new HashMap<>();
+
+        List<String> specimenLst = new ArrayList<>();
+        List<Map<String, Object>> donorsLst = new ArrayList<>();
+        for (int i=0; i<donors.length(); i++) {
+            donorMap = new HashMap<>();
+            specimenLst.add( (String) specimenList.get(i) );
+            JSONObject donor = (JSONObject) donors.get(i);
+            donorMap.put("depth", donor.get("depth"));
+            donorMap.put("mq", donor.get("mq"));
+            donorMap.put("filter", donor.get("filter"));
+            donorMap.put("specimenId", specimenList.get(i));
+            donorMap.put("patientId", donor.get("patientId"));
+            donorMap.put("familyId", donor.get("familyId"));
+            //donorMap.put("pid", donor.get("pid"));
+            donorMap.put("relation", donor.get("relation"));
+            donorMap.put("sequencingStrategy", donor.get("sequencingStrategy"));
+            donorMap.put("studyId", donor.get("studyId"));
+            donorMap.put("zygosity", donor.get("zygosity"));
+            donorMap.put("ad", donor.get("ad"));
+            donorMap.put("af", donor.get("af"));
+            donorMap.put("dp", donor.get("dp"));
+            donorMap.put("gt", donor.get("gt"));
+            donorMap.put("gq", donor.get("gq"));
+            donorMap.put("practitionerId", donor.get("practitionerId"));
+            donorMap.put("organizationId", donor.get("organizationId"));
+            if (!donor.isNull("genotypeFamily")) {
+                donorMap.put("genotypeFamily", donor.get("genotypeFamily"));
+            }
+
+            donorMap.put("lastUpdate", donor.get("lastUpdate"));
+
+
+            donorsLst.add(donorMap);
+//            System.err.println("donorsLst@"+i+"="+donorsLst.get(i));
+//            System.err.println("spIds@"+i+"="+donorMap.get("specimenId"));
+
+        }
+
+        parameters.put("specimen", specimenList);
+        parameters.put("donorsLst",  donorsLst );
+        parameters.put("donorMap", donorMap);
+
+        Script inline = new Script(ScriptType.INLINE, "painless",
+                "for (int i=0; i<params.specimen.size(); i++) {" +
+                            "String s = params.specimen.get(i); " +
+                            "Map d = params.donorsLst.get(i); " +
+                            "if (!ctx._source.specimenList.contains(s) && d != null) {" +
+                               " ctx._source.donors.add(d);" +
+                               " ctx._source.specimenList.add(s)" +
+                            "}" +
+                          "}", parameters);
+
+        UpdateRequest request = new UpdateRequest("mutations", "_doc", uid);
+        request.script(inline);
+
+        request.upsert(object, XContentType.JSON);
+        UpdateResponse result = null;
+        try {
+            result = client.update(request, RequestOptions.DEFAULT);
+            //System.out.print("."+indexResponse.status().getStatus()+".");
+            //System.err.println("result="+result);
+        } catch (Exception e) {
+            System.err.println("E="+e.getMessage()+"-"+uid);
+            System.err.println("result="+result+e);
+            //indexResponse = client.index(request, RequestOptions.DEFAULT);
+            throw new Exception(e);
+        }
+
+        System.out.print(".");
+    }
+
+
     public static String getSHA256Hash(String data) {
         String result = null;
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] hash = digest.digest(data.getBytes("UTF-8"));
+            byte[] hash = digest.digest(data.getBytes(StandardCharsets.UTF_8));
             return bytesToHex(hash);
         } catch(Exception ex) {
             ex.printStackTrace();
@@ -285,7 +379,7 @@ public class VEPSparkDriverProgram {
 
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-1");
-            byte[] hash = digest.digest(data.getBytes("UTF-8"));
+            byte[] hash = digest.digest(data.getBytes(StandardCharsets.UTF_8));
             return bytesToHex(hash);
         } catch(Exception ex) {
             ex.printStackTrace();
@@ -298,7 +392,7 @@ public class VEPSparkDriverProgram {
 
         try {
             MessageDigest digest = MessageDigest.getInstance("MD5");
-            byte[] hash = digest.digest(data.getBytes("UTF-8"));
+            byte[] hash = digest.digest(data.getBytes(StandardCharsets.UTF_8));
             return bytesToHex(hash);
         } catch(Exception ex) {
             ex.printStackTrace();
