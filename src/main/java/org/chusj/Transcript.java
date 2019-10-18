@@ -22,6 +22,35 @@ public class Transcript {
     private String MutationAssessor_pred;
     private String Polyphen2_HVAR_pred;
     private String LRT_score;
+    private String DANN;
+    private String CADD;
+    private String REVEL;
+
+
+    public Transcript(String ensemblTranscriptId, String aaPosition, String FATHMM, String SIFT, String SIFT_score, String ensemblProteinId,
+                      String polyphen2_HVAR_score, String mutationAssessor_score, String polyphen2_HDIV,
+                      String polyphen2_HDIV_score, String LRT_pred, String FATHMM_score, String mutationAssessor_pred,
+                      String polyphen2_HVAR_pred, String LRT_score,
+                      String DANN, String CADD, String REVEL) {
+        this.ensemblTranscriptId = ensemblTranscriptId;
+        this.aaPosition = aaPosition;
+        this.FATHMM = FATHMM;
+        this.SIFT = SIFT;
+        this.SIFT_score = SIFT_score;
+        this.ensemblProteinId = ensemblProteinId;
+        Polyphen2_HVAR_score = polyphen2_HVAR_score;
+        MutationAssessor_score = mutationAssessor_score;
+        Polyphen2_HDIV = polyphen2_HDIV;
+        Polyphen2_HDIV_score = polyphen2_HDIV_score;
+        this.LRT_pred = LRT_pred;
+        this.FATHMM_score = FATHMM_score;
+        MutationAssessor_pred = mutationAssessor_pred;
+        Polyphen2_HVAR_pred = polyphen2_HVAR_pred;
+        this.LRT_score = LRT_score;
+        this.DANN = DANN;
+        this.CADD = CADD;
+        this.REVEL = REVEL;
+    }
 
     public Transcript(String ensemblTranscriptId, String aaPosition, String FATHMM, String SIFT, String ensemblProteinId,
                       String polyphen2_HVAR_score, String mutationAssessor_score, String polyphen2_HDIV,
@@ -42,6 +71,8 @@ public class Transcript {
         Polyphen2_HVAR_pred = polyphen2_HVAR_pred;
         this.LRT_score = LRT_score;
         this.SIFT_score = SIFT_score;
+
+
 
     }
 
@@ -181,7 +212,9 @@ public class Transcript {
         addNumberToJsonObject("Polyphen2_HVAR_score", Polyphen2_HVAR_score, prediction, true, 'f');
         addStrToJsonObject("LRT_pred", LRT_pred, prediction, true);
         addNumberToJsonObject("LRT_score", LRT_score, prediction, true, 'f');
-
+        addNumberToJsonObject("REVEL_score", REVEL, prediction, true, 'f');
+        addNumberToJsonObject("DANN_score", DANN, prediction, true, 'f');
+        addNumberToJsonObject("CADD_score", CADD, prediction, true, 'f');
 
         return prediction;
     }

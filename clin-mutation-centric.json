@@ -150,6 +150,18 @@
                 }
               }
             },
+            "dn": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              }
+            },
+            "dq": {
+              "type": "float"
+            },
             "gq": {
               "type": "long"
             },
@@ -551,15 +563,6 @@
             }
           }
         },
-        "id": {
-          "type": "text",
-          "fields": {
-            "keyword": {
-              "type": "keyword",
-              "ignore_above": 256
-            }
-          }
-        },
         "dnaChange": {
           "type": "text",
           "fields": {
@@ -638,28 +641,16 @@
                 },
                 "SAS_AF": {
                   "type": "double"
-                },
-                "available": {
-                  "type": "boolean"
                 }
               }
             },
-            "ESP6500": {
+            "Uk10k": {
               "properties": {
-                "AA_AC": {
+                "AC": {
                   "type": "long"
                 },
-                "AA_AF": {
+                "AF": {
                   "type": "double"
-                },
-                "EA_AC": {
-                  "type": "long"
-                },
-                "EA_AF": {
-                  "type": "double"
-                },
-                "available": {
-                  "type": "boolean"
                 }
               }
             },
@@ -720,12 +711,6 @@
             },
             "gnomAD_exomes": {
               "properties": {
-                "POPMAX_AC": {
-                  "type": "long"
-                },
-                "POPMAX_AF": {
-                  "type": "double"
-                },
                 "AC": {
                   "type": "long"
                 },
@@ -797,20 +782,11 @@
                 },
                 "SAS_AN": {
                   "type": "long"
-                },
-                "available": {
-                  "type": "boolean"
                 }
               }
             },
             "gnomAD_genomes": {
               "properties": {
-                "POPMAX_AC": {
-                  "type": "long"
-                },
-                "POPMAX_AF": {
-                  "type": "double"
-                },
                 "AC": {
                   "type": "long"
                 },
@@ -873,9 +849,25 @@
                 },
                 "NFE_AN": {
                   "type": "long"
+                }
+              }
+            },
+            "interne" : {
+              "properties": {
+                "AC": {
+                  "type": "long"
                 },
-                "available": {
-                  "type": "boolean"
+                "AF": {
+                  "type": "double"
+                },
+                "AN": {
+                  "type": "long"
+                },
+                "HC": {
+                  "type": "long"
+                },
+                "PN": {
+                  "type": "long"
                 }
               }
             }

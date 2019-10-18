@@ -6,7 +6,8 @@ public class Main {
     public static void main(String[] args) throws Exception {
 
         if (args.length == 0 ) {
-            MemcachedJavaClient.main(args);
+            //MemcachedJavaClient.main(args);
+            RedisGeneSetHelper.main(args);
         } else if ( args.length == 2) {
             VepHelper.main(args);
         } else {

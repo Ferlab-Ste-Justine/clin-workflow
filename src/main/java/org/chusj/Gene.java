@@ -5,13 +5,13 @@ import java.util.Objects;
 
 public class Gene {
 
-    String ensemblId;
-    String geneSymbol;
-    String biotype;
-    String[] HPO;
-    String[] radboudumc;
-    String[] omim;
-    String[] orphanet;
+    private String ensemblId;
+    private String geneSymbol;
+    private String biotype;
+    private String[] HPO;
+    private String[] radboudumc;
+    private String[] omim;
+    private String[] orphanet;
 
 
     public Gene(String ensemblId, String geneSymbol, String biotype, String[] HPO, String[] radboudumc, String[] omim, String[] orphanet) {
@@ -93,13 +93,12 @@ public class Gene {
         if (o == null || getClass() != o.getClass()) return false;
         Gene gene = (Gene) o;
         return ensemblId.equals(gene.ensemblId) &&
-                geneSymbol.equals(gene.geneSymbol) &&
-                biotype.equals(gene.biotype);
+                geneSymbol.equals(gene.geneSymbol);
     }
 
     @Override
     public int hashCode() {
-        int result = Objects.hash(ensemblId, geneSymbol, biotype);
+        int result = Objects.hash(ensemblId, geneSymbol);
         result = 31 * result + Arrays.hashCode(HPO);
         result = 31 * result + Arrays.hashCode(radboudumc);
         result = 31 * result + Arrays.hashCode(omim);
