@@ -1,6 +1,6 @@
 {
   "settings": {
-    "number_of_shards": 8
+    "number_of_shards": 12
   },
   "mappings": {
     "_doc": {
@@ -140,7 +140,7 @@
             },
             "genotypeFamily": {
               "type": "text"
-              },
+            },
             "gt": {
               "type": "text",
               "fields": {
@@ -165,7 +165,9 @@
             "gq": {
               "type": "long"
             },
-            "lastUpdate": { "type" : "date" },
+            "lastUpdate": {
+              "type": "date"
+            },
             "practitionerId": {
               "type": "text",
               "fields": {
@@ -195,49 +197,49 @@
             }
           }
         },
-        "bdExt" : {
+        "bdExt": {
           "type": "nested",
           "include_in_parent": true,
           "properties": {
             "clinvar": {
-              "type" : "text",
-              "fields" : {
-                "keyword" : {
-                  "type" : "keyword",
-                  "ignore_above" : 256
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
                 }
               }
             },
             "omim": {
-              "type" : "text",
-              "fields" : {
-                "keyword" : {
-                  "type" : "keyword",
-                  "ignore_above" : 256
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
                 }
               }
             },
             "orphanet": {
-              "type" : "text",
-              "fields" : {
-                "keyword" : {
-                  "type" : "keyword",
-                  "ignore_above" : 256
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
                 }
               }
             },
             "pubmed": {
-              "type" : "text",
-              "fields" : {
-                "keyword" : {
-                  "type" : "keyword",
-                  "ignore_above" : 256
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
                 }
               }
             }
           }
         },
-        "availableDbExt" : {
+        "availableDbExt": {
           "type": "nested",
           "include_in_parent": true,
           "properties": {
@@ -247,21 +249,21 @@
             "omim": {
               "type": "boolean"
             },
-            "orphanet":{
+            "orphanet": {
               "type": "boolean"
             },
             "pubmed": {
               "type": "boolean"
             },
-            "hpo" : {
+            "hpo": {
               "type": "boolean"
             },
-            "radboudumc" : {
+            "radboudumc": {
               "type": "boolean"
             }
           }
         },
-        "clinvar" : {
+        "clinvar": {
           "type": "nested",
           "include_in_parent": true,
           "properties": {
@@ -294,7 +296,13 @@
             }
           }
         },
-        "genes" : {
+        "mutation_or_gene": {
+          "type": "join",
+          "relations": {
+            "mutation": "gene"
+          }
+        },
+        "genes": {
           "type": "nested",
           "include_in_parent": true,
           "properties": {
@@ -326,44 +334,49 @@
               }
             },
             "orphanet": {
-              "type" : "text",
-              "fields" : {
-                "keyword" : {
-                  "type" : "keyword",
-                  "ignore_above" : 256
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
                 }
               }
             },
             "hpo": {
-              "type" : "text",
-              "fields" : {
-                "keyword" : {
-                  "type" : "keyword",
-                  "ignore_above" : 256
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
                 }
               }
             },
             "radboudumc": {
-              "type" : "text",
-              "fields" : {
-                "keyword" : {
-                  "type" : "keyword",
-                  "ignore_above" : 256
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
                 }
               }
             },
             "alias": {
-              "type" : "text",
-              "fields" : {
-                "keyword" : {
-                  "type" : "keyword",
-                  "ignore_above" : 256
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
                 }
               }
-            }
+            },
+            "location": {
+              "type": "text"
+              }
           }
         },
-        "lastAnnotationUpdate": { "type" : "date" },
+        "lastAnnotationUpdate": {
+          "type": "date"
+        },
         "consequences": {
           "properties": {
             "predictions": {
@@ -852,7 +865,7 @@
                 }
               }
             },
-            "interne" : {
+            "interne": {
               "properties": {
                 "AC": {
                   "type": "long"
@@ -873,7 +886,9 @@
             }
           }
         },
-        "impactScore": {"type": "byte"}
+        "impactScore": {
+          "type": "byte"
+        }
       }
     }
   }
