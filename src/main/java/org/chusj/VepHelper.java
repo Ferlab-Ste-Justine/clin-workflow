@@ -37,7 +37,28 @@ public class VepHelper {
     private static final int GENES = 9;
     private static final int PHENO = 10;
     private static final int EXPECTED_VEP_ANNOTATION_QTY = 66;
-
+    private static final Map<String,String> FATHMM_PRED_VALUE
+            = new HashMap<String, String>(2){{
+        put("D", "DAMAGING");
+        put("T", "TOLERATED");
+    }};
+    private static final Map<String,String> POLYPHEN2_HVAR_PRED_VALUE
+            = new HashMap<String, String>(3){{
+        put("B", "BENIGN");
+        put("P", "POSSIBLY DAMAGING");
+        put("D", "PROBABLY DAMAGING");
+    }};
+    private static final Map<String,String> LRT_PRED_VALUE
+            = new HashMap<String, String>(3){{
+        put("N", "NEUTRAL");
+        put("D", "DELETERIOUS");
+        put("U", "UNKNOWN");
+    }};
+    private static final Map<String,String> SIFT_PRED_VALUE
+            = new HashMap<String, String>(2){{
+        put("D", "DAMAGING");
+        put("T", "TOLERATED");
+    }};
 
     /*
     This main method is only used to test locally the JSON object creation
@@ -58,6 +79,7 @@ public class VepHelper {
 
             // Record and prep metaData
             buf.readLine();
+            //buf.readLine();
 
             // Main - Child=14140,Mother=14141,Father=14142
 
@@ -68,18 +90,21 @@ public class VepHelper {
             //pedigreeProps.forEach((prop) -> System.out.println("prop="+prop));
             //for (int i=0; i<pedigreeProps.toString())
             System.out.println(pedigreeProps.toString());
+            List<String> hpoTerms = new ArrayList<>(Arrays.asList("HP:0005280","HP:0001773"));
 
             while (true) {
                 fetchedLine = buf.readLine();
                 if (fetchedLine == null) {
                     break;
                 } else {
-                    JSONObject propertiesOneMutation = processVcfDataLine(fetchedLine, "dn,dq", pedigreeProps);
+                    JSONObject propertiesOneMutation = processVcfDataLine(fetchedLine, pedigreeProps, hpoTerms);
                     if (toPrint) {
                         System.out.println(propertiesOneMutation.toString(0));
-                        extractGenesFromMutation(propertiesOneMutation, "0", true).stream().forEach((gene) -> System.out.println(gene.toString(0)));
+                        //extractGenesFromMutation(propertiesOneMutation, "0", true).stream().forEach((gene) -> System.out.println("\t"+gene.toString(0)));
                         toPrint = false;
                     }
+
+                    //System.err.println(propertiesOneMutation.toString(0));
                 }
             }
         }
@@ -88,7 +113,7 @@ public class VepHelper {
         }
 
         if (lastOne != null) {
-            extractGenesFromMutation(lastOne, "0", true).stream().forEach((gene) -> System.out.println("gene="+gene.toString(0)));
+//            extractGenesFromMutation(lastOne, "0", false).stream().forEach((gene) -> System.out.println("gene="+gene.toString(0)));
             System.out.println("lastOne="+lastOne.toString(2));
 //            extractGenesFromMutation(lastOne).stream().forEach((gene) -> System.out.println("gene="+gene.toString(0)));
         }
@@ -98,7 +123,7 @@ public class VepHelper {
     }
 
 
-    static JSONObject processVcfDataLine(String extractedLine, String OptionStr, Properties pedigreeProps) {
+    static JSONObject processVcfDataLine(String extractedLine,  Properties pedigreeProps, List<String> hpoTerms) {
 
         // CHROM
 
@@ -108,10 +133,12 @@ public class VepHelper {
         int pos = 0;
         int impactScore;
         String chrom = lineValueArray[pos++];
+        // CHROM <- line from snpsift extract fields execution
         if ("CHROM".equalsIgnoreCase(chrom)) {
             return null; // Meta data line
         }
-        // System.out.println("lineValueArray.length="+lineValueArray.length);
+        // #CHROM <- line from vcf which have specimen ids
+
         //boolean db_snp ; clinvarIds, omimIds, emsemblIds, orphanetIds , pubmedIds, clinvarSig, Types, PHENO, trait, genes
 
         boolean[] dbExt = {false, false, false, false, false, false, false, false, false, false, false};
@@ -125,7 +152,6 @@ public class VepHelper {
 
         Map<Integer, FunctionalAnnotation> faMap = new HashMap<>();
         Map<String, Transcript> deStructuredTranscript = new HashMap<>();
-
 
         JSONObject propertiesOneMutation = new JSONObject();
         JSONArray donorArray = new JSONArray();
@@ -145,6 +171,8 @@ public class VepHelper {
         String organizationId = pedigreeProps.getProperty("organizationId");
         String practitionerId = pedigreeProps.getProperty("practitionerId");
         String laboName = pedigreeProps.getProperty("laboName");
+        //List<String> hpoTermsPos = Arrays.asList(pedigreeProps.getProperty("hpoTermsPos").split(","));
+        //List<String> hpoTermsNeg = Arrays.asList(pedigreeProps.getProperty("hpoTermsNeg").split(","));
         propertiesOneMutation.put("assemblyVersion", pedigreeProps.getProperty("assemblyVersion"));
         propertiesOneMutation.put("annotationTool", pedigreeProps.getProperty("annotationTool"));
 
@@ -155,7 +183,6 @@ public class VepHelper {
         JSONObject[] arrayDonor = new JSONObject[nbDonor];
         for (int i=0; i<nbDonor; i++) {
             arrayDonor[i] = new JSONObject();
-
         }
 
         // POS	REF	ALT	FILTER	DP	MQ	QD	RPA	RU	STR
@@ -185,21 +212,6 @@ public class VepHelper {
 //        String lod = lineValueArray[pos++];
 //        String fractionInformativeReads = lineValueArray[pos++];
 
-//        boolean snp = Boolean.valueOf(lineValueArray[pos++]);
-//        boolean mnp = Boolean.valueOf(lineValueArray[pos++]);
-//        boolean ins = Boolean.valueOf(lineValueArray[pos++]);
-//        boolean del = Boolean.valueOf(lineValueArray[pos++]);
-//        boolean mixed = Boolean.valueOf(lineValueArray[pos++]);
-//        boolean hom = Boolean.valueOf(lineValueArray[pos++]);
-//        boolean het = Boolean.valueOf(lineValueArray[pos++]);
-
-
-//        if (snp) propertiesOneMutation.put("type", "SNP");
-//        if (mnp) propertiesOneMutation.put("type", "MNP");
-//        if (ins) propertiesOneMutation.put("type", "INS");
-//        if (del) propertiesOneMutation.put("type", "DEL");
-//        if (mixed) propertiesOneMutation.put("type", "MIXED");
-
         propertiesOneMutation.put("altAllele", alt);
         //GT:AD:AF:DP:F1R2:F2R1:FT:GP:GQ:PL:PP
         // GEN[*].GT	GEN[*].AD	GEN[*].AF	GEN[*].DN	GEN[*].DP	GEN[*].FT	GEN[*].GQ	GEN[*].DQ	GEN[*].SB	CSQ
@@ -224,10 +236,19 @@ public class VepHelper {
 
         String csq = lineValueArray[pos];
 
-        String[] csqArray = csq.split(",");  // return functionalAnnotation array
+        String[] csqArray = csq.split(",");  // return vep functionalAnnotation array
         countFuncAnnoPerMutation += csqArray.length;
 
         String chrPos = chrom.substring(3); // remove 'chr'
+        /*
+        Comment est-ce que l'on dealer avec des chromosomes comme ceux-ci :
+        14_GL000225v1_random; Un_KI270442v1; etc...  ???
+        Alex DL 10:44 AM:
+        En clinique on peut les jeter a la poubelle. PAr exemple exomiser ne retient que les variants dans les chromosomes chr1-chr22 et chrX chrY chrM
+         */
+        if (chrPos.length() > 2) {
+            return null;
+        }
         String dnaChange = reference + ">" + alt.split(",")[0];
         String mutationId = "chr" + chrPos + ":g." + position + dnaChange;
         String uid = getMD5Hash(mutationId);
@@ -245,6 +266,7 @@ public class VepHelper {
         JSONObject funcAnnotation;
 
 
+        // vep annotation analysis (column CSQ)
         impactScore = 0;
         for (String s : csqArray) {
 
@@ -337,9 +359,33 @@ public class VepHelper {
             System.err.println("empty type for :" + mutationId);
         }
 
+        // Proband hpo terms found
+        int[] posNegHposTermsFoundArray = {0,0};
+
+
+        // Genes analysis
+        for (Gene gene: geneSet) {
+            geneObj = new JSONObject();
+            if (gene.getGeneSymbol().trim().isEmpty()) continue;
+            geneObj.put("geneSymbol", gene.getGeneSymbol());
+            geneObj.put("ensemblId", gene.getEnsemblId());
+            geneObj.put("biotype", gene.getBiotype());
+            addGeneSetsToObjs(gene.getEnsemblId(), geneObj, availBdExtObj, hpoTerms, hpoTerms, posNegHposTermsFoundArray);
+
+//            String tableRow = "gene:" + gene.getGeneSymbol() + "@" +
+//                    "type:" + gene.getBiotype() + "@" +
+//                    "location:" + (geneObj.isNull("location") ? "" : geneObj.get("location")) + "@" +
+//                    "ensemblId:" + gene.getEnsemblId();
+//            geneObj.put("tableRow", tableRow);
+            geneArray.put(geneObj);
+        }
+
+        // Patient and donor analysis
         int patientNb = 0;
         float alleleCount = 0, alleleNumber = 0, homozygoteCount = 0;
         float alleleFrequencies = 0f;
+        // snpSift Extract does not keep correctly the qty of unknown value . (only give 1 number (0) in GEN[*].AD
+        int adPointer = 0;
 
         for (int i=0; i< nbDonor; i++) {
 
@@ -359,22 +405,27 @@ public class VepHelper {
             arrayDonor[i].put("zygosity", zygosity);
             addNumberToJsonObject("gq", gq[i], arrayDonor[i], false, 'l');
             String adS;
-            // bug in snpSift Extract...  does not keep correctly unknown value . in GEN[*].AD
-            // but in that regards, the information is so bad that it's okay to put 0,1 or 1,0
+            // snpSift Extract does not keep correctly the qty of unknown value . (only give 1 number (0) in GEN[*].AD
+
             if (ad.length < nbDonor * 2) {
+                //toPrint = true;
                 if ("./.".equalsIgnoreCase(gt[i])) {
-                    adS = "0,0";
-                } else if ("1/0".equalsIgnoreCase(gt[i])) {
-                    adS = "0,1";
-                } else if ("0/1".equalsIgnoreCase(gt[i])) {
-                    adS = "0,1";
-                } else { //1/1
-                    adS = "1,0";
+                    adS = ad[adPointer] + "," + ad[adPointer++]; // increment only by 1
+                } else {
+                    adS = ad[adPointer++] + "," + ad[adPointer++];
                 }
             } else {
                 adS = ad[i * 2] + "," + ad[(i * 2) + 1];
             }
-            arrayDonor[i].put("ad", adS);
+
+            String[] adSArray = adS.split(",");
+//            arrayDonor[i].put("ad", adS);
+            int adRef = Integer.parseInt(adSArray[0]);
+            int adAlt = Integer.parseInt(adSArray[1]);
+            int adTotal = adRef+adAlt ;
+            arrayDonor[i].put("adRef", adRef);
+            arrayDonor[i].put("adAlt", adAlt);
+            arrayDonor[i].put("adTotal", adTotal);
 //            arrayDonor[i].put("af", );
             addNumberToJsonObject("af", af[i], arrayDonor[i], false, 'f');
 //            arrayDonor[i].put("f1r2", f1r2[i*2] + "," + f1r2[i*2+1]);
@@ -406,18 +457,24 @@ public class VepHelper {
         }
 
 
-        // analyse familliale et transmission
+        // transmission and familial analysis
         for (int i=0; i< nbDonor; i++) {
             String zygosity = (String) arrayDonor[i].get("zygosity");
             if ("HOM REF".equalsIgnoreCase(zygosity) || "UNK".equalsIgnoreCase(zygosity)) continue;
-            StringBuilder genotypeFamily = new StringBuilder();
-            if ("P".equalsIgnoreCase(relation[i]) && nbDonor > 1) {
-                for (int j=i+1; j<nbDonor; j++) {
-                    genotypeFamily.append(relation[j]).append(":").append(gt[j]).append((j == nbDonor - 1) ? "" : ",");
+
+            if ("P".equalsIgnoreCase(relation[i])) {
+
+                if (nbDonor > 1) {
+                    StringBuilder genotypeFamily = new StringBuilder();
+                    for (int j = i + 1; j < nbDonor; j++) {
+                        genotypeFamily.append(relation[j]).append(":").append(gt[j]).append((j == nbDonor - 1) ? "" : ",");
+                    }
+                    if (genotypeFamily.length() > 0) {
+                        arrayDonor[i].put("genotypeFamily", genotypeFamily.toString());
+                    }
                 }
-                if (genotypeFamily.length() > 0) {
-                    arrayDonor[i].put("genotypeFamily", genotypeFamily.toString());
-                }
+                arrayDonor[i].put("nbHpoTerms",posNegHposTermsFoundArray[0]);
+
             }
             specimenArray.put(pedigree[i]);
             donorArray.put(arrayDonor[i]);
@@ -465,38 +522,25 @@ public class VepHelper {
 
         addSetsToArrayToObjs(dbExtId, PUBMED, bdExtObj, "pubmed", availBdExtObj);
 
-        for (Gene gene: geneSet) {
-            geneObj = new JSONObject();
-            if (gene.getGeneSymbol().trim().isEmpty()) continue;
-            geneObj.put("geneSymbol", gene.getGeneSymbol());
-            geneObj.put("ensemblId", gene.getEnsemblId());
-            geneObj.put("biotype", gene.getBiotype());
-            String biotype = gene.getBiotype();
-            addGeneSetsToObjs(gene.getEnsemblId(), geneObj, availBdExtObj, biotype);
-//            geneObj
-            geneArray.put(geneObj);
-        }
-
-
         String clsig = toStringList(dbExtId.get(CLINVAR_SIG));
         if (!clsig.isEmpty()) { clinvarObj.put( "clinvar_clinsig", clsig ); }
         String cltraits = toStringList(dbExtId.get(CLINVAR_TRAIT));
 
         addSetsToArrayToObjs(dbExtId, CLINVAR_TRAIT, clinvarObj, "clinvar_trait", null);
 
-        propertiesOneMutation.put("bdExt", bdExtObj);
-        propertiesOneMutation.put("availableDbExt", availBdExtObj);
+        if (bdExtObj.length() >0) {
+            propertiesOneMutation.put("bdExt", bdExtObj);
+        }
+        if (availBdExtObj.length()>0) {
+            propertiesOneMutation.put("availableDbExt", availBdExtObj);
+        }
 
         propertiesOneMutation.put("donors", donorArray);
         propertiesOneMutation.put("specimenList", specimenArray);
         if (geneArray.length()>0) {
             propertiesOneMutation.put("genes", geneArray);
         }
-        propertiesOneMutation.put("mutation_or_gene", "mutation");
 
-        //uid = getSHA1Hash(familyId+ "@" + mutationId);
-
-        //propertiesOneMutation.put("_id", uid);
         if ( dbExt[CLINVAR]  || dbExt[OMIM] || dbExt[ORPHANET]  )//|| dbExt[DBSNP] )
             lastOne = propertiesOneMutation;
 
@@ -504,11 +548,12 @@ public class VepHelper {
 
     }
 
+
+
     private static JSONObject processVepAnnotations(String csqLine, List<Set<String>> dbExtId, boolean[] dbExt,
                                                     Set<Gene> geneSet, Map<String, Transcript> deStructuredTranscript,
                                                     String ref, String alt ) {
 
-        //System.out.print("\n"+csqLine);
         String[] functionalAnnotationArray = csqLine.split("[|]", -1);
         // dynamic positioning system -- pos counter++
 
@@ -534,7 +579,6 @@ public class VepHelper {
         JSONObject frequencies = new JSONObject();
         JSONObject frequencyExAc = new JSONObject();
         JSONObject frequency1000Gp3 = new JSONObject();
-        //JSONObject frequencyEsp6500 = new JSONObject();
         JSONObject frequencyUk10k = new JSONObject();
         JSONObject frequencyGnomadEx = new JSONObject();
         JSONObject frequencyGnomadGen = new JSONObject();
@@ -600,9 +644,7 @@ public class VepHelper {
             dbExt[TYPES] = true;
             addStrToListSet(dbExtId, TYPES, VARIANT_CLASS);
         }
-
         String SYMBOL_SOURCE = functionalAnnotationArray[pos++];
-
 
         // N23 HGNC_ID|CANONICAL|GIVEN_REF|USED_REF|BAM_EDIT|  DOMAINS
         //     HGNC_ID|CANONICAL|RefSeq|
@@ -639,7 +681,6 @@ public class VepHelper {
             dbExt[PUBMED] = true;
             addStrToListSet(dbExtId, PUBMED, pubmed);
         }
-
 //        String MOTIF_NAME = functionalAnnotationArray[pos++];
 //        String MOTIF_POS = functionalAnnotationArray[pos++];
 //        String HIGH_INF_POS = functionalAnnotationArray[pos++];
@@ -1220,10 +1261,11 @@ public class VepHelper {
                       String DANN, String CADD, String REVEL) {
                      */
                     deStructuredTranscript.put(tid, new Transcript(
-                            tid, null, FATHMMArray[i], SIFTArray[i], SIFT_scoreArray[scorePos], null,
+                            tid, null, FATHMM_PRED_VALUE.get(FATHMMArray[i]), SIFT_PRED_VALUE.get(SIFTArray[i]),
+                            SIFT_scoreArray[scorePos], null,
                             Polyphen2_HVAR_scoreArray[scorePos], null, null,
-                            null, LRT_pred, FATHMM_scoreArray[scorePos], null,
-                            Polyphen2_HVAR_predArray[i], LRT_converted_rankscore,
+                            null, LRT_PRED_VALUE.get(LRT_pred), FATHMM_scoreArray[scorePos], null,
+                            POLYPHEN2_HVAR_PRED_VALUE.get(Polyphen2_HVAR_predArray[i]), LRT_converted_rankscore,
                             DANN_rankscore, CADD_raw_rankscore, REVEL_rankscore));
                 } catch (ArrayIndexOutOfBoundsException aioe) {
                     System.err.println("something can be empty");
@@ -1246,13 +1288,16 @@ public class VepHelper {
 
             prediction = transcript.getPrediction();
             if ( (boolean) prediction.get("available") ) {
-                //prediction.remove("available");
+                prediction.remove("available");
                 funcAnnotation.put("predictions", prediction);
             }
 
         }
 
-        if (!cdnaPos.isEmpty() && ".".startsWith(cdnaPos)) cdnaChange = ref + cdnaPos + alt;
+        if (!cdnaPos.isEmpty() && !".".startsWith(cdnaPos)) {
+            cdnaChange = ref + cdnaPos + alt;
+            //System.out.println("cdnaChange="+cdnaChange);
+        }
         addStrToJsonObject("cdnaChange", cdnaChange , funcAnnotation, false);
         boolean freqAvail = false;
         if ((boolean) frequency1000Gp3.get("available")) {
@@ -1372,18 +1417,6 @@ public class VepHelper {
         return avail;
 
     }
-    static boolean addAllStrToJsonObject(String name, String var, JSONObject jsonObject, boolean withAvailability) {
-        boolean avail = false;
-        if (var != null && var.length()>0 ) {
-            jsonObject.put(name, var);
-            avail = true;
-            if (withAvailability) jsonObject.put("available", avail);
-        } else if (withAvailability) {
-            jsonObject.put("available", avail);
-        }
-        return avail;
-
-    }
 
     public static String zygosity(String gt) {
         char[] gtA = gt.toCharArray();
@@ -1459,15 +1492,6 @@ public class VepHelper {
         return prop;
     }
 
-    static JSONArray addDonorArrayToDonorArray(JSONArray previous, JSONArray newOne) {
-
-        for (int i = 0; i<newOne.length(); i++) {
-            previous.put(newOne.get(i));
-        }
-        return previous;
-
-    }
-
     private static void addStrToListSet(List<Set<String>> setList, int position, String value) {
 
         // Extract the proper set
@@ -1496,9 +1520,10 @@ public class VepHelper {
     }
 
 
-    private static void addGeneSetsToObjs(String ensId, JSONObject jsonObject, JSONObject availObj, String biotype) {
+    private static void addGeneSetsToObjs(String ensId, JSONObject jsonObject, JSONObject availObj,
+                                               List<String> hpoTermsNeg, List<String> hpoTermsPos, int[] negPosHposTermsFoundArray) {
 
-        countRedisCalls++;
+        //countRedisCalls++;
         Set<String> geneSets = getMembersForEnsId(ensId);
         JSONArray hpoGeneSets = new JSONArray();
         JSONArray orphanetGeneSets = new JSONArray();
@@ -1508,7 +1533,11 @@ public class VepHelper {
         geneSets.forEach( member -> {
 
             if (member.startsWith("HP:")) {
+                String hpo = member.split(",")[0];
                 hpoGeneSets.put(member);
+                if (hpoTermsNeg.contains(hpo)) negPosHposTermsFoundArray[0]++;
+                if (hpoTermsPos.contains(hpo)) negPosHposTermsFoundArray[1]++;
+                //for (String hpoTerm : hpoTermsNeg
             } else if (member.startsWith("Orph:")) {
                 orphanetGeneSets.put(member);
             } else if (member.startsWith("alias:")) {
@@ -1538,13 +1567,22 @@ public class VepHelper {
         });
     }
 
+    private static boolean isHposFound(JSONObject geneObj, String[] hpoTermsNeg) {
+        boolean isHposFound = false;
+        if (geneObj == null || geneObj.length() == 0 || geneObj.isNull("hpo"))
+            return isHposFound;
+        JSONArray hposTerms = (JSONArray) geneObj.get("hpo");
+
+        return isHposFound;
+    }
+
     private static String[] fillArray(int size) {
         String[] array = new String[size];
         Arrays.fill(array, "");
         return array;
     }
 
-    protected static List<JSONObject> extractGenesFromMutation(JSONObject mutationWithGene, String parentId, boolean andRemove) {
+    static List<JSONObject> extractGenesFromMutation(JSONObject mutationWithGene, String parentId, boolean andRemove) {
         List<JSONObject> listGenes = new ArrayList<>();
 
         mutationWithGene.put("mutation_or_gene", "mutation");

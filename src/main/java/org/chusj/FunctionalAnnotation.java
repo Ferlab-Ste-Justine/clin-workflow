@@ -144,7 +144,7 @@ public class FunctionalAnnotation {
         if (geneId != null && !geneId.isEmpty()) fa.put("geneAffectedId", geneId);
         if (!aaChange.isEmpty()) fa.put("aaChange", aaChange);
         fa.put("consequence", consequence);
-        if (!codingDNAChange.isEmpty()) fa.put("codingDNAChange", codingDNAChange);
+        if (!codingDNAChange.isEmpty()) fa.put("cdnaChange", codingDNAChange);
         fa.put("impact", impact);
         if (strand != null ) {
             fa.put("strand", strand);

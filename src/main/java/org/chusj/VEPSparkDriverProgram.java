@@ -19,12 +19,11 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import javax.xml.bind.DatatypeConverter;
-import java.io.IOException;
-import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.*;
 
+import static org.chusj.PatientHelper.getAPatientFromESFromID;
 import static org.chusj.VepHelper.extractGenesFromMutation;
 
 public class VEPSparkDriverProgram {
@@ -39,7 +38,7 @@ public class VEPSparkDriverProgram {
 
         if (args.length < 8 ) {
             throw new Exception("Missing params; need extractFile pedigreePropertiesFile ES_UPSERT (true|false) " +
-                    "sparkMaster local[nbWorkers] 8g nbPartitions bulkSize mutation_parent_child (true|false)");
+                    "sparkMaster local[nbWorkers] 8g nbPartitions bulkSize");
         }
 
         String extractFile = args[0];
@@ -54,10 +53,10 @@ public class VEPSparkDriverProgram {
         //spliting gene into a join relation is currently disabled as it's not helping in our use cases
         // The feature is kept for now as the simplification of the ES indexing was done at same time
         boolean splitGene = false; //  Boolean.parseBoolean(args[8]);
-        if (splitGene) {
-            INDEX_NAME = "mutations_genes";
-            System.err.println("$$$$$$$\n$$$$$$$$\nswitching to mutation_gene\n\n$$$$$$$$$");
-        }
+//        if (splitGene) {
+//            INDEX_NAME = "mutations_genes";
+//            System.err.println("$$$$$$$\n$$$$$$$$\nswitching to mutation_gene\n\n$$$$$$$$$");
+//        }
 
         /* Define Spark Configuration */
         SparkConf conf = new SparkConf().setAppName("ExtractTLoad").setMaster(sparkMaster)
@@ -74,17 +73,21 @@ public class VEPSparkDriverProgram {
         Properties pedigreeProps = VepHelper.getPropertiesFromFile(pedigreePropsFile);
         pedigreeProps.forEach( (k,v) -> System.out.println(k+"="+v) );
 
+
         try (RestHighLevelClient clientTry = new RestHighLevelClient(
                 RestClient.builder(
                         new HttpHost("localhost", 9200, "http")))) {
 
             client = clientTry;
+            PatientHelper.client = clientTry;
+            String patientId = pedigreeProps.getProperty("patientId").split(",")[0];
+            List<String> hpoTerms = PatientHelper.getHpoTerms(getAPatientFromESFromID(patientId));
 
 
             lines.foreachPartition(partitionOfRecords -> {
                 List<JSONObject> jsonObjectList = new ArrayList<>();
                 while (partitionOfRecords.hasNext()) {
-                    jsonObjectList.add(buildJsonObj(partitionOfRecords.next(), pedigreeProps));
+                    jsonObjectList.add(VepHelper.processVcfDataLine(partitionOfRecords.next(), pedigreeProps, hpoTerms));
                     if (jsonObjectList.size() >= bulkOpsQty) {
                         //System.out.println("Bulk Items in partition-" + jsonObjectList.size());
                         bulkStoreJsonObj(jsonObjectList, esUpsert, pedigreeProps, splitGene);
@@ -98,10 +101,6 @@ public class VEPSparkDriverProgram {
         }
         sc.close();
         client.close();
-    }
-
-    private static JSONObject buildJsonObj(String extractedLine, Properties pedigreeProps) {
-        return  VepHelper.processVcfDataLine(extractedLine, "dn,dq", pedigreeProps);
     }
 
     private static Boolean bulkStoreJsonObj(List<JSONObject> propertiesOneMutations, boolean esUpsert, Properties pedigreeProps, boolean splitGene) {
@@ -224,7 +223,10 @@ public class VEPSparkDriverProgram {
             donorMap.put("sequencingStrategy", donor.get("sequencingStrategy"));
             donorMap.put("studyId", donor.get("studyId"));
             donorMap.put("zygosity", donor.get("zygosity"));
-            donorMap.put("ad", donor.get("ad"));
+            //donorMap.put("ad", donor.get("ad"));
+            donorMap.put("adRef", donor.get("adRef"));
+            donorMap.put("adAlt", donor.get("adAlt"));
+            donorMap.put("adTotal", donor.get("adTotal"));
             donorMap.put("af", donor.get("af"));
             donorMap.put("dp", donor.get("dp"));
             donorMap.put("gt", donor.get("gt"));
@@ -242,9 +244,11 @@ public class VEPSparkDriverProgram {
             if (!donor.isNull("dq")) {
                 donorMap.put("dq", donor.get("dq"));
             }
+            if (!donor.isNull("nbHpoTerms")) {
+                donorMap.put("nbHpoTerms", donor.get("nbHpoTerms"));
+            }
 
             donorMap.put("lastUpdate", donor.get("lastUpdate"));
-
 
             donorsLst.add(donorMap);
         }
@@ -321,7 +325,6 @@ public class VEPSparkDriverProgram {
 
 
     public static String getSHA256Hash(String data) {
-        String result = null;
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
             byte[] hash = digest.digest(data.getBytes(StandardCharsets.UTF_8));
@@ -329,12 +332,10 @@ public class VEPSparkDriverProgram {
         } catch(Exception ex) {
             ex.printStackTrace();
         }
-        return result;
+        return null;
     }
 
     static String getSHA1Hash(String data) {
-        String result = null;
-
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-1");
             byte[] hash = digest.digest(data.getBytes(StandardCharsets.UTF_8));
@@ -342,12 +343,10 @@ public class VEPSparkDriverProgram {
         } catch(Exception ex) {
             ex.printStackTrace();
         }
-        return result;
+        return null;
     }
 
     static String getMD5Hash(String data) {
-        String result = null;
-
         try {
             MessageDigest digest = MessageDigest.getInstance("MD5");
             byte[] hash = digest.digest(data.getBytes(StandardCharsets.UTF_8));
@@ -355,42 +354,11 @@ public class VEPSparkDriverProgram {
         } catch(Exception ex) {
             ex.printStackTrace();
         }
-        return result;
+        return null;
     }
 
     private static String bytesToHex(byte[] hash) {
         return DatatypeConverter.printHexBinary(hash);
     }
-
-    private static boolean checkForSpecimen(JSONArray donorArray, String specimenIdList) {
-
-
-        String[] specimenIds = specimenIdList.split(",");
-        for (int i = 0; i < donorArray.length(); i++) {
-            JSONObject currentDonor = (JSONObject) donorArray.get(i);
-            String specimen = (String) currentDonor.get("specimenId");
-            for (String specimenId: specimenIds) {
-                if (specimenId.equalsIgnoreCase(specimen)) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
-    private Properties getPropertiesFromFile(String filename) {
-        Properties prop = new Properties();
-
-        try (InputStream in =
-                     getClass().getResourceAsStream(filename)) {
-            prop.load(in);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-
-        return prop;
-    }
-
 
 }

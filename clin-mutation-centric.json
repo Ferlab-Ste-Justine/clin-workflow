@@ -123,19 +123,22 @@
                 }
               }
             },
-            "ad": {
-              "type": "text",
-              "fields": {
-                "keyword": {
-                  "type": "keyword",
-                  "ignore_above": 256
-                }
-              }
+            "adTotal": {
+              "type": "long"
+            },
+            "adRef": {
+              "type": "long"
+            },
+            "adAlt": {
+              "type": "long"
             },
             "af": {
               "type": "float"
             },
             "dp": {
+              "type": "long"
+            },
+            "nbHpoTerms": {
               "type": "long"
             },
             "genotypeFamily": {
@@ -296,12 +299,6 @@
             }
           }
         },
-        "mutation_or_gene": {
-          "type": "join",
-          "relations": {
-            "mutation": "gene"
-          }
-        },
         "genes": {
           "type": "nested",
           "include_in_parent": true,
@@ -312,6 +309,15 @@
                 "keyword": {
                   "type": "keyword",
                   "ignore_above": 256
+                }
+              }
+            },
+            "tableRow": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "index": false
                 }
               }
             },
@@ -452,9 +458,6 @@
                 },
                 "SIFT_score": {
                   "type": "float"
-                },
-                "available": {
-                  "type": "boolean"
                 }
               }
             },
