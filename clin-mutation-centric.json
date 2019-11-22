@@ -45,12 +45,6 @@
           "type": "nested",
           "include_in_parent": true,
           "properties": {
-            "depth": {
-              "type": "long"
-            },
-            "mq": {
-              "type": "long"
-            },
             "filter": {
               "type": "text",
               "fields": {
@@ -126,16 +120,10 @@
             "adTotal": {
               "type": "long"
             },
-            "adRef": {
-              "type": "long"
-            },
-            "adAlt": {
-              "type": "long"
-            },
-            "af": {
+            "adFreq": {
               "type": "float"
             },
-            "dp": {
+            "adAlt": {
               "type": "long"
             },
             "nbHpoTerms": {
@@ -163,6 +151,9 @@
               }
             },
             "dq": {
+              "type": "float"
+            },
+            "qd": {
               "type": "float"
             },
             "gq": {

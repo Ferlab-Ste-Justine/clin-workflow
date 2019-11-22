@@ -24,6 +24,7 @@ import java.security.MessageDigest;
 import java.util.*;
 
 import static org.chusj.PatientHelper.getAPatientFromESFromID;
+import static org.chusj.PatientHelper.loadPedigree;
 import static org.chusj.VepHelper.extractGenesFromMutation;
 
 public class VEPSparkDriverProgram {
@@ -73,6 +74,9 @@ public class VEPSparkDriverProgram {
         Properties pedigreeProps = VepHelper.getPropertiesFromFile(pedigreePropsFile);
         pedigreeProps.forEach( (k,v) -> System.out.println(k+"="+v) );
 
+        List<Pedigree> pedigrees = loadPedigree("pedigree.ped");
+        Map<String, Patient> patientMap = PatientHelper.preparePedigreeFromPed(pedigrees);
+
 
         try (RestHighLevelClient clientTry = new RestHighLevelClient(
                 RestClient.builder(
@@ -87,7 +91,7 @@ public class VEPSparkDriverProgram {
             lines.foreachPartition(partitionOfRecords -> {
                 List<JSONObject> jsonObjectList = new ArrayList<>();
                 while (partitionOfRecords.hasNext()) {
-                    jsonObjectList.add(VepHelper.processVcfDataLine(partitionOfRecords.next(), pedigreeProps, hpoTerms));
+                    jsonObjectList.add(VepHelper.processVcfDataLine(partitionOfRecords.next(), pedigreeProps, hpoTerms, patientMap, pedigrees));
                     if (jsonObjectList.size() >= bulkOpsQty) {
                         //System.out.println("Bulk Items in partition-" + jsonObjectList.size());
                         bulkStoreJsonObj(jsonObjectList, esUpsert, pedigreeProps, splitGene);
@@ -115,7 +119,7 @@ public class VEPSparkDriverProgram {
 
         for (JSONObject propertiesOneMutation: propertiesOneMutations) {
             if (propertiesOneMutation == null ) {
-                System.err.println("empty or null variant");
+                //System.out.print("");
                 continue;
             }
 
@@ -213,8 +217,8 @@ public class VEPSparkDriverProgram {
             donorMap = new HashMap<>();
             specimenLst.add( (String) specimenList.get(i) );
             JSONObject donor = (JSONObject) donors.get(i);
-            donorMap.put("depth", donor.get("depth"));
-            donorMap.put("mq", donor.get("mq"));
+//            donorMap.put("depth", donor.get("depth"));
+//            donorMap.put("mq", donor.get("mq"));
             donorMap.put("filter", donor.get("filter"));
             donorMap.put("specimenId", specimenList.get(i));
             donorMap.put("patientId", donor.get("patientId"));
@@ -224,12 +228,13 @@ public class VEPSparkDriverProgram {
             donorMap.put("studyId", donor.get("studyId"));
             donorMap.put("zygosity", donor.get("zygosity"));
             //donorMap.put("ad", donor.get("ad"));
-            donorMap.put("adRef", donor.get("adRef"));
+            donorMap.put("adFreq", donor.get("adFreq"));
             donorMap.put("adAlt", donor.get("adAlt"));
             donorMap.put("adTotal", donor.get("adTotal"));
-            donorMap.put("af", donor.get("af"));
+//            donorMap.put("af", donor.get("af"));
             donorMap.put("dp", donor.get("dp"));
             donorMap.put("gt", donor.get("gt"));
+            donorMap.put("qd", donor.get("qd"));
             if (!donor.isNull("gq")) {
                 donorMap.put("gq", donor.get("gq"));
             }

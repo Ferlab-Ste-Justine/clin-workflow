@@ -13,6 +13,10 @@ import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.*;
 
 import static org.elasticsearch.index.query.QueryBuilders.queryStringQuery;
@@ -31,11 +35,13 @@ public class PatientHelper {
             client = clientTry;
             //
             List<String> listOfSpecimen = new ArrayList<>(Arrays.asList("SP00047", "SP00072", "SP00022"));
-            List<String> list2 = new ArrayList<>(Arrays.asList("SP00011", "SP00061", "SP00036"));
+                //List<String> list2 = new ArrayList<>(Arrays.asList("SP00011", "SP00061", "SP00036"));
             List<String> hpoTerms = getHpoTerms(getAPatientFromESFromID("PA00002"));
             hpoTerms.forEach(System.out::println);
             hpoTerms.clear();
 
+//            List<Pedigree> pedigrees = loadPedigree("pedigree.ped");
+//            pedigrees.forEach((ped) -> System.out.println(ped));
 
             Map<String, Patient> donors = preparePedigree(listOfSpecimen);
             donors.forEach((k,v) -> {
@@ -46,8 +52,15 @@ public class PatientHelper {
 //                System.out.println("\tRelation:"+v.getRelation());
             });
 
-            donors = preparePedigree(list2);
+            List<Pedigree> pedigrees = loadPedigree("pedigree.ped");
+            donors = preparePedigreeFromPed(pedigrees);
             donors.forEach((k,v) -> System.out.println("id=" + k + "\n\t" + v));
+            String pedigreePropsFile = "pedigree.properties";
+            Properties pedigreeProps = VepHelper.getPropertiesFromFile(pedigreePropsFile);
+            donors = preparePedigreeFromProps(pedigreeProps);
+            System.out.println("--------");
+            donors.forEach((k,v) -> System.out.println("id=" + k + "\n\t" + v));
+
 
         }
     }
@@ -229,6 +242,7 @@ public class PatientHelper {
 
 
     static Map<String, Patient> preparePedigree(List<String> listOfSpecimen) {
+
         Map<String, Patient> patientMap = new HashMap<>();
 
         listOfSpecimen.forEach((specimen) -> {
@@ -257,12 +271,16 @@ public class PatientHelper {
             patient.setPatientId(id);
             patient.setFamilyId((String) patientObj.get("familyId"));
             boolean isProban = (Boolean) patientObj.get("isProband");
+            boolean isInfected = (Boolean) patientObj.get("status");
+            patient.setAffected(isInfected);
+            patient.setGender((String) patientObj.get("gender"));
             patient.setProban(isProban);
             if (isProban) {
                 patient.setRelation("Proban");
             }
             patient.setHposTerms(getHpoTerms(patientObj));
             patientMap.put(id, patient);
+            patientMap.put(specimen, patient);
         });
 
         //hpoTerms.forEach((hpo) -> System.out.println(hpo));
@@ -271,16 +289,149 @@ public class PatientHelper {
             patientMap.forEach((k,v) -> {
                 if (v.isProban()) {
                     // fetch relationship of proban -- duo, trio, etc...
+
                     JSONArray link = (JSONArray) v.getPatient().get("link");
-                    link.forEach((rel) -> {
-                        String relationship = (String) ((JSONObject) rel).get("relationship");
-                        String id = (String) ((JSONObject) rel).get("id");
+
+                    String[] linkToOthersPatientIds = new String[link.length()];
+                    String[] linkToOthersSpecimenIds = new String[link.length()];
+                    for (int i=0; i<link.length();i++) {
+                        JSONObject rel = (JSONObject) link.get(i);
+                        String relationship = (String) rel.get("relationship");
+                        String id = (String) rel.get("id");
+                        linkToOthersPatientIds[i] = id;
+                        linkToOthersSpecimenIds[i] = patientMap.get(id).getSpecimenId();
                         patientMap.get(id).setRelation(relationship);
-                    });
+
+                    }
+                    v.setLinkToOthersPatientId(linkToOthersPatientIds);
+                    v.setLinkToOthersSpecimenId(linkToOthersSpecimenIds);
                 }
             });
         }
         return patientMap;
+    }
+
+    static Map<String, Patient> preparePedigreeFromPed(List<Pedigree> pedigrees) {
+//        List<Pedigree> pedigrees = loadPedigree(filename);
+
+        List<String> listOfSpecimen = new ArrayList<>();
+        pedigrees.forEach((ped) -> listOfSpecimen.add(ped.getId()));
+
+        listOfSpecimen.forEach(sp->System.out.println(sp));
+        return preparePedigree(listOfSpecimen);
+
+    }
+
+    /*
+    #into pedigree, put specimen IDs in comma separated list
+
+    linkQty=2,0,0
+    linkPatient=PA00027,PA00052,.,.,.,.
+    linkSpecimen=14141,14142,.,.,.,.
+    patientId=PA00002,PA00027,PA00052
+    familyId=FA0002,FA0002,FA0002
+    studyId=ET00011,ET00011,ET00011
+    organizationId=OR00202,OR00202,OR00202
+
+    annotationTool=VEP 97
+    HpoQtyTerms=2,0,0
+    hpoTermsPos=HP:0005280,HP:0001773
+
+    */
+    static Map<String, Patient> preparePedigreeFromProps(Properties pedigreeProps) {
+        Map<String, Patient> patientMap = new HashMap<>();
+
+        String[] specimens = pedigreeProps.getProperty("specimen").split(",");
+        String[] familyIds = pedigreeProps.getProperty("familyId").split(",");
+        String[] genders = pedigreeProps.getProperty("gender").split(",");
+        String[] patientIds = pedigreeProps.getProperty("patientId").split(",");
+        String[] relationship = pedigreeProps.getProperty("relation").split(",");
+        String[] studyIds = pedigreeProps.getProperty("studyId").split(",");
+        String sequencingStrategy = pedigreeProps.getProperty("sequencingStrategy");
+        String[] organizationId = pedigreeProps.getProperty("organizationId").split(",");
+        String[] practitionerId = pedigreeProps.getProperty("practitionerId").split(",");
+        String[] laboNames = pedigreeProps.getProperty("laboName").split(",");
+        String[] isInfected = pedigreeProps.getProperty("isAffected").split(",");
+        String[] isProban = pedigreeProps.getProperty("isProban").split(",");
+        String[] hpoTermsPos = pedigreeProps.getProperty("hpoTermsPos").split(",");
+        String[] hpoQtyTerms = pedigreeProps.getProperty("HpoQtyTerms").split(",");
+        String[] linkQty = pedigreeProps.getProperty("linkQty").split(",");
+        String[] linkPatient = pedigreeProps.getProperty("linkPatient").split(",");
+        String[] linkSpecimen = pedigreeProps.getProperty("linkSpecimen").split(",");
+
+        int hpoArrayPosition=0;
+        int pos =0;
+        for (int i=0; i<specimens.length;i++) {
+            Patient patient = new Patient(specimens[i]);
+            patient.setGender(genders[i]);
+            patient.setAffected(Boolean.parseBoolean(isInfected[i]));
+            patient.setRelation(relationship[i]);
+            patient.setFamilyId(familyIds[i]);
+
+            int hpoTermsQty = Integer.parseInt(hpoQtyTerms[i]);
+            List<String> hpoList = new ArrayList<>();
+            for (int j=0;j<hpoTermsQty;j++) {
+                hpoList.add(hpoTermsPos[hpoArrayPosition++]);
+            }
+            patient.setHposTerms(hpoList);
+            patient.setOrgId(organizationId[i]);
+            patient.setPatientId(patientIds[i]);
+            patient.setPractitionerId(practitionerId[i]);
+            patient.setStudyId(studyIds[i]);
+            patient.setLabName(laboNames[i]);
+            patient.setProban(Boolean.parseBoolean(isProban[i]));
+            patient.setSequencingStrategy(sequencingStrategy);
+
+            int linkNumber = Integer.parseInt(linkQty[i]);
+            String[] linkPatientTo = new String[linkNumber];
+            String[] linkSpecimenTo = new String[linkNumber];
+            for (int j=0;j<linkNumber;j++) {
+                linkPatientTo[j] = linkPatient[pos];
+                linkSpecimenTo[j] = linkSpecimen[pos++];
+            }
+            patient.setLinkToOthersPatientId(linkPatientTo);
+            patient.setLinkToOthersSpecimenId(linkSpecimenTo);
+
+            patientMap.put(specimens[i],patient);
+            patientMap.put(patientIds[i],patient);
+        }
+
+        return patientMap;
+    }
+
+
+    static List<Pedigree> loadPedigree(String filename) {
+        List<Pedigree> pedigrees = new ArrayList<>();
+
+        try (BufferedReader buf = new BufferedReader(new FileReader(filename))) {
+
+            String fetchedLine;
+            while (true) {
+                fetchedLine = buf.readLine();
+                if (fetchedLine == null || fetchedLine.length() == 0) {
+                    break;
+                } else {
+                    Pedigree ped = new Pedigree();
+                    String[] line = fetchedLine.split("\t");
+                    //System.out.println(fetchedLine + "-"+line.length);
+                    ped.setFamilyId(line[0]);
+                    ped.setId(line[1]);
+                    ped.setPaternalId(line[2]);
+                    ped.setMaternalId(line[3]);
+                    ped.setSex(line[4]);
+                    ped.setPhenotype(line[5]);
+                    pedigrees.add(ped);
+
+                }
+        }
+
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return pedigrees;
     }
 
 

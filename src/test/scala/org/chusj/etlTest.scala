@@ -29,10 +29,10 @@ class etlTest extends FunSuite  {
 
       VepHelper.zygosity("0/0") == "HOM REF" &&
       VepHelper.zygosity("0|0") == "HOM REF" &&
-      VepHelper.zygosity("0/1") == "HET REF" &&
-      VepHelper.zygosity("1/2") == "HET ALT" &&
-      VepHelper.zygosity("1/1") == "HOM ALT" &&
-      VepHelper.zygosity("2/2") == "HOM ALT"
+      VepHelper.zygosity("0/1") == "HET" &&
+      VepHelper.zygosity("1/2") == "HET" &&
+      VepHelper.zygosity("1/1") == "HOM" &&
+      VepHelper.zygosity("2/2") == "HOM"
 
   }
 

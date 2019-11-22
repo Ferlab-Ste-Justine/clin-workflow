@@ -3,6 +3,7 @@ package org.chusj;
 import org.json.JSONObject;
 
 import java.io.Serializable;
+import java.util.Arrays;
 import java.util.List;
 
 public class Patient implements Serializable {
@@ -16,9 +17,14 @@ public class Patient implements Serializable {
     private String labName;
     private String practitionerId;
     private boolean isProban;
+    private boolean isAffected;
     private JSONObject patient;
     private List<String> hposTerms;
     private String sequencingStrategy;
+    private String[] linkToOthersPatientId;
+    private String[] linkToOthersSpecimenId;
+    private String gender;
+
 
     Patient(String specimenId) {
         this.specimenId = specimenId;
@@ -41,6 +47,22 @@ public class Patient implements Serializable {
         this.relation = relation;
     }
 
+    public String getGender() {
+        return gender;
+    }
+
+    public void setGender(String gender) {
+        this.gender = gender;
+    }
+
+    public String[] getLinkToOthersSpecimenId() {
+        return linkToOthersSpecimenId;
+    }
+
+    public void setLinkToOthersSpecimenId(String[] linkToOthersSpecimenId) {
+        this.linkToOthersSpecimenId = linkToOthersSpecimenId;
+    }
+
     public String getPatientId() {
         return patientId;
     }
@@ -52,6 +74,15 @@ public class Patient implements Serializable {
     public String getFamilyId() {
         return familyId;
     }
+
+    public String[] getLinkToOthersPatientId() {
+        return linkToOthersPatientId;
+    }
+
+    public void setLinkToOthersPatientId(String[] linkToOthersPatientId) {
+        this.linkToOthersPatientId = linkToOthersPatientId;
+    }
+
 
     public void setFamilyId(String familyId) {
         this.familyId = familyId;
@@ -93,6 +124,14 @@ public class Patient implements Serializable {
         return isProban;
     }
 
+    public boolean isAffected() {
+        return isAffected;
+    }
+
+    public void setAffected(boolean affected) {
+        isAffected = affected;
+    }
+
     void setProban(boolean proban) {
         isProban = proban;
     }
@@ -123,7 +162,7 @@ public class Patient implements Serializable {
 
     @Override
     public String toString() {
-        return "Donor{" +
+        return "Patient{" +
                 "specimenId='" + specimenId + '\'' +
                 ", relation='" + relation + '\'' +
                 ", patientId='" + patientId + '\'' +
@@ -131,10 +170,14 @@ public class Patient implements Serializable {
                 ", studyId='" + studyId + '\'' +
                 ", orgId='" + orgId + '\'' +
                 ", labName='" + labName + '\'' +
-                ", practitionerId='" + practitionerId + '\'' +
+                ", \npractitionerId='" + practitionerId + '\'' +
                 ", isProban=" + isProban +
+                ", isAffected=" + isAffected +
                 ", hposTerms=" + hposTerms +
                 ", sequencingStrategy='" + sequencingStrategy + '\'' +
+                ", linkToOthersPatientId=" + Arrays.toString(linkToOthersPatientId) +
+                ", linkToOthersSpecimenId=" + Arrays.toString(linkToOthersSpecimenId) +
+                ", gender='" + gender + '\'' +
                 '}';
     }
 }
