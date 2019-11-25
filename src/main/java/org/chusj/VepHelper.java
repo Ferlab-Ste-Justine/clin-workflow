@@ -503,11 +503,18 @@ public class VepHelper {
 
         // transmission and familial analysis
         // Per Family - need a grouping from PED structure
-        // Ped need to match donor array
 
-        //String[] familySet = familyMap.keySet().toArray();
-        //
-        //Object[] familySet = familyMap.entrySet().toArray();
+        /*
+
+        https://gemini.readthedocs.io/en/latest/content/tools.html#autosomal-recessive-find-variants-meeting-an-autosomal-recessive-model
+        Genotype Requirements
+            * all affecteds must be hom_alt
+            * [affected] no unaffected can be hom_alt (can be unknown)
+            * [strict] if parents exist they must be unaffected and het for all affected kids
+            * [strict] if there are no affecteds that have a parent, a warning is issued.
+
+         */
+
 
 
         for (Map.Entry<String, Family> entry : familyMap.entrySet()) {
@@ -518,13 +525,18 @@ public class VepHelper {
             int familySize = familyCompositionArray.size();
 
             for (Integer index : familyCompositionArray) {
+                boolean isAutosomalRecessive = false;
                 familyCompositionIndex++;
                 Pedigree currentDonor = pedigrees.get(index);
                 Patient currentPatient = patientMap.get(currentDonor.getId());
                 String relation = currentPatient.getRelation();
                 String zygosity = (String) arrayDonor[index].get("zygosity");
+                boolean isAffected = currentPatient.isAffected();
                 // discard 0/0 and ./. but we keep a reference for the proban of the family...
-                if ("HOM REF".equalsIgnoreCase(zygosity) || "UNK".equalsIgnoreCase(zygosity)) continue;
+                if ("HOM REF".equalsIgnoreCase(zygosity) ) {
+                    continue;
+                }
+                //
                 if ("Proban".equalsIgnoreCase(relation)) {
                     if (familySize > 1) {
                         StringBuilder genotypeFamily = new StringBuilder();
@@ -536,6 +548,22 @@ public class VepHelper {
 
                             if (genotypeFamily.length() > 0) {
                                 arrayDonor[index].put("genotypeFamily", genotypeFamily.toString());
+                            }
+                        }
+                        // all affecteds must be hom_alt
+
+                        if (isAffected && "HOM".equalsIgnoreCase(zygosity)) {
+                            // [affected] no unaffected can be hom_alt (can be unknown)
+                            //[strict] if parents exist (familySize > 1) they must be unaffected and het for all affected kids
+                            for (int j = familyCompositionIndex + 1; j < familySize; j++) {
+                                Integer otherRelationIndex = familyCompositionArray.get(j);
+                                String parentZigo = (String) arrayDonor[otherRelationIndex].get("zygosity");
+                                String parentSpecimen = ((String) arrayDonor[otherRelationIndex].get("specimenId"));
+                                boolean isParentAffected = patientMap.get(parentSpecimen).isAffected();
+                                // must include both parent in test...
+                                if (!isParentAffected && ("HET".equalsIgnoreCase(parentZigo) || ("UNK".equalsIgnoreCase(parentZigo)))) {
+                                    break;
+                                }
                             }
                         }
                     }
@@ -552,14 +580,17 @@ public class VepHelper {
                         // setback to 0 for new variant
                         currentPatient.setQtyHposTermsFound(0);
                     }
-
-                    specimenArray.put(currentDonor.getId());
-                    donorArray.put(arrayDonor[index]);
-                    String labo = currentPatient.getLabName();
-                    Frequencies freqenceLabo = frequenciesPerLabos.get(labo);
-                    freqenceLabo.setPn(freqenceLabo.getPn() + 1f);
-                    patientNb++;
                 }
+                if ("UNK".equalsIgnoreCase(zygosity)) {
+                    continue;
+                }
+                specimenArray.put(currentDonor.getId());
+                donorArray.put(arrayDonor[index]);
+                String labo = currentPatient.getLabName();
+                Frequencies freqenceLabo = frequenciesPerLabos.get(labo);
+                freqenceLabo.setPn(freqenceLabo.getPn() + 1f);
+                patientNb++;
+
             }
         }
 
