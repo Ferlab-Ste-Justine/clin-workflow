@@ -75,8 +75,7 @@ public class VEPSparkDriverProgram {
         pedigreeProps.forEach( (k,v) -> System.out.println(k+"="+v) );
 
         List<Pedigree> pedigrees = loadPedigree("pedigree.ped");
-        Map<String, Patient> patientMap = PatientHelper.preparePedigreeFromPed(pedigrees);
-
+        Map<String, Patient> patientMap = PatientHelper.preparePedigreeFromPedAndFHIR(pedigrees);
 
         try (RestHighLevelClient clientTry = new RestHighLevelClient(
                 RestClient.builder(
@@ -84,14 +83,11 @@ public class VEPSparkDriverProgram {
 
             client = clientTry;
             PatientHelper.client = clientTry;
-            String patientId = pedigreeProps.getProperty("patientId").split(",")[0];
-            List<String> hpoTerms = PatientHelper.getHpoTerms(getAPatientFromESFromID(patientId));
-
 
             lines.foreachPartition(partitionOfRecords -> {
                 List<JSONObject> jsonObjectList = new ArrayList<>();
                 while (partitionOfRecords.hasNext()) {
-                    jsonObjectList.add(VepHelper.processVcfDataLine(partitionOfRecords.next(), pedigreeProps, hpoTerms, patientMap, pedigrees));
+                    jsonObjectList.add(VepHelper.processVcfDataLine(partitionOfRecords.next(), pedigreeProps, patientMap, pedigrees));
                     if (jsonObjectList.size() >= bulkOpsQty) {
                         //System.out.println("Bulk Items in partition-" + jsonObjectList.size());
                         bulkStoreJsonObj(jsonObjectList, esUpsert, pedigreeProps, splitGene);

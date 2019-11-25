@@ -53,7 +53,7 @@ public class PatientHelper {
             });
 
             List<Pedigree> pedigrees = loadPedigree("pedigree.ped");
-            donors = preparePedigreeFromPed(pedigrees);
+            donors = preparePedigreeFromPedAndFHIR(pedigrees);
             donors.forEach((k,v) -> System.out.println("id=" + k + "\n\t" + v));
             String pedigreePropsFile = "pedigree.properties";
             Properties pedigreeProps = VepHelper.getPropertiesFromFile(pedigreePropsFile);
@@ -96,7 +96,7 @@ public class PatientHelper {
         }
     }
 
-    static List<JSONObject> getPatientFromESWithQueryString(String query) {
+    private static List<JSONObject> getPatientFromESWithQueryString(String query) {
         boolean requestSuccess = false;
         List<JSONObject> patients = new ArrayList<>();
         for (int i=0; i< 10; i++) {
@@ -176,7 +176,7 @@ public class PatientHelper {
     }
 
 
-    static JSONObject serviceRequest(JSONArray serviceRequests, String specimenId) {
+    private static JSONObject serviceRequest(JSONArray serviceRequests, String specimenId) {
 
         if (serviceRequests == null || serviceRequests.length() == 0) {
             return null;
@@ -198,7 +198,7 @@ public class PatientHelper {
         return null;
     }
 
-    static String getPractitionerId(JSONArray practitioners, String requesterRoleId) {
+    private static String getPractitionerId(JSONArray practitioners, String requesterRoleId) {
 
         if (practitioners == null || practitioners.length() == 0) {
             return null;
@@ -219,7 +219,7 @@ public class PatientHelper {
         return null;
     }
 
-    static String getOrgId(JSONArray practitioners, String requesterRoleId) {
+    private static String getOrgId(JSONArray practitioners, String requesterRoleId) {
 
         if (practitioners == null || practitioners.length() == 0) {
             return null;
@@ -311,13 +311,13 @@ public class PatientHelper {
         return patientMap;
     }
 
-    static Map<String, Patient> preparePedigreeFromPed(List<Pedigree> pedigrees) {
+    static Map<String, Patient> preparePedigreeFromPedAndFHIR(List<Pedigree> pedigrees) {
 //        List<Pedigree> pedigrees = loadPedigree(filename);
 
         List<String> listOfSpecimen = new ArrayList<>();
         pedigrees.forEach((ped) -> listOfSpecimen.add(ped.getId()));
 
-        listOfSpecimen.forEach(sp->System.out.println(sp));
+        //listOfSpecimen.forEach(System.out::println);
         return preparePedigree(listOfSpecimen);
 
     }
@@ -423,10 +423,8 @@ public class PatientHelper {
                     pedigrees.add(ped);
 
                 }
-        }
+            }
 
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
         }

@@ -20,6 +20,7 @@ public class Patient implements Serializable {
     private boolean isAffected;
     private JSONObject patient;
     private List<String> hposTerms;
+    private int qtyHposTermsFound=0;
     private String sequencingStrategy;
     private String[] linkToOthersPatientId;
     private String[] linkToOthersSpecimenId;
@@ -31,72 +32,72 @@ public class Patient implements Serializable {
     }
 
 
-    public String getSpecimenId() {
+    String getSpecimenId() {
         return specimenId;
     }
 
-    public void setSpecimenId(String specimenId) {
+    void setSpecimenId(String specimenId) {
         this.specimenId = specimenId;
     }
 
-    public String getRelation() {
+    String getRelation() {
         return relation;
     }
 
-    public void setRelation(String relation) {
+    void setRelation(String relation) {
         this.relation = relation;
     }
 
-    public String getGender() {
+    String getGender() {
         return gender;
     }
 
-    public void setGender(String gender) {
+    void setGender(String gender) {
         this.gender = gender;
     }
 
-    public String[] getLinkToOthersSpecimenId() {
+    String[] getLinkToOthersSpecimenId() {
         return linkToOthersSpecimenId;
     }
 
-    public void setLinkToOthersSpecimenId(String[] linkToOthersSpecimenId) {
+    void setLinkToOthersSpecimenId(String[] linkToOthersSpecimenId) {
         this.linkToOthersSpecimenId = linkToOthersSpecimenId;
     }
 
-    public String getPatientId() {
+    String getPatientId() {
         return patientId;
     }
 
-    public void setPatientId(String patientId) {
+    void setPatientId(String patientId) {
         this.patientId = patientId;
     }
 
-    public String getFamilyId() {
+    String getFamilyId() {
         return familyId;
     }
 
-    public String[] getLinkToOthersPatientId() {
+    String[] getLinkToOthersPatientId() {
         return linkToOthersPatientId;
     }
 
-    public void setLinkToOthersPatientId(String[] linkToOthersPatientId) {
+    void setLinkToOthersPatientId(String[] linkToOthersPatientId) {
         this.linkToOthersPatientId = linkToOthersPatientId;
     }
 
 
-    public void setFamilyId(String familyId) {
+    void setFamilyId(String familyId) {
         this.familyId = familyId;
     }
 
-    public String getStudyId() {
+    String getStudyId() {
         return studyId;
     }
 
-    public void setStudyId(String studyId) {
+    void setStudyId(String studyId) {
         this.studyId = studyId;
     }
 
-    public String getOrgId() {
+    String getOrgId() {
         return orgId;
     }
 
@@ -104,19 +105,19 @@ public class Patient implements Serializable {
         this.orgId = orgId;
     }
 
-    public String getLabName() {
+    String getLabName() {
         return labName;
     }
 
-    public void setLabName(String labName) {
+    void setLabName(String labName) {
         this.labName = labName;
     }
 
-    public String getPractitionerId() {
+    String getPractitionerId() {
         return practitionerId;
     }
 
-    public void setPractitionerId(String practitionerId) {
+    void setPractitionerId(String practitionerId) {
         this.practitionerId = practitionerId;
     }
 
@@ -124,11 +125,11 @@ public class Patient implements Serializable {
         return isProban;
     }
 
-    public boolean isAffected() {
+    boolean isAffected() {
         return isAffected;
     }
 
-    public void setAffected(boolean affected) {
+    void setAffected(boolean affected) {
         isAffected = affected;
     }
 
@@ -144,7 +145,7 @@ public class Patient implements Serializable {
         this.patient = patient;
     }
 
-    public List<String> getHposTerms() {
+    List<String> getHposTerms() {
         return hposTerms;
     }
 
@@ -152,12 +153,23 @@ public class Patient implements Serializable {
         this.hposTerms = hposTerms;
     }
 
-    public String getSequencingStrategy() {
+    String getSequencingStrategy() {
         return sequencingStrategy;
     }
 
-    public void setSequencingStrategy(String sequencingStrategy) {
+    void setSequencingStrategy(String sequencingStrategy) {
         this.sequencingStrategy = sequencingStrategy;
+    }
+
+    int getQtyHposTermsFound() {
+        return qtyHposTermsFound;
+    }
+
+    void setQtyHposTermsFound(int qtyHposTermsFound) {
+        this.qtyHposTermsFound = qtyHposTermsFound;
+    }
+    void addQtyOfHposTermsFound(int newQty) {
+        this.qtyHposTermsFound += newQty;
     }
 
     @Override
@@ -170,10 +182,11 @@ public class Patient implements Serializable {
                 ", studyId='" + studyId + '\'' +
                 ", orgId='" + orgId + '\'' +
                 ", labName='" + labName + '\'' +
-                ", \npractitionerId='" + practitionerId + '\'' +
+                ", practitionerId='" + practitionerId + '\'' +
                 ", isProban=" + isProban +
                 ", isAffected=" + isAffected +
                 ", hposTerms=" + hposTerms +
+                ", qtyHposTermsFound=" + qtyHposTermsFound +
                 ", sequencingStrategy='" + sequencingStrategy + '\'' +
                 ", linkToOthersPatientId=" + Arrays.toString(linkToOthersPatientId) +
                 ", linkToOthersSpecimenId=" + Arrays.toString(linkToOthersSpecimenId) +

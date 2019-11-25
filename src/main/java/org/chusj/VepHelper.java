@@ -79,14 +79,13 @@ public class VepHelper {
         List<Pedigree> pedigrees = loadPedigree(pedFile);
 //        Map<String, Patient> patientMap = PatientHelper.preparePedigreeFromPed(pedigrees);
         Map<String, Patient> patientMap = PatientHelper.preparePedigreeFromProps(pedigreeProps);
-        pedigrees.forEach((ped)->System.out.println(ped));
+        pedigrees.forEach(System.out::println);
         patientMap.forEach((k,v)->System.out.println(k+"\n\t"+v));
 
 
         try (BufferedReader buf = new BufferedReader(new FileReader(extractFile))) {
 
             String fetchedLine;
-
 
             // Record and prep metaData
             buf.readLine();
@@ -100,14 +99,14 @@ public class VepHelper {
             //pedigreeProps.forEach((prop) -> System.out.println("prop="+prop));
             //for (int i=0; i<pedigreeProps.toString())
             System.out.println(pedigreeProps.toString());
-            List<String> hpoTerms = new ArrayList<>(Arrays.asList("HP:0005280","HP:0001773"));
+            //List<String> hpoTerms = new ArrayList<>(Arrays.asList("HP:0005280","HP:0001773"));
 
             while (true) {
                 fetchedLine = buf.readLine();
                 if (fetchedLine == null) {
                     break;
                 } else {
-                    JSONObject propertiesOneMutation = processVcfDataLine(fetchedLine, pedigreeProps, hpoTerms, patientMap, pedigrees);
+                    JSONObject propertiesOneMutation = processVcfDataLine(fetchedLine, pedigreeProps, patientMap, pedigrees);
                     if (toPrint) {
                         System.out.println(propertiesOneMutation.toString(0));
                         //extractGenesFromMutation(propertiesOneMutation, "0", true).stream().forEach((gene) -> System.out.println("\t"+gene.toString(0)));
@@ -134,7 +133,7 @@ public class VepHelper {
 
 
 
-    static JSONObject processVcfDataLine(String extractedLine,  Properties pedigreeProps, List<String> hpoTerms, Map<String, Patient> patientMap, List<Pedigree> pedigrees) {
+    static JSONObject processVcfDataLine(String extractedLine,  Properties pedigreeProps, Map<String, Patient> patientMap, List<Pedigree> pedigrees) {
 
         // CHROM
 
@@ -192,7 +191,14 @@ public class VepHelper {
         LocalDate localDate = LocalDate.now();
         propertiesOneMutation.put("lastAnnotationUpdate", localDate);
 
-        int nbDonor = pedigrees.size();//specimenId.length;
+
+        Map<String,Family> familyMap = new HashMap<>();
+        pedigrees.forEach((ped)-> {
+            Family family = new Family(ped.getFamilyId());
+            familyMap.put(ped.getFamilyId(), family);
+        });
+
+        int nbDonor = pedigrees.size();
         JSONObject[] arrayDonor = new JSONObject[nbDonor];
         for (int i=0; i<nbDonor; i++) {
             arrayDonor[i] = new JSONObject();
@@ -372,9 +378,6 @@ public class VepHelper {
             System.err.println("empty type for :" + mutationId);
         }
 
-        // Proband hpo terms found
-        int[] posNegHposTermsFoundArray = {0,0};
-
 
         // Genes analysis
         for (Gene gene: geneSet) {
@@ -383,7 +386,7 @@ public class VepHelper {
             geneObj.put("geneSymbol", gene.getGeneSymbol());
             geneObj.put("ensemblId", gene.getEnsemblId());
             geneObj.put("biotype", gene.getBiotype());
-            addGeneSetsToObjs(gene.getEnsemblId(), geneObj, availBdExtObj, hpoTerms, hpoTerms, posNegHposTermsFoundArray);
+            addGeneSetsToObjs(gene.getEnsemblId(), geneObj, availBdExtObj, patientMap, pedigrees);
 
 //            String tableRow = "gene:" + gene.getGeneSymbol() + "@" +
 //                    "type:" + gene.getBiotype() + "@" +
@@ -490,6 +493,7 @@ public class VepHelper {
             arrayDonor[i].put("practitionerId", currentPatient.getPractitionerId());
             arrayDonor[i].put("organizationId", currentPatient.getOrgId());
             arrayDonor[i].put("sequencingStrategy", currentPatient.getSequencingStrategy());
+            familyMap.get(currentPatient.getFamilyId()).addFamily(i);
 
         }
         if (alleleNumber > 0) {
@@ -498,35 +502,99 @@ public class VepHelper {
 
 
         // transmission and familial analysis
-        for (int i=0; i< nbDonor; i++) {
-            Pedigree currentDonor = pedigrees.get(i);
-            Patient currentPatient = patientMap.get(currentDonor.getId());
-            String relation = currentPatient.getRelation();
-            String zygosity = (String) arrayDonor[i].get("zygosity");
-            if ("HOM REF".equalsIgnoreCase(zygosity) || "UNK".equalsIgnoreCase(zygosity)) continue;
+        // Per Family - need a grouping from PED structure
+        // Ped need to match donor array
 
-            if ("Proban".equalsIgnoreCase(relation)) {
+        //String[] familySet = familyMap.keySet().toArray();
+        //
+        //Object[] familySet = familyMap.entrySet().toArray();
 
-                if (nbDonor > 1) { // and it's a trio...
-                    StringBuilder genotypeFamily = new StringBuilder();
-                    for (int j = i + 1; j < nbDonor; j++) {
-                        genotypeFamily.append(arrayDonor[j].get("relation")).append(":").append(gt[j]).append((j == nbDonor - 1) ? "" : ",");
-                    }
-                    if (genotypeFamily.length() > 0) {
-                        arrayDonor[i].put("genotypeFamily", genotypeFamily.toString());
+
+        for (Map.Entry<String, Family> entry : familyMap.entrySet()) {
+            String familyId = entry.getKey();
+            Family family = entry.getValue();
+            int familyCompositionIndex = -1;
+            List<Integer> familyCompositionArray = family.getFamilyComposition();
+            int familySize = familyCompositionArray.size();
+
+            for (Integer index : familyCompositionArray) {
+                familyCompositionIndex++;
+                Pedigree currentDonor = pedigrees.get(index);
+                Patient currentPatient = patientMap.get(currentDonor.getId());
+                String relation = currentPatient.getRelation();
+                String zygosity = (String) arrayDonor[index].get("zygosity");
+                // discard 0/0 and ./. but we keep a reference for the proban of the family...
+                if ("HOM REF".equalsIgnoreCase(zygosity) || "UNK".equalsIgnoreCase(zygosity)) continue;
+                if ("Proban".equalsIgnoreCase(relation)) {
+                    if (familySize > 1) {
+                        StringBuilder genotypeFamily = new StringBuilder();
+                        // put genotype of all other family member inside a field named genotypeFamily...
+                        // since we discard 0/0 and ./. of all donor for clinical
+                        for (int j = familyCompositionIndex + 1; j < familySize; j++) {
+                            Integer otherRelationIndex = familyCompositionArray.get(j);
+                            genotypeFamily.append(arrayDonor[otherRelationIndex].get("relation")).append(":").append(gt[otherRelationIndex]).append((j == familySize - 1) ? "" : ",");
+
+                            if (genotypeFamily.length() > 0) {
+                                arrayDonor[index].put("genotypeFamily", genotypeFamily.toString());
+                            }
+                        }
                     }
                 }
-                arrayDonor[i].put("nbHpoTerms",posNegHposTermsFoundArray[0]);
+                if (currentPatient.isAffected()) {
+                    if (currentPatient.getQtyHposTermsFound() > 0) {
+                        List<String> hposTerms = new ArrayList<>(currentPatient.getHposTerms());
+                        if (currentDonor.getPhenotype().length() > 2) {
+                            hposTerms.add(currentDonor.getPhenotype());
+                        }
+                        //arrayDonor[index].put("HpoTerms", hposTerms);
+                        arrayDonor[index].put("nbHpoTerms", currentPatient.getQtyHposTermsFound());
+                        //toPrint = true;
+                        // setback to 0 for new variant
+                        currentPatient.setQtyHposTermsFound(0);
+                    }
 
+                    specimenArray.put(currentDonor.getId());
+                    donorArray.put(arrayDonor[index]);
+                    String labo = currentPatient.getLabName();
+                    Frequencies freqenceLabo = frequenciesPerLabos.get(labo);
+                    freqenceLabo.setPn(freqenceLabo.getPn() + 1f);
+                    patientNb++;
+                }
             }
-            specimenArray.put(currentDonor.getId());
-            donorArray.put(arrayDonor[i]);
-            String labo = currentPatient.getLabName();
-            Frequencies freqenceLabo = frequenciesPerLabos.get(labo);
-            freqenceLabo.setPn(freqenceLabo.getPn()+1f);
-            patientNb++;
-
         }
+
+
+
+
+//        for (int i=0; i< nbDonor; i++) {
+//            Pedigree currentDonor = pedigrees.get(i);
+//            Patient currentPatient = patientMap.get(currentDonor.getId());
+//            String relation = currentPatient.getRelation();
+//            String zygosity = (String) arrayDonor[i].get("zygosity");
+//            if ("HOM REF".equalsIgnoreCase(zygosity) || "UNK".equalsIgnoreCase(zygosity)) continue;
+//
+//            if ("Proban".equalsIgnoreCase(relation)) {
+//
+//                if (nbDonor > 1) { // and it's a trio...
+//                    StringBuilder genotypeFamily = new StringBuilder();
+//                    for (int j = i + 1; j < nbDonor; j++) {
+//                        genotypeFamily.append(arrayDonor[j].get("relation")).append(":").append(gt[j]).append((j == nbDonor - 1) ? "" : ",");
+//                    }
+//                    if (genotypeFamily.length() > 0) {
+//                        arrayDonor[i].put("genotypeFamily", genotypeFamily.toString());
+//                    }
+//                }
+//                arrayDonor[i].put("nbHpoTerms",posNegHposTermsFoundArray[0]);
+//
+//            }
+//            specimenArray.put(currentDonor.getId());
+//            donorArray.put(arrayDonor[i]);
+//            String labo = currentPatient.getLabName();
+//            Frequencies freqenceLabo = frequenciesPerLabos.get(labo);
+//            freqenceLabo.setPn(freqenceLabo.getPn()+1f);
+//            patientNb++;
+//
+//        }
 
         if (frequencies == null ) frequencies = new JSONObject();
         JSONObject freqenceInterne = new JSONObject();
@@ -1526,7 +1594,7 @@ public class VepHelper {
         return count;
     }
 
-    static int getImpactScore(String impact) {
+    private static int getImpactScore(String impact) {
         if (impact == null) return 0;
         switch (impact.toUpperCase()) {
             case "HIGH" : return 4;
@@ -1579,7 +1647,7 @@ public class VepHelper {
 
 
     private static void addGeneSetsToObjs(String ensId, JSONObject jsonObject, JSONObject availObj,
-                                               List<String> hpoTermsNeg, List<String> hpoTermsPos, int[] negPosHposTermsFoundArray) {
+                                          Map<String, Patient> patientMap, List<Pedigree> pedigrees) {
 
         //countRedisCalls++;
         Set<String> geneSets = getMembersForEnsId(ensId);
@@ -1593,9 +1661,26 @@ public class VepHelper {
             if (member.startsWith("HP:")) {
                 String[] hpoTerms = member.split(",");
                 hpoGeneSets.put(hpoTerms[1] + " (" + hpoTerms[0] + ")");
-                if (hpoTermsNeg.contains(hpoTerms[0])) negPosHposTermsFoundArray[0]++;
-                if (hpoTermsPos.contains(hpoTerms[0])) negPosHposTermsFoundArray[1]++;
-                //for (String hpoTerm : hpoTermsNeg
+                for (Pedigree ped : pedigrees) {
+                    String phenotype = ped.getPhenotype();
+
+                    // -9 (missing), 0 (missing) ,1 (unaffected)
+                    // 2 is affected or could have 1 single hpo term
+
+                    if ( !("-9".equalsIgnoreCase(phenotype) || "0".equalsIgnoreCase(phenotype) || "1".equalsIgnoreCase(phenotype))) {
+                        if (phenotype.equalsIgnoreCase(hpoTerms[0])) {
+                            patientMap.get(ped.getId()).addQtyOfHposTermsFound(1);
+                        }
+                        for (String hpo : patientMap.get(ped.getId()).getHposTerms()) {
+                            if (hpo.equalsIgnoreCase(hpoTerms[0])) {
+                                patientMap.get(ped.getId()).addQtyOfHposTermsFound(1);
+                            }
+                        }
+                    }
+                }
+//                if (hpoTermsNeg.contains(hpoTerms[0])) negPosHposTermsFoundArray[0]++;
+//                if (hpoTermsPos.contains(hpoTerms[0])) negPosHposTermsFoundArray[1]++;
+
             } else if (member.startsWith("Orph:")) {
                 String[] orphTerms = member.split(",");
                 orphanetGeneSets.put(orphTerms[1] + " (" + orphTerms[0] + ")");
