@@ -1,6 +1,8 @@
 package org.chusj;
 
-public class Pedigree {
+import java.io.Serializable;
+
+public class Pedigree implements Serializable {
 
     String familyId;
     String id;

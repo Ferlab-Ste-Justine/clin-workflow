@@ -75,7 +75,8 @@ public class VEPSparkDriverProgram {
         pedigreeProps.forEach( (k,v) -> System.out.println(k+"="+v) );
 
         List<Pedigree> pedigrees = loadPedigree("pedigree.ped");
-        Map<String, Patient> patientMap = PatientHelper.preparePedigreeFromPedAndFHIR(pedigrees);
+//        Map<String, Patient> patientMap = PatientHelper.preparePedigreeFromPedAndFHIR(pedigrees);
+        Map<String, Patient> patientMap = PatientHelper.preparePedigreeFromProps(pedigreeProps);
 
         try (RestHighLevelClient clientTry = new RestHighLevelClient(
                 RestClient.builder(
@@ -129,7 +130,7 @@ public class VEPSparkDriverProgram {
                 JSONArray donorArray = (JSONArray) propertiesOneMutation.get("donors");
                 JSONObject frequencies = (JSONObject) propertiesOneMutation.get("frequencies");
                 JSONArray specimenList = (JSONArray) propertiesOneMutation.get("specimenList");
-                String laboName = pedigreeProps.getProperty("laboName");
+                String laboName = pedigreeProps.getProperty("laboName").split(",")[0];
                 request.add(
                         upsertRequest(propertiesOneMutation.toString(0), uid, donorArray, specimenList, frequencies, laboName)
                 );
@@ -228,9 +229,11 @@ public class VEPSparkDriverProgram {
             donorMap.put("adAlt", donor.get("adAlt"));
             donorMap.put("adTotal", donor.get("adTotal"));
 //            donorMap.put("af", donor.get("af"));
-            donorMap.put("dp", donor.get("dp"));
+//            donorMap.put("dp", donor.get("dp"));
             donorMap.put("gt", donor.get("gt"));
-            donorMap.put("qd", donor.get("qd"));
+            if (!donor.isNull("qd")) {
+                donorMap.put("qd", donor.get("qd"));
+            }
             if (!donor.isNull("gq")) {
                 donorMap.put("gq", donor.get("gq"));
             }

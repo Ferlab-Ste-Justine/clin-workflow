@@ -185,7 +185,8 @@ public class VepHelper {
 //        String laboName = pedigreeProps.getProperty("laboName");
         //List<String> hpoTermsPos = Arrays.asList(pedigreeProps.getProperty("hpoTermsPos").split(","));
         //List<String> hpoTermsNeg = Arrays.asList(pedigreeProps.getProperty("hpoTermsNeg").split(","));
-        propertiesOneMutation.put("assemblyVersion", pedigreeProps.getProperty("assemblyVersion"));
+        String build = pedigreeProps.getProperty("assemblyVersion");
+        propertiesOneMutation.put("assemblyVersion", build);
         propertiesOneMutation.put("annotationTool", pedigreeProps.getProperty("annotationTool"));
 
         LocalDate localDate = LocalDate.now();
@@ -270,8 +271,7 @@ public class VepHelper {
         }
         String dnaChange = reference + ">" + alt.split(",")[0];
         String mutationId = "chr" + chrPos + ":g." + position + dnaChange;
-        String uid = getMD5Hash(mutationId);
-
+        String uid = getMD5Hash(mutationId +"@"+build);
 
         propertiesOneMutation.put("id", uid);
         propertiesOneMutation.put("mutationId", mutationId);
@@ -1594,7 +1594,8 @@ public class VepHelper {
         return count;
     }
 
-    private static int getImpactScore(String impact) {
+    // public bc it's used by scala test
+    public static int getImpactScore(String impact) {
         if (impact == null) return 0;
         switch (impact.toUpperCase()) {
             case "HIGH" : return 4;
@@ -1607,7 +1608,7 @@ public class VepHelper {
     }
 
 
-    static Properties getPropertiesFromFile(String filename) {
+    public static Properties getPropertiesFromFile(String filename) {
         Properties prop = new Properties();
 
         try (BufferedReader buf = new BufferedReader(new FileReader(filename))) {

@@ -1,9 +1,10 @@
 package org.chusj;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Family {
+public class Family implements Serializable {
 
     private String familyId;
     private List<Integer> familyComposition;
