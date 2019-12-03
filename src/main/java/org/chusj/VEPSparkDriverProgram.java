@@ -33,6 +33,7 @@ public class VEPSparkDriverProgram {
     private static SockIOPool pool;
     private static MemCachedClient mcc;
     private static String INDEX_NAME = "mutations";
+    public static int TOTAL_COUNT = 0;
 
 
     public static void main(String[] args) throws Exception {
@@ -78,6 +79,10 @@ public class VEPSparkDriverProgram {
 //        Map<String, Patient> patientMap = PatientHelper.preparePedigreeFromPedAndFHIR(pedigrees);
         Map<String, Patient> patientMap = PatientHelper.preparePedigreeFromProps(pedigreeProps);
 
+        JSONArray test = toJson( new String[]{"out10000.txt","pedigree.properties", "pedigree.ped"});
+
+        test.forEach((variant) -> System.out.println(variant));
+
         try (RestHighLevelClient clientTry = new RestHighLevelClient(
                 RestClient.builder(
                         new HttpHost("localhost", 9200, "http")))) {
@@ -91,12 +96,12 @@ public class VEPSparkDriverProgram {
                     jsonObjectList.add(VepHelper.processVcfDataLine(partitionOfRecords.next(), pedigreeProps, patientMap, pedigrees));
                     if (jsonObjectList.size() >= bulkOpsQty) {
                         //System.out.println("Bulk Items in partition-" + jsonObjectList.size());
-                        bulkStoreJsonObj(jsonObjectList, esUpsert, pedigreeProps, splitGene);
+                        bulkStoreJsonObj(jsonObjectList, esUpsert, pedigreeProps, splitGene, false);
                         jsonObjectList = new ArrayList<>();
                     }
                 }
 //                System.err.println("Bulk Items left in partition-" + jsonObjectList.size());
-                bulkStoreJsonObj(jsonObjectList, esUpsert, pedigreeProps, splitGene);
+                bulkStoreJsonObj(jsonObjectList, esUpsert, pedigreeProps, splitGene, false);
 
             });
         }
@@ -104,7 +109,7 @@ public class VEPSparkDriverProgram {
         client.close();
     }
 
-    private static Boolean bulkStoreJsonObj(List<JSONObject> propertiesOneMutations, boolean esUpsert, Properties pedigreeProps, boolean splitGene) {
+    public static Boolean bulkStoreJsonObj(List<JSONObject> propertiesOneMutations, boolean esUpsert, Properties pedigreeProps, boolean splitGene, boolean exoUpsert) {
 
         if (propertiesOneMutations == null || propertiesOneMutations.isEmpty()) {
             System.err.println("empty or null variants");
@@ -126,7 +131,11 @@ public class VEPSparkDriverProgram {
 //                geneList.addAll(extractGenesFromMutation(propertiesOneMutation, uid, false));
 //            }
 
-            if (esUpsert) {
+            if (exoUpsert) {
+                //System.out.println(propertiesOneMutation.toString(0));
+                String specimenId = (String) propertiesOneMutation.remove("specimenId");
+
+            } else if (esUpsert) {
                 JSONArray donorArray = (JSONArray) propertiesOneMutation.get("donors");
                 JSONObject frequencies = (JSONObject) propertiesOneMutation.get("frequencies");
                 JSONArray specimenList = (JSONArray) propertiesOneMutation.get("specimenList");
@@ -327,6 +336,46 @@ public class VEPSparkDriverProgram {
         return request;
     }
 
+    protected static UpdateRequest upsertExomiserRequest(JSONObject object, String uid, String specimenId) {
+
+
+
+        Map<String, Object> parameters = new HashMap<>();
+        parameters.put("transmission", object.get("transmission"));
+        parameters.put("exomiserScore", object.get("combinedScore"));
+        parameters.put("lastUpdate", object.get("lastUpdate"));
+        parameters.put("specimen", specimenId);
+
+
+
+        Script inline = new Script(ScriptType.INLINE, "painless",
+
+        "boolean toUpdateFreq = false; " +
+
+                "String specimen = params.specimen; " +
+                "Double score = params.exomiserScore; " +
+                "String lastUpdate = params.lastUpdate" +
+                "if (ctx._source.specimenList.contains(specimen) ) {" +
+                    "for (Map donor : ctx._source.donors) {" +
+
+                    "ctx._source.donors.add(d);" +
+                    "ctx._source.specimenList.add(s);" +
+                    "toUpdateFreq = true " +
+                    "} " +
+                "} " +
+
+                "ctx._source.frequencies.put(params.labName,params.freqLab)" +
+                "}"
+                , parameters);
+
+
+        UpdateRequest request = new UpdateRequest(INDEX_NAME, "_doc", uid);
+        request.script(inline);
+
+        request.upsert(object.toString(0), XContentType.JSON);
+        return request;
+    }
+
 
     public static String getSHA256Hash(String data) {
         try {
@@ -363,6 +412,16 @@ public class VEPSparkDriverProgram {
 
     private static String bytesToHex(byte[] hash) {
         return DatatypeConverter.printHexBinary(hash);
+    }
+
+    private static JSONArray toJson(String[] bob) {
+        JSONArray array = new JSONArray();
+        for (String line: bob) {
+            JSONObject obj = new JSONObject(line);
+            array.put(obj);
+        }
+        return array;
+
     }
 
 }
