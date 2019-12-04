@@ -493,6 +493,7 @@ public class VepHelper {
             arrayDonor[i].put("practitionerId", currentPatient.getPractitionerId());
             arrayDonor[i].put("organizationId", currentPatient.getOrgId());
             arrayDonor[i].put("sequencingStrategy", currentPatient.getSequencingStrategy());
+            arrayDonor[i].put("exomiserScore", 0f);
             familyMap.get(currentPatient.getFamilyId()).addFamily(i);
 
         }
@@ -552,14 +553,13 @@ public class VepHelper {
                         // setback to 0 for new variant
                         currentPatient.setQtyHposTermsFound(0);
                     }
-
-                    specimenArray.put(currentDonor.getId());
-                    donorArray.put(arrayDonor[index]);
-                    String labo = currentPatient.getLabName();
-                    Frequencies freqenceLabo = frequenciesPerLabos.get(labo);
-                    freqenceLabo.setPn(freqenceLabo.getPn() + 1f);
-                    patientNb++;
                 }
+                specimenArray.put(currentDonor.getId());
+                donorArray.put(arrayDonor[index]);
+                String labo = currentPatient.getLabName();
+                Frequencies freqenceLabo = frequenciesPerLabos.get(labo);
+                freqenceLabo.setPn(freqenceLabo.getPn() + 1f);
+                patientNb++;
             }
         }
 

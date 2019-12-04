@@ -19,6 +19,7 @@ import java.util.Set;
 
 import static org.chusj.ESSparkDriverProgram.checkForDonor;
 import static org.chusj.ESSparkDriverProgram.getSHA256Hash;
+import static org.chusj.VEPSparkDriverProgram.getMD5Hash;
 
 
 public class Validator {
@@ -33,13 +34,15 @@ public class Validator {
         String extractFile = args[0];
         String patientId = args[1];
 
+        String build = "";
+
         try (BufferedReader buf = new BufferedReader(new FileReader(extractFile));
              RestHighLevelClient client = new RestHighLevelClient(
                      RestClient.builder(
                              new HttpHost("localhost", 9200, "http"))) ) {
 
             String fetchedLine;
-            connectToMemCached();
+            //connectToMemCached();
 
             //JSONObject projectIdO = new JSONObject();
             //projectIdO.put("pid", projectId);
@@ -69,7 +72,8 @@ public class Validator {
                     String mutation = reference + ">" + alt.split(",")[0];
                     String dnaChanges = chrPos + ":g." + position + mutation;
 
-                    String uid = getSHA256Hash(dnaChanges);
+//                    String uid = getSHA256Hash(dnaChanges);
+                    String uid = getMD5Hash(dnaChanges +"@"+build);
 
                     if (setTest.contains(uid)) {
                         // found in memory!!!
@@ -79,30 +83,33 @@ public class Validator {
                     }
 
                     // Check in Memcached
-                    String donorArrayStr = (String) mcc.get(uid);
-                    if (donorArrayStr != null) {
-                        JSONArray donorArray = new JSONArray(donorArrayStr);
+                    boolean checkInMemcached =false;
+                    if (checkInMemcached) {
+                        String donorArrayStr = (String) mcc.get(uid);
+                        if (donorArrayStr != null) {
+                            JSONArray donorArray = new JSONArray(donorArrayStr);
 
-                        if (donorArray != null && donorArray.length() > 0) {
-                            boolean donorFound = checkForDonor(donorArray, patientId);
+                            if (donorArray != null && donorArray.length() > 0) {
+                                boolean donorFound = checkForDonor(donorArray, patientId);
 
-                            if (!donorFound) {
-                                System.err.println("*****  Donor not Found in Memcached:" + dnaChanges + " - uid ="+uid);
+                                if (!donorFound) {
+                                    System.err.println("*****  Donor not Found in Memcached:" + dnaChanges + " - uid =" + uid);
+                                } else {
+                                    System.out.print("m1");
+                                }
+
                             } else {
-                                System.out.print("m1");
+                                System.err.println("*****  No donor array Found in Memcached:" + dnaChanges + " - uid =" + uid);
                             }
 
                         } else {
-                            System.err.println("*****  No donor array Found in Memcached:" + dnaChanges + " - uid ="+uid);
+                            System.err.println("*****  No Record not Found in Memcached:" + dnaChanges + " - uid =" + uid);
                         }
-
-                    } else {
-                        System.err.println("*****  No Record not Found in Memcached:" + dnaChanges + " - uid ="+uid);
                     }
 
                     // check in ES
                     String msg;
-                    GetRequest getRequest = new GetRequest("variants", "family", uid);
+                    GetRequest getRequest = new GetRequest("mutations", "_doc", uid);
 
                     if (client.exists(getRequest, RequestOptions.DEFAULT)) {
                         GetResponse getResponse = client.get(getRequest, RequestOptions.DEFAULT);

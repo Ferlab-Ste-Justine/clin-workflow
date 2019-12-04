@@ -7,6 +7,7 @@ import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.elasticsearch.action.bulk.BulkRequest;
+import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.update.UpdateRequest;
 import org.elasticsearch.client.RequestOptions;
@@ -79,10 +80,6 @@ public class VEPSparkDriverProgram {
 //        Map<String, Patient> patientMap = PatientHelper.preparePedigreeFromPedAndFHIR(pedigrees);
         Map<String, Patient> patientMap = PatientHelper.preparePedigreeFromProps(pedigreeProps);
 
-        JSONArray test = toJson( new String[]{"out10000.txt","pedigree.properties", "pedigree.ped"});
-
-        test.forEach((variant) -> System.out.println(variant));
-
         try (RestHighLevelClient clientTry = new RestHighLevelClient(
                 RestClient.builder(
                         new HttpHost("localhost", 9200, "http")))) {
@@ -132,9 +129,11 @@ public class VEPSparkDriverProgram {
 //            }
 
             if (exoUpsert) {
-                //System.out.println(propertiesOneMutation.toString(0));
+                propertiesOneMutation.put("uid", uid);
+//                System.out.println(propertiesOneMutation.toString(0));
                 String specimenId = (String) propertiesOneMutation.remove("specimenId");
-
+                request.add(
+                        upsertExomiserRequest(propertiesOneMutation,uid,specimenId));
             } else if (esUpsert) {
                 JSONArray donorArray = (JSONArray) propertiesOneMutation.get("donors");
                 JSONObject frequencies = (JSONObject) propertiesOneMutation.get("frequencies");
@@ -150,7 +149,7 @@ public class VEPSparkDriverProgram {
         }
         boolean success = true;
         if (request.numberOfActions() > 0 ) {
-            success = sendToES(request, esUpsert);
+            success = sendToES(request, (esUpsert||exoUpsert));
             if (!success) {
                 System.err.print("Unable to bulk " + ((esUpsert) ? "upsert " : "insert "));
                 for (JSONObject propertiesOneMutation : propertiesOneMutations) {
@@ -189,15 +188,17 @@ public class VEPSparkDriverProgram {
 
     private static boolean sendToES(BulkRequest request, boolean esUpsert) {
         boolean indexingSuccess = false;
-        //BulkResponse bulkResponse;
-        for (int i=0; i< 10; i++) {
+        BulkResponse bulkResponse = null;
+        for (int i=0; i< 3; i++) {
             try {
-                //bulkResponse =
-                client.bulk(request, RequestOptions.DEFAULT);
+                bulkResponse = client.bulk(request, RequestOptions.DEFAULT);
                 indexingSuccess = true;
                 break;
             } catch (Exception e) {
                 System.err.println("*******Bulk "+((esUpsert) ? "upsert":"insert")+" try #"+i+" failed...\n"+e);
+                if (bulkResponse != null) {
+                    System.err.println("bulResponse=" + bulkResponse.buildFailureMessage());
+                }
             }
         }
         if (indexingSuccess) {
@@ -237,6 +238,7 @@ public class VEPSparkDriverProgram {
             donorMap.put("adFreq", donor.get("adFreq"));
             donorMap.put("adAlt", donor.get("adAlt"));
             donorMap.put("adTotal", donor.get("adTotal"));
+            donorMap.put("exomiserScore", donor.get("exomiserScore"));
 //            donorMap.put("af", donor.get("af"));
 //            donorMap.put("dp", donor.get("dp"));
             donorMap.put("gt", donor.get("gt"));
@@ -339,33 +341,34 @@ public class VEPSparkDriverProgram {
     protected static UpdateRequest upsertExomiserRequest(JSONObject object, String uid, String specimenId) {
 
 
-
         Map<String, Object> parameters = new HashMap<>();
+
         parameters.put("transmission", object.get("transmission"));
         parameters.put("exomiserScore", object.get("combinedScore"));
         parameters.put("lastUpdate", object.get("lastUpdate"));
+        parameters.put("transmissionKeyName", "transmission");
+        parameters.put("exomiserScoreKeyName", "exomiserScore");
+        parameters.put("overwriteKey", "lastUpdate");
         parameters.put("specimen", specimenId);
+
+
 
 
 
         Script inline = new Script(ScriptType.INLINE, "painless",
 
-        "boolean toUpdateFreq = false; " +
+        "" +
 
                 "String specimen = params.specimen; " +
-                "Double score = params.exomiserScore; " +
-                "String lastUpdate = params.lastUpdate" +
-                "if (ctx._source.specimenList.contains(specimen) ) {" +
-                    "for (Map donor : ctx._source.donors) {" +
-
-                    "ctx._source.donors.add(d);" +
-                    "ctx._source.specimenList.add(s);" +
-                    "toUpdateFreq = true " +
+                "if (ctx._source.specimenList != null && ctx._source.specimenList.contains(specimen) ) { " +
+                    "for (Map donor : ctx._source.donors) { " +
+                        "if (donor.specimenId == specimen) { " +
+                            "donor.put(params.exomiserScoreKeyName,params.exomiserScore); " +
+//                            "donor.put(params.transmissionKeyName,params.transmission); " +
+                            "donor.put(params.overwriteKey,params.lastUpdate); " +
+                        "} " +
                     "} " +
-                "} " +
-
-                "ctx._source.frequencies.put(params.labName,params.freqLab)" +
-                "}"
+                "} "
                 , parameters);
 
 
