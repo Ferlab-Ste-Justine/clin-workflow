@@ -5,7 +5,6 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -67,7 +66,7 @@ public class VepHelper {
      */
     public static void main(String[] args) throws Exception {
 
-        if (args.length < 3) {
+        if (args.length != 3) {
             args = new String[]{"out10000.txt","pedigree.properties", "pedigree.ped"};
         }
 
@@ -87,17 +86,9 @@ public class VepHelper {
 
             String fetchedLine;
 
-            // Record and prep metaData
             buf.readLine();
-            //buf.readLine();
-
-            // Main - Child=14140,Mother=14141,Father=14142
-
-            //String[] pedigree = {"14140,P","14141,M", "14142,F"};
 
 
-            //pedigreeProps.forEach((prop) -> System.out.println("prop="+prop));
-            //for (int i=0; i<pedigreeProps.toString())
             System.out.println(pedigreeProps.toString());
             //List<String> hpoTerms = new ArrayList<>(Arrays.asList("HP:0005280","HP:0001773"));
 
@@ -147,9 +138,6 @@ public class VepHelper {
         if ("CHROM".equalsIgnoreCase(chrom)) {
             return null; // Meta data line
         }
-        // #CHROM <- line from vcf which have specimen ids
-
-        //boolean db_snp ; clinvarIds, omimIds, emsemblIds, orphanetIds , pubmedIds, clinvarSig, Types, PHENO, trait, genes
 
         boolean[] dbExt = {false, false, false, false, false, false, false, false, false, false, false};
         List<Set<String>> dbExtId = new ArrayList<>();

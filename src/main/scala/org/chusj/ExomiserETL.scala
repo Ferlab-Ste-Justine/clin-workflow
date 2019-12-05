@@ -31,7 +31,7 @@ object ExomiserETL {
   def main(args: Array[String]): Unit = {
 
 
-    val newArgs = if (args.length < 3)
+    val newArgs = if (args.length < 3) // to test locally
        Array[String]("exomiser/FAM_C3_92.json", "pedigree.properties", "pedigree.ped", "6", "20")
     else
       args
@@ -45,11 +45,11 @@ object ExomiserETL {
     val pedigrees: mutable.Seq[Pedigree] = loadPedigree(pedFile).asScala
     val patientMap: mutable.Map[String, Patient] = PatientHelper.preparePedigreeFromProps(pedigreeProps).asScala
 
-    var totalCount = 0;
+    var totalCount = 0
 
     pedigrees.foreach((ped:Pedigree) => println(ped))
 
-    val proban = pedigrees(0)
+    val proban = pedigrees.head
 
     val build:String = pedigreeProps.get("assemblyVersion").toString
 
@@ -58,7 +58,7 @@ object ExomiserETL {
     }
 
     val spark = SparkSession.builder()
-      .appName("Joins")
+      .appName("ExomiserETL")
       .config("spark.master", "local")
       .getOrCreate()
 
@@ -69,17 +69,6 @@ object ExomiserETL {
     import spark.implicits._
 
     val exomiserGenesDFTransformed = exomiserGenesDF.select(
-//      col("geneSymbol"),
-//      col("geneIdentifier.geneId").as("geneId"),
-//      col("combinedScore"),
-//      size(col("variantEvaluations")).as("variantQty"),
-//      col("variantEvaluations.chromosome").as("chrom"),
-//      col("variantEvaluations.position").as("position"),
-//      col("variantEvaluations.ref").as("ref"),
-//      col("variantEvaluations.alt").as("alt"),
-//      col("variantEvaluations.compatibleInheritanceModes").as("Inheritance"),
-//      size(col("variantEvaluations.compatibleInheritanceModes")).as("qtyOfInheritance")
-//    ).select(
       col("geneSymbol"),
       col("geneIdentifier.geneId").as("geneId"),
       col("combinedScore"),
@@ -99,17 +88,9 @@ object ExomiserETL {
       col("qtyOfInheritance")
     )
 
-
-//    selected3.show()
     println(exomiserGenesDFTransformed.count())
 
     val exoDS = exomiserGenesDFTransformed.as[ExomiserETL.Exomiser]
-//    val filtered = exoDS.filter((variant) => {
-//      variant.qtyOfInheritance != variant.variantQty
-//    })
-//    filtered.show()
-    exoDS.show()
-    println(exoDS.count())
 
     val clientTry = new RestHighLevelClient(
       RestClient.builder(
@@ -132,7 +113,6 @@ object ExomiserETL {
           VEPSparkDriverProgram.bulkStoreJsonObj(jsonObjectList, false, pedigreeProps, false, true)
           VEPSparkDriverProgram.TOTAL_COUNT += jsonObjectList.size()
           jsonObjectList = new util.ArrayList[JSONObject]
-
         }
       }
       // empty bucket
@@ -140,13 +120,12 @@ object ExomiserETL {
       VEPSparkDriverProgram.TOTAL_COUNT += jsonObjectList.size()
     })
 
-    println(s"proban is $proban")
     println(s"Total count=${VEPSparkDriverProgram.TOTAL_COUNT}")
     VEPSparkDriverProgram.client.close()
   }
 
 
-  def toJsonObj(oneExo: Exomiser, build: String, specimenId: String) = {
+  def toJsonObj(oneExo: Exomiser, build: String, specimenId: String): JSONObject = {
     val oneVariant = new JSONObject
 
     // Exomiser chromose X is 23 while VEP and previous ETL is using X
