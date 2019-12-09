@@ -3,13 +3,13 @@ package org.chusj;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.util.Objects;
+import java.util.*;
 
 public class FunctionalAnnotation {
 
     private String gene;
     private String aaChange;
-    private String consequence;
+    private Set<String> consequence = new HashSet<>();
     private String codingDNAChange;
     private Long strand;
     private JSONArray theRest;
@@ -57,7 +57,7 @@ public class FunctionalAnnotation {
     FunctionalAnnotation(String gene, String aaChange, String consequence, String codingDNAChange, Long strand) {
         this.gene = gene;
         this.aaChange = aaChange;
-        this.consequence = consequence;
+        this.consequence = new HashSet<>(Arrays.asList(consequence.split("&")));
         this.codingDNAChange = codingDNAChange;
         this.strand = strand;
     }
@@ -78,13 +78,15 @@ public class FunctionalAnnotation {
         this.aaChange = aaChange;
     }
 
-    private String getConsequence() {
+    private Set<String> getConsequence() {
         return consequence;
     }
 
-    public void setConsequence(String consequence) {
+    public void setConsequence(Set<String> consequence) {
         this.consequence = consequence;
     }
+
+    public void addConsequence(String consequence) { this.consequence.add(consequence); }
 
     private String getCodingDNAChange() {
         return codingDNAChange;
@@ -143,7 +145,7 @@ public class FunctionalAnnotation {
         if (!gene.isEmpty()) fa.put("geneAffectedSymbol", gene);
         if (geneId != null && !geneId.isEmpty()) fa.put("geneAffectedId", geneId);
         if (!aaChange.isEmpty()) fa.put("aaChange", aaChange);
-        fa.put("consequence", consequence);
+        fa.put("consequence", consequence.toArray());
         if (!codingDNAChange.isEmpty()) fa.put("cdnaChange", codingDNAChange);
         fa.put("impact", impact);
         if (strand != null ) {
