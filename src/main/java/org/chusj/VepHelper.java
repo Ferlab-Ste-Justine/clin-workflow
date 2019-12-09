@@ -5,7 +5,6 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -67,7 +66,7 @@ public class VepHelper {
      */
     public static void main(String[] args) throws Exception {
 
-        if (args.length < 3) {
+        if (args.length != 3) {
             args = new String[]{"out10000.txt","pedigree.properties", "pedigree.ped"};
         }
 
@@ -87,17 +86,9 @@ public class VepHelper {
 
             String fetchedLine;
 
-            // Record and prep metaData
             buf.readLine();
-            //buf.readLine();
-
-            // Main - Child=14140,Mother=14141,Father=14142
-
-            //String[] pedigree = {"14140,P","14141,M", "14142,F"};
 
 
-            //pedigreeProps.forEach((prop) -> System.out.println("prop="+prop));
-            //for (int i=0; i<pedigreeProps.toString())
             System.out.println(pedigreeProps.toString());
             //List<String> hpoTerms = new ArrayList<>(Arrays.asList("HP:0005280","HP:0001773"));
 
@@ -147,9 +138,6 @@ public class VepHelper {
         if ("CHROM".equalsIgnoreCase(chrom)) {
             return null; // Meta data line
         }
-        // #CHROM <- line from vcf which have specimen ids
-
-        //boolean db_snp ; clinvarIds, omimIds, emsemblIds, orphanetIds , pubmedIds, clinvarSig, Types, PHENO, trait, genes
 
         boolean[] dbExt = {false, false, false, false, false, false, false, false, false, false, false};
         List<Set<String>> dbExtId = new ArrayList<>();
@@ -185,7 +173,8 @@ public class VepHelper {
 //        String laboName = pedigreeProps.getProperty("laboName");
         //List<String> hpoTermsPos = Arrays.asList(pedigreeProps.getProperty("hpoTermsPos").split(","));
         //List<String> hpoTermsNeg = Arrays.asList(pedigreeProps.getProperty("hpoTermsNeg").split(","));
-        propertiesOneMutation.put("assemblyVersion", pedigreeProps.getProperty("assemblyVersion"));
+        String build = pedigreeProps.getProperty("assemblyVersion");
+        propertiesOneMutation.put("assemblyVersion", build);
         propertiesOneMutation.put("annotationTool", pedigreeProps.getProperty("annotationTool"));
 
         LocalDate localDate = LocalDate.now();
@@ -270,8 +259,7 @@ public class VepHelper {
         }
         String dnaChange = reference + ">" + alt.split(",")[0];
         String mutationId = "chr" + chrPos + ":g." + position + dnaChange;
-        String uid = getMD5Hash(mutationId);
-
+        String uid = getMD5Hash(mutationId +"@"+build);
 
         propertiesOneMutation.put("id", uid);
         propertiesOneMutation.put("mutationId", mutationId);
@@ -493,6 +481,7 @@ public class VepHelper {
             arrayDonor[i].put("practitionerId", currentPatient.getPractitionerId());
             arrayDonor[i].put("organizationId", currentPatient.getOrgId());
             arrayDonor[i].put("sequencingStrategy", currentPatient.getSequencingStrategy());
+            arrayDonor[i].put("exomiserScore", 0f);
             familyMap.get(currentPatient.getFamilyId()).addFamily(i);
 
         }
@@ -552,14 +541,13 @@ public class VepHelper {
                         // setback to 0 for new variant
                         currentPatient.setQtyHposTermsFound(0);
                     }
-
-                    specimenArray.put(currentDonor.getId());
-                    donorArray.put(arrayDonor[index]);
-                    String labo = currentPatient.getLabName();
-                    Frequencies freqenceLabo = frequenciesPerLabos.get(labo);
-                    freqenceLabo.setPn(freqenceLabo.getPn() + 1f);
-                    patientNb++;
                 }
+                specimenArray.put(currentDonor.getId());
+                donorArray.put(arrayDonor[index]);
+                String labo = currentPatient.getLabName();
+                Frequencies freqenceLabo = frequenciesPerLabos.get(labo);
+                freqenceLabo.setPn(freqenceLabo.getPn() + 1f);
+                patientNb++;
             }
         }
 
@@ -1594,7 +1582,8 @@ public class VepHelper {
         return count;
     }
 
-    private static int getImpactScore(String impact) {
+    // public bc it's used by scala test
+    public static int getImpactScore(String impact) {
         if (impact == null) return 0;
         switch (impact.toUpperCase()) {
             case "HIGH" : return 4;
@@ -1607,7 +1596,7 @@ public class VepHelper {
     }
 
 
-    static Properties getPropertiesFromFile(String filename) {
+    public static Properties getPropertiesFromFile(String filename) {
         Properties prop = new Properties();
 
         try (BufferedReader buf = new BufferedReader(new FileReader(filename))) {

@@ -25,7 +25,7 @@
                     <dependency>
                         <groupId>org.scala-lang</groupId>
                         <artifactId>scala-compiler</artifactId>
-                        <version>[2.11.12,)</version>
+                        <version>2.11.12</version>
                     </dependency>
                 </dependencies>
                 <executions>
@@ -39,7 +39,7 @@
                 <configuration>
                     <sourceDir>src/main/scala</sourceDir>
                     <testSourceDir>src/test/scala</testSourceDir>
-                    <!--<scalaVersion>2.12.8</scalaVersion>-->
+                    <scalaVersion>2.11.12</scalaVersion>
                     <jvmArgs>
                         <jvmArg>-Xms64m</jvmArg>
                         <jvmArg>-Xmx1024m</jvmArg>
@@ -122,15 +122,15 @@
         </dependency>
         <dependency>
             <groupId>org.apache.spark</groupId>
-            <artifactId>spark-core_2.12</artifactId>
-            <version>2.4.0</version>
-            <scope>provided</scope>
+            <artifactId>spark-core_2.11</artifactId>
+            <version>2.4.3</version>
+<!--            <scope>provided</scope>-->
         </dependency>
         <dependency>
             <groupId>org.apache.spark</groupId>
-            <artifactId>spark-sql_2.12</artifactId>
-            <version>2.4.0</version>
-            <scope>provided</scope>
+            <artifactId>spark-sql_2.11</artifactId>
+            <version>2.4.3</version>
+<!--            <scope>provided</scope>-->
         </dependency>
         <dependency>
             <groupId>com.whalin</groupId>
@@ -140,11 +140,11 @@
         <dependency>
             <groupId>org.scala-lang</groupId>
             <artifactId>scala-library</artifactId>
-            <version>2.12.8</version>
+            <version>2.11.12</version>
         </dependency>
         <dependency>
             <groupId>org.scalatest</groupId>
-            <artifactId>scalatest_2.12</artifactId>
+            <artifactId>scalatest_2.11</artifactId>
             <version>3.0.7</version>
             <scope>test</scope>
         </dependency>
@@ -154,6 +154,11 @@
             <artifactId>jedis</artifactId>
             <version>3.1.0</version>
             <type>jar</type>
+        </dependency>
+        <dependency>
+            <groupId>com.googlecode.json-simple</groupId>
+            <artifactId>json-simple</artifactId>
+            <version>1.1.1</version>
         </dependency>
 
         <!--<dependency>-->

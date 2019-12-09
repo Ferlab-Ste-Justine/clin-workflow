@@ -14,24 +14,44 @@ import org.json.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 import static org.chusj.ESSparkDriverProgram.checkForDonor;
 import static org.chusj.ESSparkDriverProgram.getSHA256Hash;
+import static org.chusj.PatientHelper.loadPedigree;
+import static org.chusj.VEPSparkDriverProgram.getMD5Hash;
+import static org.chusj.VepHelper.getPropertiesFromFile;
 
 
 public class Validator {
 
     public static RestHighLevelClient client;
-    public static SockIOPool pool;
-    public static MemCachedClient mcc;
+    private static SockIOPool pool;
+    private static MemCachedClient mcc;
+    private static long FOUND = 0L;
+    private static long NOT_FOUND = 0L;
+    private static long PROCESS = 0L;
+    private static long DISCARD = 0L;
+    private static long ERROR = 0L;
 
 
     public static void main(String args[]) throws Exception {
 
+        if (args.length != 4) {
+            args = new String[]{"out10.txt","pedigree.properties", "pedigree.ped", "validate"};
+        }
+
         String extractFile = args[0];
-        String patientId = args[1];
+        String pedigrePropsFile = args[1];
+        String pedFile = args[2];
+
+        Properties pedigreeProps = getPropertiesFromFile(pedigrePropsFile);
+        List<Pedigree> pedigrees = loadPedigree(pedFile);
+
+        Map<String, Patient> patientMap = PatientHelper.preparePedigreeFromProps(pedigreeProps);
+        pedigrees.forEach(System.out::println);
+        patientMap.forEach((k,v)->System.out.println(k+"\n\t"+v));
+        String build = pedigreeProps.getProperty("assemblyVersion");
 
         try (BufferedReader buf = new BufferedReader(new FileReader(extractFile));
              RestHighLevelClient client = new RestHighLevelClient(
@@ -39,7 +59,7 @@ public class Validator {
                              new HttpHost("localhost", 9200, "http"))) ) {
 
             String fetchedLine;
-            connectToMemCached();
+            //connectToMemCached();
 
             //JSONObject projectIdO = new JSONObject();
             //projectIdO.put("pid", projectId);
@@ -58,18 +78,24 @@ public class Validator {
                     break;
                 } else {
 
-                    System.out.print(".");
+                    PROCESS++;
                     String[] lineValueArray = fetchedLine.split("\t");
                     String chrom = lineValueArray[0];
 
                     String position = lineValueArray[1];
-                    String reference = lineValueArray[3].trim();
-                    String alt = lineValueArray[4].replace(",<NON_REF>", ""); // CT,<NON_REF> or G,TGG,<NON_REF>
+                    String reference = lineValueArray[2].trim();
+                    String alt = lineValueArray[3].replace(",<NON_REF>", ""); // CT,<NON_REF> or G,TGG,<NON_REF>
                     String chrPos = chrom.substring(3); // remove 'chr'
+                    if (chrPos.length() > 2) {
+                        DISCARD++;
+                        continue;
+                    }
                     String mutation = reference + ">" + alt.split(",")[0];
-                    String dnaChanges = chrPos + ":g." + position + mutation;
+                    String dnaChanges = "chr" + chrPos + ":g." + position + mutation;
 
-                    String uid = getSHA256Hash(dnaChanges);
+
+//                    String uid = getSHA256Hash(dnaChanges);
+                    String uid = getMD5Hash(dnaChanges +"@"+build);
 
                     if (setTest.contains(uid)) {
                         // found in memory!!!
@@ -78,31 +104,9 @@ public class Validator {
                         setTest.add(uid);
                     }
 
-                    // Check in Memcached
-                    String donorArrayStr = (String) mcc.get(uid);
-                    if (donorArrayStr != null) {
-                        JSONArray donorArray = new JSONArray(donorArrayStr);
-
-                        if (donorArray != null && donorArray.length() > 0) {
-                            boolean donorFound = checkForDonor(donorArray, patientId);
-
-                            if (!donorFound) {
-                                System.err.println("*****  Donor not Found in Memcached:" + dnaChanges + " - uid ="+uid);
-                            } else {
-                                System.out.print("m1");
-                            }
-
-                        } else {
-                            System.err.println("*****  No donor array Found in Memcached:" + dnaChanges + " - uid ="+uid);
-                        }
-
-                    } else {
-                        System.err.println("*****  No Record not Found in Memcached:" + dnaChanges + " - uid ="+uid);
-                    }
-
                     // check in ES
                     String msg;
-                    GetRequest getRequest = new GetRequest("variants", "family", uid);
+                    GetRequest getRequest = new GetRequest("mutations", "_doc", uid);
 
                     if (client.exists(getRequest, RequestOptions.DEFAULT)) {
                         GetResponse getResponse = client.get(getRequest, RequestOptions.DEFAULT);
@@ -110,39 +114,47 @@ public class Validator {
                         if (getResponse.isExists()) {
 
                             JSONObject obj = new JSONObject(getResponse.getSourceAsString());
-                            JSONObject props = (JSONObject) obj.get("properties");
                             JSONArray donorArray = new JSONArray();
 
-                            String mutationId = (String) props.get("mutationId");
+                            String mutationId = (String) obj.get("mutationId");
 
                             if (!mutationId.equalsIgnoreCase(dnaChanges)) {
                                 // collision detected
                                 msg = "(" + dnaChanges + ";" + uid + ";";
                                 System.err.println("collision="+msg);
                             }
-                            try {
-                                donorArray = (JSONArray) props.get("donor");
-                            } catch (Exception e) {
-                                donorArray = new JSONArray();
-                            }
+                            System.out.print(".");
+                            FOUND++;
 
-                            boolean donorFound = ESSparkDriverProgram.checkForDonor(donorArray, patientId);
-                            if (!donorFound) {
-                                System.err.println("*****  Donor not Found in ES:" + dnaChanges + " - uid ="+uid);
-                            } else {
-                                System.out.print("e1");
-                            }
+//                            boolean donorFound = ESSparkDriverProgram.checkForDonor(donorArray, patientId);
+//                            if (!donorFound) {
+//                                System.err.println("*****  Donor not Found in ES:" + dnaChanges + " - uid ="+uid);
+//                            } else {
+//                                System.out.print("e1");
+//                            }
                         } else {
-                            System.err.println("*****  No Record not Found in ES:" + dnaChanges + " - uid ="+uid);
+                            System.err.println("*****  Cannot get record from ES for " + dnaChanges + " - uid = "+uid);
+                            ERROR++;
 
                         }
 
                     } else {
-                        System.err.println("#### not exist()");
+                        System.err.println("#### Record not Found in ES:" + dnaChanges + " - uid = "+uid);
+                        NOT_FOUND++;
                     }
                 }
             }
         }
+        long total = (FOUND+NOT_FOUND+DISCARD+ERROR);
+        System.out.println("");
+        System.out.println("Number of Record Processed = "+ PROCESS);
+        System.out.println("Number of Record Found     = "+ FOUND);
+        System.out.println("Number of Record Not Found = "+ NOT_FOUND);
+        System.out.println("Number of Record Discarded = "+ DISCARD);
+        System.out.println("Number of error Record     = "+ ERROR);
+        System.out.println("Total                      = "+ total);
+        System.out.println(( NOT_FOUND == 0L ) ? "passed" : "failed" );
+
     }
 
     public static void connectToMemCached() {

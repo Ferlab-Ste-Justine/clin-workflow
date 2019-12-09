@@ -120,6 +120,9 @@
             "adTotal": {
               "type": "long"
             },
+            "exomiserScore": {
+              "type": "float"
+            },
             "adFreq": {
               "type": "float"
             },

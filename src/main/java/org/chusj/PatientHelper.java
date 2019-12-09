@@ -299,6 +299,7 @@ public class PatientHelper {
                         String relationship = (String) rel.get("relationship");
                         String id = (String) rel.get("id");
                         linkToOthersPatientIds[i] = id;
+                        System.out.println("V:"+v.getPatientId()+"id:"+id);
                         linkToOthersSpecimenIds[i] = patientMap.get(id).getSpecimenId();
                         patientMap.get(id).setRelation(relationship);
 
@@ -338,7 +339,7 @@ public class PatientHelper {
     hpoTermsPos=HP:0005280,HP:0001773
 
     */
-    static Map<String, Patient> preparePedigreeFromProps(Properties pedigreeProps) {
+    public static Map<String, Patient> preparePedigreeFromProps(Properties pedigreeProps) {
         Map<String, Patient> patientMap = new HashMap<>();
 
         String[] specimens = pedigreeProps.getProperty("specimen").split(",");
@@ -400,7 +401,7 @@ public class PatientHelper {
     }
 
 
-    static List<Pedigree> loadPedigree(String filename) {
+    public static List<Pedigree> loadPedigree(String filename) {
         List<Pedigree> pedigrees = new ArrayList<>();
 
         try (BufferedReader buf = new BufferedReader(new FileReader(filename))) {
