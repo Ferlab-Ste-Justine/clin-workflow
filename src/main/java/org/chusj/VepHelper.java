@@ -1640,14 +1640,22 @@ public class VepHelper {
 
         //countRedisCalls++;
         Set<String> geneSets = getMembersForEnsId(ensId);
+        Set<String> aliasSet = new HashSet<>();
         JSONArray hpoGeneSets = new JSONArray();
         JSONArray orphanetGeneSets = new JSONArray();
-        JSONArray alias = new JSONArray();
         JSONArray radboudumc = new JSONArray();
 
         geneSets.forEach( member -> {
 
-            if (member.startsWith("HP:")) {
+            if (member.startsWith("symbol:")) {
+                // VEP geneSymbol sometimes put an alias instead
+                String symbol = member.replace("symbol:", "");
+                String geneSymbol = jsonObject.getString("geneSymbol");
+                if (!symbol.equalsIgnoreCase(geneSymbol)) {
+                    aliasSet.add(geneSymbol);
+                    jsonObject.put("geneSymbol", symbol);
+                }
+            } else if (member.startsWith("HP:")) {
                 String[] hpoTerms = member.split(",");
                 hpoGeneSets.put(hpoTerms[1] + " (" + hpoTerms[0] + ")");
                 for (Pedigree ped : pedigrees) {
@@ -1674,7 +1682,8 @@ public class VepHelper {
                 String[] orphTerms = member.split(",");
                 orphanetGeneSets.put(orphTerms[1] + " (" + orphTerms[0] + ")");
             } else if (member.startsWith("alias:")) {
-                alias.put(member.replace("alias:", ""));
+                //alias.put(member.replace("alias:", ""));
+                aliasSet.add(member.replace("alias:", ""));
             } else if (member.startsWith("Rad:")) {
                 String[] radTerms = member.split(":");
                 radboudumc.put(radTerms[1] + " (" + member + ")");
@@ -1692,7 +1701,7 @@ public class VepHelper {
                 jsonObject.put("orphanet", orphanetGeneSets);
                 availObj.put("orphanet", true);
             }
-            if (alias.length()>0) jsonObject.put("alias", alias);
+            if (aliasSet.size()>0) jsonObject.put("alias", aliasSet.toArray());
             if (radboudumc.length()>0) {
                 jsonObject.put("radboudumc", radboudumc);
                 availObj.put("radboudumc", true);
