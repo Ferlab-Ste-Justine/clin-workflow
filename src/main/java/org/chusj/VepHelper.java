@@ -637,7 +637,8 @@ public class VepHelper {
         addSetsToArrayToObjs(dbExtId, PUBMED, bdExtObj, "pubmed", availBdExtObj);
 
         String clsig = toStringList(dbExtId.get(CLINVAR_SIG));
-        if (!clsig.isEmpty()) { clinvarObj.put( "clinvar_clinsig", clsig ); }
+        if (!clsig.isEmpty()) {
+            clinvarObj.put( "clinvar_clinsig", clsig.split(",") ); }
         String cltraits = toStringList(dbExtId.get(CLINVAR_TRAIT));
 
         addSetsToArrayToObjs(dbExtId, CLINVAR_TRAIT, clinvarObj, "clinvar_trait", null);
