@@ -34,7 +34,8 @@ public class PatientHelper {
 
             client = clientTry;
             //
-            List<String> listOfSpecimen = new ArrayList<>(Arrays.asList("SP00047", "SP00072", "SP00022"));
+            //List<String> listOfSpecimen = new ArrayList<>(Arrays.asList("SP00047", "SP00072", "SP00022"));
+            List<String> listOfSpecimen = new ArrayList<>(Arrays.asList("SP00011", "SP00061", "SP00036"));
                 //List<String> list2 = new ArrayList<>(Arrays.asList("SP00011", "SP00061", "SP00036"));
             List<String> hpoTerms = getHpoTerms(getAPatientFromESFromID("PA00002"));
             hpoTerms.forEach(System.out::println);
@@ -52,14 +53,14 @@ public class PatientHelper {
 //                System.out.println("\tRelation:"+v.getRelation());
             });
 
-            List<Pedigree> pedigrees = loadPedigree("pedigree.ped");
+            List<Pedigree> pedigrees = loadPedigree("pedigreeTest1.ped");
             donors = preparePedigreeFromPedAndFHIR(pedigrees);
             donors.forEach((k,v) -> System.out.println("id=" + k + "\n\t" + v));
-            String pedigreePropsFile = "pedigree.properties";
-            Properties pedigreeProps = VepHelper.getPropertiesFromFile(pedigreePropsFile);
-            donors = preparePedigreeFromProps(pedigreeProps);
-            System.out.println("--------");
-            donors.forEach((k,v) -> System.out.println("id=" + k + "\n\t" + v));
+            //String pedigreePropsFile = "pedigree.properties";
+            //Properties pedigreeProps = VepHelper.getPropertiesFromFile(pedigreePropsFile);
+            //donors = preparePedigreeFromProps(pedigreeProps);
+            //System.out.println("--------");
+            //donors.forEach((k,v) -> System.out.println("id=" + k + "\n\t" + v));
 
 
         }
@@ -102,7 +103,7 @@ public class PatientHelper {
         for (int i=0; i< 10; i++) {
             try {
 
-                SearchRequest searchRequest = new SearchRequest("patient");
+                SearchRequest searchRequest = new SearchRequest("test");
                 SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
 
                 QueryStringQueryBuilder queryStringQueryBuilder = queryStringQuery(query);
@@ -198,7 +199,25 @@ public class PatientHelper {
         return null;
     }
 
-    private static String getPractitionerId(JSONArray practitioners, String requesterRoleId) {
+    private static String getPractitionerRoleIdFromClinicalImpression(JSONArray clinicalImpressions, String ciRef) {
+
+        if (clinicalImpressions == null || clinicalImpressions.length() == 0) {
+            return null;
+        }
+
+        for (int i=0; i<clinicalImpressions.length();i++) {
+
+            JSONObject ci = (JSONObject) clinicalImpressions.get(i);
+            String ciId = (String) ci.get("id");
+            if (ciId.equalsIgnoreCase(ciRef)) {
+                return (String) ci.get("assessor_id");
+            }
+        }
+
+        return null;
+    }
+
+    private static String getPractitionerId(JSONArray practitioners, String practitionerRoleId) {
 
         if (practitioners == null || practitioners.length() == 0) {
             return null;
@@ -209,7 +228,7 @@ public class PatientHelper {
             JSONObject prac = (JSONObject) practitioners.get(i);
 
             String roleId = (String) prac.get("role_id");
-            if (requesterRoleId.equalsIgnoreCase(roleId)) {
+            if (practitionerRoleId.equalsIgnoreCase(roleId)) {
                 return (String) prac.get("id");
             }
 
@@ -251,17 +270,28 @@ public class PatientHelper {
             List<JSONObject> patients = getPatientFromESWithQueryString(specimen);
             JSONObject patientObj = patients.get(0);
             String studyId = (String) ((JSONObject) ((JSONArray) patientObj.get("studies")).get(0)).get("id");
-
+            // Obtain matching serviceRequest with specimen id
             JSONObject serviceRequest = serviceRequest((JSONArray) patientObj.get("serviceRequests"), specimen);
+            JSONArray clinicalImpression = (JSONArray) patientObj.get("clinicalImpressions");
+
             if (serviceRequest != null) {
                 String code = (String) ((JSONObject) serviceRequest.get("code")).get("text");
                 patient.setSequencingStrategy(code);
-                String requesterRoleId = (String) serviceRequest.get("requester_id");
-                // get practitionerId from requesterRoleId
-                String practitionerId = getPractitionerId((JSONArray) patientObj.get("practitioners"), requesterRoleId);
-                String orgId = getOrgId((JSONArray) patientObj.get("practitioners"), requesterRoleId);
-                patient.setPractitionerId(practitionerId);
+                String requesterId = (String) serviceRequest.get("requester_id");
+                String clincicalImpressionRef = (String) serviceRequest.get("ci_ref");
+                String practitionerRoleId = getPractitionerRoleIdFromClinicalImpression(clinicalImpression, clincicalImpressionRef);
+
+                String practitionerId = getPractitionerId((JSONArray) patientObj.get("practitioners"), practitionerRoleId);
+                String orgId = getOrgId((JSONArray) patientObj.get("practitioners"), practitionerRoleId);
                 patient.setOrgId(orgId);
+                patient.setPractitionerId(practitionerId);
+
+                String labName = (String) serviceRequest.get("requester_org_name");
+
+                patient.setLabName(labName);
+                patient.setLabAlias((String) serviceRequest.get("requester_org_alias"));
+                patient.setRequesterId(requesterId);
+                patient.setReqOrgId((String) serviceRequest.get("requester_org_id"));
 
             }
 
@@ -299,7 +329,7 @@ public class PatientHelper {
                         String relationship = (String) rel.get("relationship");
                         String id = (String) rel.get("id");
                         linkToOthersPatientIds[i] = id;
-                        System.out.println("V:"+v.getPatientId()+"id:"+id);
+                        //System.out.println("V:"+v.getPatientId()+"id:"+id);
                         linkToOthersSpecimenIds[i] = patientMap.get(id).getSpecimenId();
                         patientMap.get(id).setRelation(relationship);
 
@@ -415,6 +445,19 @@ public class PatientHelper {
                     Pedigree ped = new Pedigree();
                     String[] line = fetchedLine.split("\t");
                     //System.out.println(fetchedLine + "-"+line.length);
+                    if (line.length < 5 ) {
+                        line = fetchedLine.split(" ");
+                    }
+                    if (line.length > 6 ) {
+                        int pos=0;
+                        for (int i=0; i<line.length;i++) {
+                            if (line[i].trim().length() > 0) {
+                                line[pos++] = line[i];
+                            }
+                        }
+                    }
+
+                    //System.out.println(fetchedLine + "-"+line.length);
                     ped.setFamilyId(line[0]);
                     ped.setId(line[1]);
                     ped.setPaternalId(line[2]);
@@ -422,6 +465,7 @@ public class PatientHelper {
                     ped.setSex(line[4]);
                     ped.setPhenotype(line[5]);
                     pedigrees.add(ped);
+                    //System.out.println("ped="+ped);
 
                 }
             }

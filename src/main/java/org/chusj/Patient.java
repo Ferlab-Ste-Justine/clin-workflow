@@ -15,7 +15,10 @@ public class Patient implements Serializable {
     private String studyId;
     private String orgId;
     private String labName;
+    private String labAlias;
     private String practitionerId;
+    private String requesterId;
+    private String reqOrgId;
     private boolean isProban;
     private boolean isAffected;
     private JSONObject patient;
@@ -36,6 +39,14 @@ public class Patient implements Serializable {
         return specimenId;
     }
 
+    public String getReqOrgId() {
+        return reqOrgId;
+    }
+
+    public void setReqOrgId(String reqOrgId) {
+        this.reqOrgId = reqOrgId;
+    }
+
     void setSpecimenId(String specimenId) {
         this.specimenId = specimenId;
     }
@@ -52,8 +63,24 @@ public class Patient implements Serializable {
         return gender;
     }
 
+    public String getRequesterId() {
+        return requesterId;
+    }
+
+    public void setRequesterId(String requesterId) {
+        this.requesterId = requesterId;
+    }
+
     void setGender(String gender) {
         this.gender = gender;
+    }
+
+    public String getLabAlias() {
+        return labAlias;
+    }
+
+    public void setLabAlias(String labAlias) {
+        this.labAlias = labAlias;
     }
 
     String[] getLinkToOthersSpecimenId() {
@@ -182,7 +209,10 @@ public class Patient implements Serializable {
                 ", studyId='" + studyId + '\'' +
                 ", orgId='" + orgId + '\'' +
                 ", labName='" + labName + '\'' +
+                ", labAlias='" + labAlias + '\'' +
                 ", practitionerId='" + practitionerId + '\'' +
+                ", requesterId='" + requesterId + '\'' +
+                ", reqOrgId='" + reqOrgId + '\'' +
                 ", isProban=" + isProban +
                 ", isAffected=" + isAffected +
                 ", hposTerms=" + hposTerms +

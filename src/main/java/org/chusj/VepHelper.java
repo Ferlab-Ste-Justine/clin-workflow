@@ -1,6 +1,9 @@
 package org.chusj;
 
 
+import org.apache.http.HttpHost;
+import org.elasticsearch.client.RestClient;
+import org.elasticsearch.client.RestHighLevelClient;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -67,59 +70,71 @@ public class VepHelper {
     public static void main(String[] args) throws Exception {
 
         if (args.length != 3) {
-            args = new String[]{"out10000.txt","pedigree.properties", "pedigree.ped"};
+            args = new String[]{"FAM_C3_92_new_15.txt", "pedigree.properties", "pedigree.ped"};
         }
 
         String extractFile = args[0];
         String pedigrePropsFile = args[1];
         String pedFile = args[2];
 
-        Properties pedigreeProps = getPropertiesFromFile(pedigrePropsFile);
-        List<Pedigree> pedigrees = loadPedigree(pedFile);
-//        Map<String, Patient> patientMap = PatientHelper.preparePedigreeFromPed(pedigrees);
-        Map<String, Patient> patientMap = PatientHelper.preparePedigreeFromProps(pedigreeProps);
-        pedigrees.forEach(System.out::println);
-        patientMap.forEach((k,v)->System.out.println(k+"\n\t"+v));
+        List<String> specimenList = getSpecimenList(extractFile);
+
+        specimenList.forEach((x) -> System.out.println(x));
+
+        try (RestHighLevelClient clientTry = new RestHighLevelClient(
+                RestClient.builder(
+                        new HttpHost("localhost", 9200, "http")))) {
 
 
-        try (BufferedReader buf = new BufferedReader(new FileReader(extractFile))) {
+            PatientHelper.client = clientTry;
+            Properties pedigreeProps = getPropertiesFromFile(pedigrePropsFile);
+            List<Pedigree> pedigrees = loadPedigree(pedFile);
+            Map<String, Patient> patientMap = PatientHelper.preparePedigreeFromPedAndFHIR(pedigrees);
+//        Map<String, Patient> patientMap = PatientHelper.preparePedigreeFromProps(pedigreeProps);
+            pedigrees.forEach(System.out::println);
+            patientMap.forEach((k, v) -> System.out.println(k + "\n\t" + v));
 
-            String fetchedLine;
+            System.exit(0);
 
-            buf.readLine();
+            try (BufferedReader buf = new BufferedReader(new FileReader(extractFile))) {
+
+                String fetchedLine;
+
+                buf.readLine();
 
 
-            System.out.println(pedigreeProps.toString());
-            //List<String> hpoTerms = new ArrayList<>(Arrays.asList("HP:0005280","HP:0001773"));
+                //System.out.println(pedigreeProps.toString());
+                //List<String> hpoTerms = new ArrayList<>(Arrays.asList("HP:0005280","HP:0001773"));
 
-            while (true) {
-                fetchedLine = buf.readLine();
-                if (fetchedLine == null) {
-                    break;
-                } else {
-                    JSONObject propertiesOneMutation = processVcfDataLine(fetchedLine, pedigreeProps, patientMap, pedigrees);
-                    if (toPrint) {
-                        System.out.println(propertiesOneMutation.toString(0));
-                        //extractGenesFromMutation(propertiesOneMutation, "0", true).stream().forEach((gene) -> System.out.println("\t"+gene.toString(0)));
-                        toPrint = false;
+                while (true) {
+                    fetchedLine = buf.readLine();
+                    if (fetchedLine == null) {
+                        break;
+                    } else {
+                        JSONObject propertiesOneMutation = processVcfDataLine(fetchedLine, pedigreeProps, patientMap, pedigrees);
+                        if (toPrint) {
+                            System.out.println(propertiesOneMutation.toString(0));
+                            //extractGenesFromMutation(propertiesOneMutation, "0", true).stream().forEach((gene) -> System.out.println("\t"+gene.toString(0)));
+                            toPrint = false;
+                        }
+
+                        //System.err.println(propertiesOneMutation.toString(0));
                     }
-
-                    //System.err.println(propertiesOneMutation.toString(0));
                 }
             }
-        }
-        if (countMutation>0) {
-            avgFuncAnnoPerMutation = (float) countFuncAnnoPerMutation / countMutation;
-        }
+            if (countMutation > 0) {
+                avgFuncAnnoPerMutation = (float) countFuncAnnoPerMutation / countMutation;
+            }
 
-        if (lastOne != null) {
+            if (lastOne != null) {
 //            extractGenesFromMutation(lastOne, "0", false).stream().forEach((gene) -> System.out.println("gene="+gene.toString(0)));
-            System.out.println("lastOne="+lastOne.toString(2));
+                System.out.println("lastOne=" + lastOne.toString(2));
 //            extractGenesFromMutation(lastOne).stream().forEach((gene) -> System.out.println("gene="+gene.toString(0)));
-        }
+            }
 
-        System.out.println("\navgFuncAnnoPerMutation="+avgFuncAnnoPerMutation+"  mutationCount="+ countMutation);
-        System.out.println("redisCallsCount="+ countRedisCalls);
+            System.out.println("\navgFuncAnnoPerMutation=" + avgFuncAnnoPerMutation + "  mutationCount=" + countMutation);
+            System.out.println("redisCallsCount=" + countRedisCalls);
+        }
     }
 
 
@@ -665,7 +680,6 @@ public class VepHelper {
 
     /*
         VEP specific annotation processing (CSQ)
-
      */
     private static JSONObject processVepAnnotations(String csqLine, List<Set<String>> dbExtId, boolean[] dbExt,
                                                     Set<Gene> geneSet, Map<String, Transcript> deStructuredTranscript,
@@ -1596,6 +1610,34 @@ public class VepHelper {
         }
     }
 
+    public static List<String> getSpecimenList(String filename) {
+        List<String> specimenList = new ArrayList<>();
+
+        if (filename != null && !filename.isEmpty()) {
+            try (BufferedReader buf = new BufferedReader(new FileReader(filename))) {
+
+                String[] firstLineArray = buf.readLine().split("\t");
+                int i=0;
+                for (; i<firstLineArray.length;i++) {
+                    if (firstLineArray[i].equalsIgnoreCase("FORMAT")) {
+                       break;
+                    }
+                }
+                i++;
+                for (; i<firstLineArray.length;i++) {
+                    if (firstLineArray[i].startsWith("SP")) {
+                        specimenList.add(firstLineArray[i]);
+                    } else {
+                        specimenList.add("SP" + firstLineArray[i]);
+                    }
+                }
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        return specimenList;
+    }
 
     public static Properties getPropertiesFromFile(String filename) {
         Properties prop = new Properties();
