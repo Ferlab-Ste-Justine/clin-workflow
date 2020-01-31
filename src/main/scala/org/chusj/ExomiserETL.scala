@@ -32,7 +32,7 @@ object ExomiserETL {
 
 
     val newArgs = if (args.length < 3) // to test locally
-       Array[String]("exomiser/FAM_C3_92.json", "pedigree.properties", "pedigree.ped", "6", "20")
+       Array[String]("exomiser/FAM_C3_92.json", "pedigree.properties", "00011", "6", "20")
     else
       args
     val extractFile = newArgs(0)
@@ -42,20 +42,25 @@ object ExomiserETL {
     val bulkOpsQty = newArgs(4).toInt
     import collection.JavaConverters._
     val pedigreeProps = getPropertiesFromFile(pedigrePropsFile)
-    val pedigrees: mutable.Seq[Pedigree] = loadPedigree(pedFile).asScala
-    val patientMap: mutable.Map[String, Patient] = PatientHelper.preparePedigreeFromProps(pedigreeProps).asScala
+
+    //val pedigreesScala: mutable.Seq[Pedigree] = loadPedigree(pedFile).asScala
+
 
     var totalCount = 0
 
-    pedigrees.foreach((ped:Pedigree) => println(ped))
+    //pedigreesScala.foreach((ped:Pedigree) => println(ped))
 
-    val proban = pedigrees.head
+    //val proband = pedigreesScala.head
+
+    val specimenIdForProband = if (newArgs(2).startsWith("SP"))
+      newArgs(2)
+      else
+      "SP" + newArgs(2)
+
 
     val build:String = pedigreeProps.get("assemblyVersion").toString
 
-    for (elem <- patientMap) {
-      println(s"ley=${elem._1},v=${elem._2}")
-    }
+
 
     val spark = SparkSession.builder()
       .appName("ExomiserETL")
@@ -97,6 +102,16 @@ object ExomiserETL {
         new HttpHost("localhost", 9200, "http")))
 
     VEPSparkDriverProgram.client = clientTry
+    //PatientHelper.client = clientTry
+
+    //val patientMap: mutable.Map[String, Patient] = PatientHelper.preparePedigreeFromProps(pedigreeProps).asScala
+    //val pedigrees : java.util.List[Pedigree] = loadPedigree(pedFile)
+
+    //val patientMap: mutable.Map[String, Patient] = PatientHelper.preparePedigreeFromPedAndFHIR(pedigrees).asScala
+
+//    for (elem <- patientMap) {
+//      println(s"ley=${elem._1},v=${elem._2}")
+//    }
 
     val exoRDD = exoDS.rdd.repartition(nbOfPartition)
     exoRDD.foreachPartition(partitionOfRecords => {
@@ -107,7 +122,7 @@ object ExomiserETL {
       while (partitionOfRecords.hasNext) {
         val exomiser = partitionOfRecords.next()
 
-        jsonObjectList.add(toJsonObj(exomiser,build,proban.id))
+        jsonObjectList.add(toJsonObj(exomiser,build,specimenIdForProband))
 
         if (jsonObjectList.size() > bulkOpsQty) {
           VEPSparkDriverProgram.bulkStoreJsonObj(jsonObjectList, false, pedigreeProps, false, true)
@@ -128,7 +143,7 @@ object ExomiserETL {
   def toJsonObj(oneExo: Exomiser, build: String, specimenId: String): JSONObject = {
     val oneVariant = new JSONObject
 
-    // Exomiser chromose X is 23 while VEP and previous ETL is using X
+    // Exomiser chromosome X is 23 while VEP and previous ETL is using X
     val chrom = if (oneExo.chrom == 23) "X" else oneExo.chrom
     oneVariant.put("lastUpdate", LocalDate.now)
     oneVariant.put("chrom", chrom)

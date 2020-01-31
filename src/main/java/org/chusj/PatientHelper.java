@@ -14,7 +14,6 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.*;
@@ -54,6 +53,7 @@ public class PatientHelper {
             });
 
             List<Pedigree> pedigrees = loadPedigree("pedigreeTest1.ped");
+            pedigrees.forEach((ped) -> System.out.println(ped));
             donors = preparePedigreeFromPedAndFHIR(pedigrees);
             donors.forEach((k,v) -> System.out.println("id=" + k + "\n\t" + v));
             //String pedigreePropsFile = "pedigree.properties";
@@ -210,7 +210,43 @@ public class PatientHelper {
             JSONObject ci = (JSONObject) clinicalImpressions.get(i);
             String ciId = (String) ci.get("id");
             if (ciId.equalsIgnoreCase(ciRef)) {
+                return (String) ci.get("assessor_role_id");
+            }
+        }
+
+        return null;
+    }
+
+    private static String getPractitionerIdFromClinicalImpression(JSONArray clinicalImpressions, String ciRef) {
+
+        if (clinicalImpressions == null || clinicalImpressions.length() == 0) {
+            return null;
+        }
+
+        for (int i=0; i<clinicalImpressions.length();i++) {
+
+            JSONObject ci = (JSONObject) clinicalImpressions.get(i);
+            String ciId = (String) ci.get("id");
+            if (ciId.equalsIgnoreCase(ciRef)) {
                 return (String) ci.get("assessor_id");
+            }
+        }
+
+        return null;
+    }
+
+    private static String getOrgIdFromClinicalImpression(JSONArray clinicalImpressions, String ciRef) {
+
+        if (clinicalImpressions == null || clinicalImpressions.length() == 0) {
+            return null;
+        }
+
+        for (int i=0; i<clinicalImpressions.length();i++) {
+
+            JSONObject ci = (JSONObject) clinicalImpressions.get(i);
+            String ciId = (String) ci.get("id");
+            if (ciId.equalsIgnoreCase(ciRef)) {
+                return (String) ci.get("assessor_org_id");
             }
         }
 
@@ -220,6 +256,7 @@ public class PatientHelper {
     private static String getPractitionerId(JSONArray practitioners, String practitionerRoleId) {
 
         if (practitioners == null || practitioners.length() == 0) {
+            System.out.println("prac is null or empty");
             return null;
         }
 
@@ -263,64 +300,88 @@ public class PatientHelper {
     static Map<String, Patient> preparePedigree(List<String> listOfSpecimen) {
 
         Map<String, Patient> patientMap = new HashMap<>();
+        List<String> patientNotFound = new ArrayList<>();
+
 
         listOfSpecimen.forEach((specimen) -> {
-            Patient patient = new Patient(specimen);
+//            System.out.println("specimen ="+ specimen);
+
 
             List<JSONObject> patients = getPatientFromESWithQueryString(specimen);
-            JSONObject patientObj = patients.get(0);
-            String studyId = (String) ((JSONObject) ((JSONArray) patientObj.get("studies")).get(0)).get("id");
-            // Obtain matching serviceRequest with specimen id
-            JSONObject serviceRequest = serviceRequest((JSONArray) patientObj.get("serviceRequests"), specimen);
-            JSONArray clinicalImpression = (JSONArray) patientObj.get("clinicalImpressions");
+            if (!patients.isEmpty()) {
+                Patient patient = new Patient(specimen);
+                JSONObject patientObj = patients.get(0);
+                String studyId = (String) ((JSONObject) ((JSONArray) patientObj.get("studies")).get(0)).get("id");
+                // Obtain matching serviceRequest with specimen id
+                JSONObject serviceRequest = serviceRequest((JSONArray) patientObj.get("serviceRequests"), specimen);
+                JSONArray clinicalImpression = (JSONArray) patientObj.get("clinicalImpressions");
 
-            if (serviceRequest != null) {
-                String code = (String) ((JSONObject) serviceRequest.get("code")).get("text");
-                patient.setSequencingStrategy(code);
-                String requesterId = (String) serviceRequest.get("requester_id");
-                String clincicalImpressionRef = (String) serviceRequest.get("ci_ref");
-                String practitionerRoleId = getPractitionerRoleIdFromClinicalImpression(clinicalImpression, clincicalImpressionRef);
+                if (serviceRequest != null) {
+                    String code = (String) ((JSONObject) serviceRequest.get("code")).get("text");
+                    patient.setSequencingStrategy(code);
+                    String requesterId = (String) serviceRequest.get("requester_id");
+                    String clincicalImpressionRef = (String) serviceRequest.get("ci_ref");
+                    String practitionerRoleId;
+                    String orgId;
+                    String practitionerId;
+                    if (clinicalImpression.length() > 0) {
+//                        System.out.println("\tfrom CI");
+                        practitionerRoleId = getPractitionerRoleIdFromClinicalImpression(clinicalImpression, clincicalImpressionRef);
+                        orgId = getOrgIdFromClinicalImpression(clinicalImpression, clincicalImpressionRef);
+                        practitionerId = getPractitionerIdFromClinicalImpression(clinicalImpression, clincicalImpressionRef);
+                    } else {
+//                        System.out.println("\tfrom GP");
+                        practitionerRoleId = (String) ((JSONObject)((JSONArray) patientObj.get("generalPractitioner")).get(0)).get("id");
+                        orgId = getOrgId((JSONArray) patientObj.get("practitioners"), practitionerRoleId);
+                        practitionerId = getPractitionerId((JSONArray) patientObj.get("practitioners"), practitionerRoleId);
+                    }
+//                    System.out.println("practitionerRoleId="+practitionerRoleId);
+//                    System.out.println("practitionerId="+practitionerId);
+//                    System.out.println("orgId="+orgId);
+                    patient.setOrgId(orgId);
+                    patient.setPractitionerId(practitionerId);
 
-                String practitionerId = getPractitionerId((JSONArray) patientObj.get("practitioners"), practitionerRoleId);
-                String orgId = getOrgId((JSONArray) patientObj.get("practitioners"), practitionerRoleId);
-                patient.setOrgId(orgId);
-                patient.setPractitionerId(practitionerId);
+                    String labName = (String) serviceRequest.get("requester_org_name");
 
-                String labName = (String) serviceRequest.get("requester_org_name");
+                    patient.setLabName(labName);
+                    patient.setLabAlias((String) serviceRequest.get("requester_org_alias"));
+                    patient.setRequesterId(requesterId);
+                    patient.setReqOrgId((String) serviceRequest.get("requester_org_id"));
 
-                patient.setLabName(labName);
-                patient.setLabAlias((String) serviceRequest.get("requester_org_alias"));
-                patient.setRequesterId(requesterId);
-                patient.setReqOrgId((String) serviceRequest.get("requester_org_id"));
+                }
 
+                patient.setStudyId(studyId);
+                patient.setPatient(patientObj.toString(0));
+                String id = (String) patientObj.get("id");
+                patient.setPatientId(id);
+                patient.setFamilyId((String) patientObj.get("familyId"));
+                boolean isProband = (Boolean) patientObj.get("isProband");
+                boolean isInfected = (Boolean) patientObj.get("status");
+                patient.setAffected(isInfected);
+                patient.setGender((String) patientObj.get("gender"));
+                patient.setProband(isProband);
+                if (isProband) {
+                    patient.setRelation("Proband");
+                }
+                patient.setHposTerms(getHpoTerms(patientObj));
+                patientMap.put(id, patient);
+                patientMap.put(specimen, patient);
+            } else {
+                patientNotFound.add(specimen);
             }
-
-            patient.setStudyId(studyId);
-            patient.setPatient(patientObj);
-            String id = (String) patientObj.get("id");
-            patient.setPatientId(id);
-            patient.setFamilyId((String) patientObj.get("familyId"));
-            boolean isProban = (Boolean) patientObj.get("isProband");
-            boolean isInfected = (Boolean) patientObj.get("status");
-            patient.setAffected(isInfected);
-            patient.setGender((String) patientObj.get("gender"));
-            patient.setProban(isProban);
-            if (isProban) {
-                patient.setRelation("Proban");
-            }
-            patient.setHposTerms(getHpoTerms(patientObj));
-            patientMap.put(id, patient);
-            patientMap.put(specimen, patient);
         });
+
+        listOfSpecimen.removeAll(patientNotFound);
 
         //hpoTerms.forEach((hpo) -> System.out.println(hpo));
         // relationship call 2
         if (listOfSpecimen.size() > 1 ) {
             patientMap.forEach((k,v) -> {
-                if (v.isProban()) {
+                if (v.isProband()) {
                     // fetch relationship of proban -- duo, trio, etc...
 
-                    JSONArray link = (JSONArray) v.getPatient().get("link");
+                    JSONObject patient = new JSONObject(v.getPatient());
+                    JSONArray link = (JSONArray) patient.get("link");
 
                     String[] linkToOthersPatientIds = new String[link.length()];
                     String[] linkToOthersSpecimenIds = new String[link.length()];
@@ -353,22 +414,6 @@ public class PatientHelper {
 
     }
 
-    /*
-    #into pedigree, put specimen IDs in comma separated list
-
-    linkQty=2,0,0
-    linkPatient=PA00027,PA00052,.,.,.,.
-    linkSpecimen=14141,14142,.,.,.,.
-    patientId=PA00002,PA00027,PA00052
-    familyId=FA0002,FA0002,FA0002
-    studyId=ET00011,ET00011,ET00011
-    organizationId=OR00202,OR00202,OR00202
-
-    annotationTool=VEP 97
-    HpoQtyTerms=2,0,0
-    hpoTermsPos=HP:0005280,HP:0001773
-
-    */
     public static Map<String, Patient> preparePedigreeFromProps(Properties pedigreeProps) {
         Map<String, Patient> patientMap = new HashMap<>();
 
@@ -383,7 +428,7 @@ public class PatientHelper {
         String[] practitionerId = pedigreeProps.getProperty("practitionerId").split(",");
         String[] laboNames = pedigreeProps.getProperty("laboName").split(",");
         String[] isInfected = pedigreeProps.getProperty("isAffected").split(",");
-        String[] isProban = pedigreeProps.getProperty("isProban").split(",");
+        String[] isProband = pedigreeProps.getProperty("isProband").split(",");
         String[] hpoTermsPos = pedigreeProps.getProperty("hpoTermsPos").split(",");
         String[] hpoQtyTerms = pedigreeProps.getProperty("HpoQtyTerms").split(",");
         String[] linkQty = pedigreeProps.getProperty("linkQty").split(",");
@@ -410,7 +455,7 @@ public class PatientHelper {
             patient.setPractitionerId(practitionerId[i]);
             patient.setStudyId(studyIds[i]);
             patient.setLabName(laboNames[i]);
-            patient.setProban(Boolean.parseBoolean(isProban[i]));
+            patient.setProband(Boolean.parseBoolean(isProband[i]));
             patient.setSequencingStrategy(sequencingStrategy);
 
             int linkNumber = Integer.parseInt(linkQty[i]);

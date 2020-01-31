@@ -19,9 +19,9 @@ public class Patient implements Serializable {
     private String practitionerId;
     private String requesterId;
     private String reqOrgId;
-    private boolean isProban;
+    private boolean isProband;
     private boolean isAffected;
-    private JSONObject patient;
+    private String patient;
     private List<String> hposTerms;
     private int qtyHposTermsFound=0;
     private String sequencingStrategy;
@@ -148,8 +148,8 @@ public class Patient implements Serializable {
         this.practitionerId = practitionerId;
     }
 
-    boolean isProban() {
-        return isProban;
+    boolean isProband() {
+        return isProband;
     }
 
     boolean isAffected() {
@@ -160,15 +160,15 @@ public class Patient implements Serializable {
         isAffected = affected;
     }
 
-    void setProban(boolean proban) {
-        isProban = proban;
+    void setProband(boolean proband) {
+        isProband = proband;
     }
 
-    JSONObject getPatient() {
+    String getPatient() {
         return patient;
     }
 
-    void setPatient(JSONObject patient) {
+    void setPatient(String patient) {
         this.patient = patient;
     }
 
@@ -213,7 +213,7 @@ public class Patient implements Serializable {
                 ", practitionerId='" + practitionerId + '\'' +
                 ", requesterId='" + requesterId + '\'' +
                 ", reqOrgId='" + reqOrgId + '\'' +
-                ", isProban=" + isProban +
+                ", isProband=" + isProband +
                 ", isAffected=" + isAffected +
                 ", hposTerms=" + hposTerms +
                 ", qtyHposTermsFound=" + qtyHposTermsFound +

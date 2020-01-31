@@ -33,4 +33,17 @@ public class Family implements Serializable {
     void addFamily(Integer donorPosition) {
         this.familyComposition.add(donorPosition);
     }
+
+    @Override
+    public String toString() {
+        return "Family{" +
+                "familyId='" + familyId + '\'' +
+                ", familyComposition=" + familyComposition +
+                '}';
+    }
+
+    public Family clone() {
+        return new Family(this.familyId);
+    }
+
 }

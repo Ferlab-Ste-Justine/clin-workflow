@@ -70,7 +70,8 @@ public class VepHelper {
     public static void main(String[] args) throws Exception {
 
         if (args.length != 3) {
-            args = new String[]{"FAM_C3_92_new_15.txt", "pedigree.properties", "pedigree.ped"};
+            args = new String[]{"FAM_C3_92_new5k.txt", "pedigree.properties", "pedigree.ped"};
+//            args = new String[]{"batch15.txt",  "pedigree.properties", "pedigreeTest1.ped"};
         }
 
         String extractFile = args[0];
@@ -78,8 +79,6 @@ public class VepHelper {
         String pedFile = args[2];
 
         List<String> specimenList = getSpecimenList(extractFile);
-
-        specimenList.forEach((x) -> System.out.println(x));
 
         try (RestHighLevelClient clientTry = new RestHighLevelClient(
                 RestClient.builder(
@@ -89,19 +88,28 @@ public class VepHelper {
             PatientHelper.client = clientTry;
             Properties pedigreeProps = getPropertiesFromFile(pedigrePropsFile);
             List<Pedigree> pedigrees = loadPedigree(pedFile);
-            Map<String, Patient> patientMap = PatientHelper.preparePedigreeFromPedAndFHIR(pedigrees);
+//            Map<String, Patient> patientMap = PatientHelper.preparePedigreeFromPedAndFHIR(pedigrees);
+            Map<String, Patient> patientsMap = PatientHelper.preparePedigree(specimenList);
 //        Map<String, Patient> patientMap = PatientHelper.preparePedigreeFromProps(pedigreeProps);
-            pedigrees.forEach(System.out::println);
-            patientMap.forEach((k, v) -> System.out.println(k + "\n\t" + v));
 
-            System.exit(0);
+            specimenList.forEach((x) -> System.out.println(x));
+
+            pedigrees.forEach(System.out::println);
+//            patientMap.forEach((k, v) -> System.out.println(k + "\n\t" + v));
+//            patientsMap.forEach((k, v) -> System.out.println(k + "\n\t" + v));
+
+
+            Map<String,Family> familyMap = getFamilyMap(specimenList, pedigrees);
+
+            familyMap.forEach((k, v) -> System.out.println(k + "\n\t" + v));
+
+            //System.exit(0);
 
             try (BufferedReader buf = new BufferedReader(new FileReader(extractFile))) {
 
                 String fetchedLine;
 
                 buf.readLine();
-
 
                 //System.out.println(pedigreeProps.toString());
                 //List<String> hpoTerms = new ArrayList<>(Arrays.asList("HP:0005280","HP:0001773"));
@@ -111,8 +119,9 @@ public class VepHelper {
                     if (fetchedLine == null) {
                         break;
                     } else {
-                        JSONObject propertiesOneMutation = processVcfDataLine(fetchedLine, pedigreeProps, patientMap, pedigrees);
-                        if (toPrint) {
+                        JSONObject propertiesOneMutation = processVcfDataLine(fetchedLine, pedigreeProps, patientsMap,
+                                pedigrees, specimenList, familyMap);
+                        if (toPrint && propertiesOneMutation != null) {
                             System.out.println(propertiesOneMutation.toString(0));
                             //extractGenesFromMutation(propertiesOneMutation, "0", true).stream().forEach((gene) -> System.out.println("\t"+gene.toString(0)));
                             toPrint = false;
@@ -139,7 +148,9 @@ public class VepHelper {
 
 
 
-    static JSONObject processVcfDataLine(String extractedLine,  Properties pedigreeProps, Map<String, Patient> patientMap, List<Pedigree> pedigrees) {
+    static JSONObject processVcfDataLine(String extractedLine,  Properties pedigreeProps,
+                                         Map<String, Patient> patientMap, List<Pedigree> pedigrees,
+                                         List<String> specimenList, Map<String,Family> familyMapRef) {
 
         // CHROM
 
@@ -150,7 +161,8 @@ public class VepHelper {
         int impactScore;
         String chrom = lineValueArray[pos++];
         // CHROM <- line from snpsift extract fields execution
-        if ("CHROM".equalsIgnoreCase(chrom)) {
+        // #CHROM <- line from extraction utilities for knowning list of specimen id
+        if ("CHROM".equalsIgnoreCase(chrom) || "#CHROM".equalsIgnoreCase(chrom)) {
             return null; // Meta data line
         }
 
@@ -175,19 +187,6 @@ public class VepHelper {
         JSONObject geneObj;
         JSONArray geneArray = new JSONArray();
 
-//        pedigrees.forEach((pedigree) -> { });
-
-//        String[] specimenId = pedigreeProps.getProperty("pedigree").split(",");
-//        String familyId = pedigreeProps.getProperty("familyId");
-//        String[] patientId = pedigreeProps.getProperty("patientId").split(",");
-//        String[] relation = pedigreeProps.getProperty("relation").split(",");
-//        String studyId = pedigreeProps.getProperty("studyId");
-//        String sequencingStrategy = pedigreeProps.getProperty("sequencingStrategy");
-//        String organizationId = pedigreeProps.getProperty("organizationId");
-//        String practitionerId = pedigreeProps.getProperty("practitionerId");
-//        String laboName = pedigreeProps.getProperty("laboName");
-        //List<String> hpoTermsPos = Arrays.asList(pedigreeProps.getProperty("hpoTermsPos").split(","));
-        //List<String> hpoTermsNeg = Arrays.asList(pedigreeProps.getProperty("hpoTermsNeg").split(","));
         String build = pedigreeProps.getProperty("assemblyVersion");
         propertiesOneMutation.put("assemblyVersion", build);
         propertiesOneMutation.put("annotationTool", pedigreeProps.getProperty("annotationTool"));
@@ -197,12 +196,9 @@ public class VepHelper {
 
 
         Map<String,Family> familyMap = new HashMap<>();
-        pedigrees.forEach((ped)-> {
-            Family family = new Family(ped.getFamilyId());
-            familyMap.put(ped.getFamilyId(), family);
-        });
+        familyMapRef.forEach((k, v) -> familyMap.put(k,v.clone()));
 
-        int nbDonor = pedigrees.size();
+        int nbDonor = specimenList.size();
         JSONObject[] arrayDonor = new JSONObject[nbDonor];
         for (int i=0; i<nbDonor; i++) {
             arrayDonor[i] = new JSONObject();
@@ -237,20 +233,20 @@ public class VepHelper {
 
         propertiesOneMutation.put("altAllele", alt);
         //GT:AD:AF:DP:F1R2:F2R1:FT:GP:GQ:PL:PP
-        // GEN[*].GT	GEN[*].AD	GEN[*].AF	GEN[*].DN	GEN[*].DP	GEN[*].FT	GEN[*].GQ	GEN[*].DQ	GEN[*].SB	CSQ
+        // GEN[*].GT	GEN[*].AD	GEN[*].AF	GEN[*].DP	GEN[*].FT	GEN[*].GQ	GEN[*].SB	CSQ
 
         String[] gt = lineValueArray[pos++].split(",");
         String adStr = lineValueArray[pos++];
         String[] ad = adStr.split(",", -1);
         String af = lineValueArray[pos++];//.split(",");
-        String[] dn = lineValueArray[pos++].split(",");
+        //String[] dn = lineValueArray[pos++].split(",");
         String genDP = lineValueArray[pos++];//.split(",");
 //        String[] f1r2 = lineValueArray[pos++].split(",");
 //        String[] f2r1 = lineValueArray[pos++].split(",");
         String ft = lineValueArray[pos++];//.split(",");
 //        String[] gp = lineValueArray[pos++].split(",");
         String[] gq = lineValueArray[pos++].split(",");
-        String[] dq = lineValueArray[pos++].split(",");
+//        String[] dq = lineValueArray[pos++].split(",");
         String sb = lineValueArray[pos++];//.split(",");
 //        String[] pl = lineValueArray[pos++].split(",");
 //        String[] pp = lineValueArray[pos++].split(",");
@@ -308,7 +304,6 @@ public class VepHelper {
                         "#############\n############\n");
                 break;
             }
-            //System.out.println("funcAnn="+funcAnnotation.toString(0));
 
             if (!funcAnnotation.isNull("frequencies")) {
                 frequencies = (JSONObject) funcAnnotation.remove("frequencies");
@@ -402,7 +397,7 @@ public class VepHelper {
         // Patient and donor analysis
         Map<String, Frequencies> frequenciesPerLabos = new HashMap<>();
         patientMap.forEach((id, patient) -> {
-            String labName = patient.getLabName();
+            String labName = patient.getLabAlias();
             if (!frequenciesPerLabos.containsKey(labName)) {
                 Frequencies freqenceLabo = new Frequencies();
                 frequenciesPerLabos.put(labName, freqenceLabo);
@@ -417,16 +412,20 @@ public class VepHelper {
 
         for (int i=0; i< nbDonor; i++) {
 
-            Pedigree currentDonor = pedigrees.get(i);
-            Patient currentPatient = patientMap.get(currentDonor.getId());
-            String labo = currentPatient.getLabName();
+            //Pedigree currentDonor = pedigrees.get(i);
+            Patient currentPatient = patientMap.get(specimenList.get(i));
+            String labo = currentPatient.getLabAlias();
             Frequencies freqenceLabo = frequenciesPerLabos.get(labo);
             String zygosity = zygosity(gt[i]);
-            alleleCount += countAllele(gt[i]);
-            freqenceLabo.setAc(freqenceLabo.getAc()+countAllele(gt[i]));
-            alleleNumber += countNumberOfAllele(gt[i]);
-            freqenceLabo.setAn(freqenceLabo.getAn()+countNumberOfAllele(gt[i]));
-            if ("HOM".startsWith(zygosity)) {
+            if (!"UNK".equalsIgnoreCase(zygosity)) {
+                int countAllele = countAllele(gt[i]);
+                alleleCount += countAllele;
+                freqenceLabo.setAc(freqenceLabo.getAc() + countAllele);
+                int alleleNumberCount = countNumberOfAllele(gt[i]);
+                alleleNumber += alleleNumberCount;
+                freqenceLabo.setAn(freqenceLabo.getAn() + alleleNumberCount);
+            }
+            if ("HOM".equalsIgnoreCase(zygosity)) {
                 homozygoteCount++;
                 freqenceLabo.setHc(freqenceLabo.getHc()+1);
             }
@@ -484,17 +483,17 @@ public class VepHelper {
 //            addNumberToJsonObject("readPosRankSum", readPosRankSum, arrayDonor[i], false, 'f');
             addNumberToJsonObject("qd", qdS, arrayDonor[i], false, 'f');
 
-            arrayDonor[i].put("specimenId", currentDonor.getId());
+            arrayDonor[i].put("specimenId", currentPatient.getSpecimenId());
 
-            addStrToJsonObject("dn", dn[i], arrayDonor[i], false);
-            addNumberToJsonObject("dq", dq[i], arrayDonor[i], false, 'f');
+            //addStrToJsonObject("dn", dn[i], arrayDonor[i], false);
+            //addNumberToJsonObject("dq", dq[i], arrayDonor[i], false, 'f');
 
             arrayDonor[i].put("patientId", currentPatient.getPatientId());
             arrayDonor[i].put("familyId", currentPatient.getFamilyId());
             arrayDonor[i].put("relation", currentPatient.getRelation());
             arrayDonor[i].put("studyId", currentPatient.getStudyId());
-            arrayDonor[i].put("practitionerId", currentPatient.getPractitionerId());
-            arrayDonor[i].put("organizationId", currentPatient.getOrgId());
+            arrayDonor[i].put("practitionerId", currentPatient.getRequesterId());
+            arrayDonor[i].put("organizationId", currentPatient.getReqOrgId());
             arrayDonor[i].put("sequencingStrategy", currentPatient.getSequencingStrategy());
             arrayDonor[i].put("exomiserScore", 0f);
             familyMap.get(currentPatient.getFamilyId()).addFamily(i);
@@ -507,13 +506,13 @@ public class VepHelper {
 
         // transmission and familial analysis
         // Per Family - need a grouping from PED structure
-        // Ped need to match donor array
+        // Ped need to match donor array <---
 
         //String[] familySet = familyMap.keySet().toArray();
         //
         //Object[] familySet = familyMap.entrySet().toArray();
 
-
+        //familyMap.forEach((k, v) -> System.out.println(k + "\n\t" + v));
         for (Map.Entry<String, Family> entry : familyMap.entrySet()) {
             String familyId = entry.getKey();
             Family family = entry.getValue();
@@ -523,14 +522,17 @@ public class VepHelper {
 
             for (Integer index : familyCompositionArray) {
                 familyCompositionIndex++;
-                Pedigree currentDonor = pedigrees.get(index);
+                //Pedigree currentDonor = pedigrees.get(index);
+                //Pedigree currentDonor = pedigrees.get(index);
+                Pedigree currentDonor  =  getPedigreeBySpecimenId(specimenList.get(index), pedigrees);
                 Patient currentPatient = patientMap.get(currentDonor.getId());
                 String relation = currentPatient.getRelation();
                 String zygosity = (String) arrayDonor[index].get("zygosity");
-                // discard 0/0 and ./. but we keep a reference for the proban of the family...
+                // discard 0/0 and ./. but we keep a reference for the proband of the family...
                 if ("HOM REF".equalsIgnoreCase(zygosity) || "UNK".equalsIgnoreCase(zygosity)) continue;
-                if ("Proban".equalsIgnoreCase(relation)) {
+                if ("Proband".equalsIgnoreCase(relation)) {
                     if (familySize > 1) {
+                        toPrint = true;
                         StringBuilder genotypeFamily = new StringBuilder();
                         // put genotype of all other family member inside a field named genotypeFamily...
                         // since we discard 0/0 and ./. of all donor for clinical
@@ -559,15 +561,12 @@ public class VepHelper {
                 }
                 specimenArray.put(currentDonor.getId());
                 donorArray.put(arrayDonor[index]);
-                String labo = currentPatient.getLabName();
+                String labo = currentPatient.getLabAlias();
                 Frequencies freqenceLabo = frequenciesPerLabos.get(labo);
                 freqenceLabo.setPn(freqenceLabo.getPn() + 1f);
                 patientNb++;
             }
         }
-
-
-
 
 //        for (int i=0; i< nbDonor; i++) {
 //            Pedigree currentDonor = pedigrees.get(i);
@@ -601,6 +600,7 @@ public class VepHelper {
 
         if (frequencies == null ) frequencies = new JSONObject();
         JSONObject freqenceInterne = new JSONObject();
+        JSONArray labNames = new JSONArray();
 
         addNumberToJsonObject("AC", new BigDecimal(alleleCount), freqenceInterne, false, 'l');
 
@@ -626,8 +626,11 @@ public class VepHelper {
             addNumberToJsonObject("AN", new BigDecimal(frequence.getAn()), freqenceLabo, false, 'l');
             addNumberToJsonObject("HC", new BigDecimal(frequence.getHc()), freqenceLabo, false, 'l');
             addNumberToJsonObject("AF", new BigDecimal(frequence.getAf()), freqenceLabo, false, 'f');
-            finalFrequencies.put("labo"+lab, freqenceLabo);
+            finalFrequencies.put(lab, freqenceLabo);
+            labNames.put(lab);
         });
+
+        propertiesOneMutation.put("labos", labNames);
 
 
 //        JSONObject frequencies = (!propertiesOneMutation.isNull("frequencies")) ? (JSONObject) propertiesOneMutation.get("frequencies") : new JSONObject();
@@ -675,6 +678,18 @@ public class VepHelper {
             lastOne = propertiesOneMutation;
 
         return propertiesOneMutation;
+
+    }
+
+    static Pedigree getPedigreeBySpecimenId(String specimen, List<Pedigree> pedigrees) {
+        //System.out.println("specimen"+specimen);
+        for (Pedigree ped : pedigrees) {
+//            System.out.println("ped="+ped);
+            if (ped.getId().equalsIgnoreCase(specimen)) {
+                return ped;
+            }
+        }
+        return null;
 
     }
 
@@ -1572,7 +1587,7 @@ public class VepHelper {
     }
 
 
-    private static int countAllele(String gt) {
+    public static int countAllele(String gt) {
         int count =0;
         char[] gtA = gt.toCharArray();
 
@@ -1585,7 +1600,7 @@ public class VepHelper {
 
         return count;
     }
-    private static int countNumberOfAllele(String gt) {
+    public static int countNumberOfAllele(String gt) {
         int count =0;
         char[] gtA = gt.toCharArray();
         if ( gtA[0] == '1' || gtA[0] == '0') {
@@ -1681,7 +1696,6 @@ public class VepHelper {
     private static void addGeneSetsToObjs(String ensId, JSONObject jsonObject, JSONObject availObj,
                                           Map<String, Patient> patientMap, List<Pedigree> pedigrees) {
 
-        //countRedisCalls++;
         Set<String> geneSets = getMembersForEnsId(ensId);
         Set<String> aliasSet = new HashSet<>();
         JSONArray hpoGeneSets = new JSONArray();
@@ -1777,4 +1791,26 @@ public class VepHelper {
         }
         return listGenes;
     }
+
+    static Map<String,Family> getFamilyMap(List<String> specimenList, List<Pedigree> pedigrees) {
+        Map<String,Family> familyMap = new HashMap<>();
+//        pedigrees.forEach((ped)-> {
+//            Family family = new Family(ped.getFamilyId());
+//            familyMap.put(ped.getFamilyId(), family);
+//        });
+
+        specimenList.forEach((specimen)-> {
+            Pedigree ped = getPedigreeBySpecimenId(specimen, pedigrees);
+            if (ped == null) {
+                // an error occurs...
+                System.err.println("!!! All specimen from the vcf that was found in the patient DB need an entry in the ped file");
+                System.exit(1);
+            }
+            Family family = new Family(ped.getFamilyId());
+            familyMap.put(ped.getFamilyId(), family);
+        });
+
+        return familyMap;
+    }
+
 }

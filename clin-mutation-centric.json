@@ -1,6 +1,7 @@
 {
   "settings": {
-    "number_of_shards": 12
+    "number_of_shards": 4,
+    "number_of_replicas": 2
   },
   "mappings": {
     "_doc": {
@@ -143,18 +144,6 @@
                   "ignore_above": 256
                 }
               }
-            },
-            "dn": {
-              "type": "text",
-              "fields": {
-                "keyword": {
-                  "type": "keyword",
-                  "ignore_above": 256
-                }
-              }
-            },
-            "dq": {
-              "type": "float"
             },
             "qd": {
               "type": "float"
