@@ -71,7 +71,7 @@ public class VepHelper {
 
         if (args.length != 3) {
             args = new String[]{"FAM_C3_92_new5k.txt", "pedigree.properties", "pedigree.ped"};
-//            args = new String[]{"batch15.txt",  "pedigree.properties", "pedigreeTest1.ped"};
+//            args = new String[]{"batch5000.txt",  "pedigree.properties", "pedigreeTest1.ped"};
         }
 
         String extractFile = args[0];
@@ -112,7 +112,7 @@ public class VepHelper {
                 buf.readLine();
 
                 //System.out.println(pedigreeProps.toString());
-                //List<String> hpoTerms = new ArrayList<>(Arrays.asList("HP:0005280","HP:0001773"));
+//                List<String> hpoTerms = new ArrayList<>(Arrays.asList("HP:0005280","HP:0001773"));
 
                 while (true) {
                     fetchedLine = buf.readLine();
@@ -532,17 +532,32 @@ public class VepHelper {
                 if ("HOM REF".equalsIgnoreCase(zygosity) || "UNK".equalsIgnoreCase(zygosity)) continue;
                 if ("Proband".equalsIgnoreCase(relation)) {
                     if (familySize > 1) {
-                        toPrint = true;
+
+                        List<String> genotypeOfAllMembers = new ArrayList<>(familySize);
+                        List<Pedigree> familyPed = new ArrayList<>(familySize);
+                        genotypeOfAllMembers.add((String) arrayDonor[index].get("zygosity"));
+                        familyPed.add(currentDonor);
                         StringBuilder genotypeFamily = new StringBuilder();
                         // put genotype of all other family member inside a field named genotypeFamily...
                         // since we discard 0/0 and ./. of all donor for clinical
                         for (int j = familyCompositionIndex + 1; j < familySize; j++) {
                             Integer otherRelationIndex = familyCompositionArray.get(j);
                             genotypeFamily.append(arrayDonor[otherRelationIndex].get("relation")).append(":").append(gt[otherRelationIndex]).append((j == familySize - 1) ? "" : ",");
+                            genotypeOfAllMembers.add((String) arrayDonor[otherRelationIndex].get("zygosity"));
+                            familyPed.add(getPedigreeBySpecimenId(specimenList.get(otherRelationIndex), pedigrees));
 
                             if (genotypeFamily.length() > 0) {
                                 arrayDonor[index].put("genotypeFamily", genotypeFamily.toString());
                             }
+                        }
+                        // analysis of transmission - autosomal dominant & recessif
+
+                        if (isAutosomalDominant(genotypeOfAllMembers, familyPed)) {
+                            toPrint = true;
+
+                        }
+                        if (isAutosomalRecessif(genotypeOfAllMembers, familyPed)) {
+                            //toPrint = true;
                         }
                     }
                 }
@@ -678,6 +693,11 @@ public class VepHelper {
             lastOne = propertiesOneMutation;
 
         return propertiesOneMutation;
+
+    }
+
+    private static List<Pedigree> getFamilyPed(String familyId, List<Pedigree> pedigrees) {
+        return null;
 
     }
 
@@ -1811,6 +1831,119 @@ public class VepHelper {
         });
 
         return familyMap;
+    }
+
+    public static boolean isAutosomalDominant(List<String> genotypesFamily, List<Pedigree> familyPed) {
+        //boolean isAutosomalDominant = true;
+//        familyPed.forEach((ped) -> System.out.println(ped));
+
+        // Gemini
+        // All affected must be HET or UNK
+        // [affected] No unaffected can be het or homalt (can be unknown)
+        // At least 1 affected must have 1 affected parent (or have no parents).
+
+        // Jannovar
+        // at least one affected person has a HET call for this variant,
+        // no affected person has a REF or HOM call, and
+        // no unaffected person has a HET or HOM call.
+
+
+        boolean hasParent = false, hasNoParent = false;
+        int nbAffected = 0;
+        if (familyPed.size() > 1) {
+            hasParent = true;
+        } else {
+            hasNoParent = true;
+        }
+        System.out.print("\nhasParent="+hasParent);
+        System.out.print(" hasNoParent="+hasNoParent);
+
+        for (int i=0; i<familyPed.size(); i++) {
+
+            String zygosity = zygosity(genotypesFamily.get(i));
+            System.out.print(" i="+i+ " "+ zygosity);
+            if (!familyPed.get(i).getPhenotype().equalsIgnoreCase("1")) {
+                System.out.print(" is affected");
+                nbAffected++;
+                if (! (zygosity.equalsIgnoreCase("HET"))) {
+                    if (i>0 && zygosity.equalsIgnoreCase("UNK")) {
+                        continue;
+                    } else {
+                        System.out.println(" is not HET or UNK");
+                        return false;
+                    }
+                }
+            } else if (zygosity.equalsIgnoreCase("HET") || zygosity.equalsIgnoreCase("HOM") ) {
+                System.out.print(" is not affected and not (HET or HOM)");
+                return false;
+            }
+        }
+
+        if ((hasNoParent) ||  (hasParent && nbAffected > 1) ) {
+            System.out.print(" (hasNoParent) ||  (hasParent && nbAffected > 1) "+nbAffected);
+            return true;
+        }
+        System.out.print(" nbaff="+nbAffected);
+        return false;
+
+    }
+
+    public static boolean isAutosomalRecessif(List<String> genotypesFamily, List<Pedigree> familyPed) {
+        boolean isAutosomalRecessif = false;
+
+
+        // Gemini
+        // all affecteds must be hom_alt
+        // [affected] no unaffected can be hom_alt (can be unknown)
+        // [strict] if parents exist they must be unaffected and het for all affected kids
+
+        // Janovar
+        // at least one affected person has a HOM call for this variant and
+        // no affected person has a REF or HET call.
+        // The unaffected parents of affected persons must not be REF or HOM.
+        // There is no unaffected person that has a HOM call.
+
+
+        boolean hasParent = false, hasNoParent = false;
+        int nbAffected = 0;
+        boolean childIsAffected = false;
+        if (!familyPed.get(0).getPhenotype().equalsIgnoreCase("1")) {
+            childIsAffected = true;
+        }
+        if (familyPed.size() > 1) {
+            hasParent = true;
+            System.out.print("\n has parent");
+        } else {
+            hasNoParent = true;
+            System.out.print("\n has no parent");
+        }
+
+        for (int i=0; i<familyPed.size(); i++) {
+            String zygosity = zygosity(genotypesFamily.get(i));
+            System.out.print(" i="+i+ " "+ zygosity);
+            if (!familyPed.get(i).getPhenotype().equalsIgnoreCase("1")) {
+                System.out.print(" is affected");
+                nbAffected++;
+                if  (!zygosity.equalsIgnoreCase("HOM"))   {
+                    System.out.print(" is not HOM");
+                    return false;
+                }
+            } else {
+                if (zygosity.startsWith("HOM") ) {
+                    System.out.print(" is not affected and == HOM or HOM REF ");
+                    return false;
+                }
+
+            }
+        }
+
+        if ( hasParent && nbAffected > 1 ) {
+            System.out.print(" hasParent && nbAffected > 1");
+            return false;
+        }
+
+        return true;
+
     }
 
 }
