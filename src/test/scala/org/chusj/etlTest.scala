@@ -34,6 +34,18 @@ class etlTest extends FunSuite {
 
   }
 
+  test("Testing count alternative allele") {
+
+    assert(testCountAltAllele())
+
+  }
+
+  test("Testing count number of allele") {
+
+    assert(testCountNumberOfAllele())
+
+  }
+
   test("Testing impact score") {
 
     assert(
@@ -256,11 +268,30 @@ class etlTest extends FunSuite {
 
   }
 
-  def testCountAllele() : Boolean = {
+  def testCountAltAllele() : Boolean = {
 
-    true
+      VepHelper.countAlternativeAllele("0/0") == 0 &&
+      VepHelper.countAlternativeAllele("0|0") == 0 &&
+      VepHelper.countAlternativeAllele("0/1") == 1 &&
+      VepHelper.countAlternativeAllele("1/0") == 1 &&
+      VepHelper.countAlternativeAllele("1/1") == 2 &&
+      VepHelper.countAlternativeAllele("1|1") == 2 &&
+      VepHelper.countAlternativeAllele("./.") == 0
 
   }
+
+  def testCountNumberOfAllele() : Boolean = {
+
+    VepHelper.countNumberOfAllele("0/0") == 2 &&
+      VepHelper.countNumberOfAllele("0|0") == 2 &&
+      VepHelper.countNumberOfAllele("0/1") == 2 &&
+      VepHelper.countNumberOfAllele("1/0") == 2 &&
+      VepHelper.countNumberOfAllele("1/1") == 2 &&
+      VepHelper.countNumberOfAllele("1|1") == 2 &&
+      VepHelper.countNumberOfAllele("./.") == 0
+
+  }
+
 
   def testAutosomalDominant(genotypesFamily: util.List[String], familyPed: util.List[Pedigree]) : Boolean = {
 

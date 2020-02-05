@@ -418,7 +418,7 @@ public class VepHelper {
             Frequencies freqenceLabo = frequenciesPerLabos.get(labo);
             String zygosity = zygosity(gt[i]);
             if (!"UNK".equalsIgnoreCase(zygosity)) {
-                int countAllele = countAllele(gt[i]);
+                int countAllele = countAlternativeAllele(gt[i]);
                 alleleCount += countAllele;
                 freqenceLabo.setAc(freqenceLabo.getAc() + countAllele);
                 int alleleNumberCount = countNumberOfAllele(gt[i]);
@@ -1607,7 +1607,7 @@ public class VepHelper {
     }
 
 
-    public static int countAllele(String gt) {
+    public static int countAlternativeAllele(String gt) {
         int count =0;
         char[] gtA = gt.toCharArray();
 
@@ -1855,35 +1855,35 @@ public class VepHelper {
         } else {
             hasNoParent = true;
         }
-        System.out.print("\nhasParent="+hasParent);
-        System.out.print(" hasNoParent="+hasNoParent);
+//        System.out.print("\nhasParent="+hasParent);
+//        System.out.print(" hasNoParent="+hasNoParent);
 
         for (int i=0; i<familyPed.size(); i++) {
 
             String zygosity = zygosity(genotypesFamily.get(i));
-            System.out.print(" i="+i+ " "+ zygosity);
+//            System.out.print(" i="+i+ " "+ zygosity);
             if (!familyPed.get(i).getPhenotype().equalsIgnoreCase("1")) {
-                System.out.print(" is affected");
+//                System.out.print(" is affected");
                 nbAffected++;
                 if (! (zygosity.equalsIgnoreCase("HET"))) {
                     if (i>0 && zygosity.equalsIgnoreCase("UNK")) {
                         continue;
                     } else {
-                        System.out.println(" is not HET or UNK");
+//                        System.out.println(" is not HET or UNK");
                         return false;
                     }
                 }
             } else if (zygosity.equalsIgnoreCase("HET") || zygosity.equalsIgnoreCase("HOM") ) {
-                System.out.print(" is not affected and not (HET or HOM)");
+//                System.out.print(" is not affected and not (HET or HOM)");
                 return false;
             }
         }
 
         if ((hasNoParent) ||  (hasParent && nbAffected > 1) ) {
-            System.out.print(" (hasNoParent) ||  (hasParent && nbAffected > 1) "+nbAffected);
+//            System.out.print(" (hasNoParent) ||  (hasParent && nbAffected > 1) "+nbAffected);
             return true;
         }
-        System.out.print(" nbaff="+nbAffected);
+//        System.out.print(" nbaff="+nbAffected);
         return false;
 
     }
@@ -1904,33 +1904,27 @@ public class VepHelper {
         // There is no unaffected person that has a HOM call.
 
 
-        boolean hasParent = false, hasNoParent = false;
+        boolean hasParent = false;
         int nbAffected = 0;
-        boolean childIsAffected = false;
-        if (!familyPed.get(0).getPhenotype().equalsIgnoreCase("1")) {
-            childIsAffected = true;
-        }
+
         if (familyPed.size() > 1) {
             hasParent = true;
-            System.out.print("\n has parent");
-        } else {
-            hasNoParent = true;
-            System.out.print("\n has no parent");
+//            System.out.print("\n has parent");
         }
 
         for (int i=0; i<familyPed.size(); i++) {
             String zygosity = zygosity(genotypesFamily.get(i));
-            System.out.print(" i="+i+ " "+ zygosity);
+//            System.out.print(" i="+i+ " "+ zygosity);
             if (!familyPed.get(i).getPhenotype().equalsIgnoreCase("1")) {
-                System.out.print(" is affected");
+//                System.out.print(" is affected");
                 nbAffected++;
                 if  (!zygosity.equalsIgnoreCase("HOM"))   {
-                    System.out.print(" is not HOM");
+//                    System.out.print(" is not HOM");
                     return false;
                 }
             } else {
                 if (zygosity.startsWith("HOM") ) {
-                    System.out.print(" is not affected and == HOM or HOM REF ");
+//                    System.out.print(" is not affected and == HOM or HOM REF ");
                     return false;
                 }
 
@@ -1938,7 +1932,7 @@ public class VepHelper {
         }
 
         if ( hasParent && nbAffected > 1 ) {
-            System.out.print(" hasParent && nbAffected > 1");
+//            System.out.print(" hasParent && nbAffected > 1");
             return false;
         }
 
