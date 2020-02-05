@@ -253,7 +253,101 @@ class etlTest extends FunSuite {
     assert(!testAutosomalRecessif(genotypesFamily12, pedigrees))
     assert(!testAutosomalRecessif(genotypesFamily13, pedigrees))
     assert(!testAutosomalRecessif(genotypesFamily14, pedigrees))
+  }
 
+  test("Testing denovo transmission with a Solo") {
+    val pedigrees = loadPedigree("src/test/resources/pedigreeTest0.ped")
+    // FA0002 SP00011 0 0 1 2
+
+    assert(!testDenovo(genotypesFamily1, pedigrees))
+    assert(!testDenovo(genotypesFamily2, pedigrees))
+    assert(!testDenovo(genotypesFamily3, pedigrees))
+    assert(!testDenovo(genotypesFamily4, pedigrees))
+    assert(!testDenovo(genotypesFamily5, pedigrees))
+    assert(!testDenovo(genotypesFamily6, pedigrees))
+    assert(!testDenovo(genotypesFamily7, pedigrees))
+    assert(!testDenovo(genotypesFamily8, pedigrees))
+    assert(!testDenovo(genotypesFamily9, pedigrees))
+    assert(!testDenovo(genotypesFamily10, pedigrees))
+    assert(!testDenovo(genotypesFamily11, pedigrees))
+    assert(!testDenovo(genotypesFamily12, pedigrees))
+    assert(!testDenovo(genotypesFamily13, pedigrees))
+    assert(!testDenovo(genotypesFamily14, pedigrees))
+
+  }
+
+  test("Testing denovo transmission with 0 affected parents") {
+    val pedigrees = loadPedigree("src/test/resources/pedigreeTest1.ped")
+    /*
+    FA0002 SP00011 SP00061 SP00036 1 2
+    FA0002 SP00061 0 0 1 1
+    FA0002 SP00036 0 0 2 1
+     */
+
+    assert(!testDenovo(genotypesFamily1, pedigrees))
+    assert(testDenovo(genotypesFamily2, pedigrees))
+    assert(!testDenovo(genotypesFamily3, pedigrees))
+    assert(!testDenovo(genotypesFamily4, pedigrees))
+    assert(!testDenovo(genotypesFamily5, pedigrees))
+    assert(!testDenovo(genotypesFamily6, pedigrees))
+    assert(!testDenovo(genotypesFamily7, pedigrees))
+    assert(!testDenovo(genotypesFamily8, pedigrees))
+    assert(!testDenovo(genotypesFamily9, pedigrees))
+    assert(!testDenovo(genotypesFamily10, pedigrees))
+    assert(!testDenovo(genotypesFamily11, pedigrees))
+    assert(!testDenovo(genotypesFamily12, pedigrees))
+    assert(testDenovo(genotypesFamily13, pedigrees))
+    assert(!testDenovo(genotypesFamily14, pedigrees))
+
+  }
+
+  test("Testing denovo transmission with affected father @ pos 1") {
+    val pedigrees = loadPedigree("src/test/resources/pedigreeTest2.ped")
+    /*
+    FA0002 SP00011 SP00061 SP00036 1 2
+    FA0002 SP00061 0 0 1 2
+    FA0002 SP00036 0 0 2 1
+     */
+
+    assert(!testDenovo(genotypesFamily1, pedigrees))
+    assert(!testDenovo(genotypesFamily2, pedigrees))
+    assert(!testDenovo(genotypesFamily3, pedigrees))
+    assert(!testDenovo(genotypesFamily4, pedigrees))
+    assert(!testDenovo(genotypesFamily5, pedigrees))
+    assert(!testDenovo(genotypesFamily6, pedigrees))
+    assert(!testDenovo(genotypesFamily7, pedigrees))
+    assert(!testDenovo(genotypesFamily8, pedigrees))
+    assert(!testDenovo(genotypesFamily9, pedigrees))
+    assert(!testDenovo(genotypesFamily10, pedigrees))
+    assert(!testDenovo(genotypesFamily11, pedigrees))
+    assert(!testDenovo(genotypesFamily12, pedigrees))
+    assert(!testDenovo(genotypesFamily13, pedigrees))
+    assert(!testDenovo(genotypesFamily14, pedigrees))
+
+  }
+
+  test("Testing denovo transmission with 2 affected parents") {
+    val pedigrees = loadPedigree("src/test/resources/pedigreeTest3.ped")
+    /*
+    FA0002 SP00011 SP00061 SP00036 1 2
+    FA0002 SP00061 0 0 1 2
+    FA0002 SP00036 0 0 2 HP:0000268
+     */
+
+    assert(!testDenovo(genotypesFamily1, pedigrees))
+    assert(!testDenovo(genotypesFamily2, pedigrees))
+    assert(!testDenovo(genotypesFamily3, pedigrees))
+    assert(!testDenovo(genotypesFamily4, pedigrees))
+    assert(!testDenovo(genotypesFamily5, pedigrees))
+    assert(!testDenovo(genotypesFamily6, pedigrees))
+    assert(!testDenovo(genotypesFamily7, pedigrees))
+    assert(!testDenovo(genotypesFamily8, pedigrees))
+    assert(!testDenovo(genotypesFamily9, pedigrees))
+    assert(!testDenovo(genotypesFamily10, pedigrees))
+    assert(!testDenovo(genotypesFamily11, pedigrees))
+    assert(!testDenovo(genotypesFamily12, pedigrees))
+    assert(!testDenovo(genotypesFamily13, pedigrees))
+    assert(!testDenovo(genotypesFamily14, pedigrees))
 
   }
 
@@ -294,15 +388,16 @@ class etlTest extends FunSuite {
 
 
   def testAutosomalDominant(genotypesFamily: util.List[String], familyPed: util.List[Pedigree]) : Boolean = {
-
     VepHelper.isAutosomalDominant(genotypesFamily,familyPed)
-
   }
 
   def testAutosomalRecessif(genotypesFamily: util.List[String], familyPed: util.List[Pedigree]) : Boolean = {
-
     VepHelper.isAutosomalRecessif(genotypesFamily,familyPed)
-
   }
+
+  def testDenovo(genotypesFamily: util.List[String], familyPed: util.List[Pedigree]) : Boolean = {
+    VepHelper.isDeNovo(genotypesFamily,familyPed)
+  }
+
 
 }

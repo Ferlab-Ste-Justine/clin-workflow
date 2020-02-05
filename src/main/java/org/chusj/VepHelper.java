@@ -1940,4 +1940,50 @@ public class VepHelper {
 
     }
 
+    public static boolean isDeNovo(List<String> genotypesFamily, List<Pedigree> familyPed) {
+
+        // Gemini
+        // All affected must be HET
+        // [affected] all unaffected must be homref or homalt
+        // at least 1 affected kid must have unaffected parents
+
+        boolean hasParent = false;
+
+        int nbAffected = 0;
+        if (familyPed.size() > 1) {
+            hasParent = true;
+        } else {
+            return false;
+        }
+        if (familyPed.get(0).getPhenotype().equalsIgnoreCase("1")) {
+            return false;
+        }
+//        System.out.print("\nHave Parent="+hasParent);
+
+        for (int i=0; i<familyPed.size(); i++) {
+
+            String zygosity = zygosity(genotypesFamily.get(i));
+//            System.out.print(" i="+i+ " "+ zygosity);
+            if (!familyPed.get(i).getPhenotype().equalsIgnoreCase("1")) {
+//                System.out.print(" is affected");
+                nbAffected++;
+                if (! (zygosity.equalsIgnoreCase("HET"))) {
+                        return false;
+                }
+
+            } else if (!zygosity.startsWith("HOM") ) {
+                return false;
+            }
+        }
+
+        if ( (hasParent && nbAffected > 1) ) {
+//            System.out.print(" (hasNoParent) ||  (hasParent && nbAffected > 1) "+nbAffected);
+            return false;
+        }
+//        System.out.print(" nbaff="+nbAffected);
+        return true;
+
+    }
+
+
 }
