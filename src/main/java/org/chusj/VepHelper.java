@@ -550,15 +550,23 @@ public class VepHelper {
                                 arrayDonor[index].put("genotypeFamily", genotypeFamily.toString());
                             }
                         }
-                        // analysis of transmission - autosomal dominant & recessif
+                        // analysis of transmission - X & autosomal (dominant & recessif)
+                        if ( !( chrPos.equalsIgnoreCase("X") || chrPos.equalsIgnoreCase("Y") ) ) {
+                            if (isAutosomalDominant(genotypeOfAllMembers, familyPed)) {
+                                toPrint = true;
 
-                        if (isAutosomalDominant(genotypeOfAllMembers, familyPed)) {
-                            toPrint = true;
+                            }
+                            if (isAutosomalRecessif(genotypeOfAllMembers, familyPed)) {
+                                //toPrint = true;
+                            }
+                        } else if (chrPos.equalsIgnoreCase("X")){
+                            // X-Related
+                        }
+                        if (!isDeNovo(genotypeOfAllMembers, familyPed).equalsIgnoreCase("NO")) {
+
 
                         }
-                        if (isAutosomalRecessif(genotypeOfAllMembers, familyPed)) {
-                            //toPrint = true;
-                        }
+
                     }
                 }
                 if (currentPatient.isAffected()) {
@@ -1693,7 +1701,6 @@ public class VepHelper {
         Collections.addAll(extractedSet, splitedStr);
         //extractedSet.add(value);
 
-
     }
 
     private static String toStringList(Set<String> setStr) {
@@ -1814,10 +1821,6 @@ public class VepHelper {
 
     static Map<String,Family> getFamilyMap(List<String> specimenList, List<Pedigree> pedigrees) {
         Map<String,Family> familyMap = new HashMap<>();
-//        pedigrees.forEach((ped)-> {
-//            Family family = new Family(ped.getFamilyId());
-//            familyMap.put(ped.getFamilyId(), family);
-//        });
 
         specimenList.forEach((specimen)-> {
             Pedigree ped = getPedigreeBySpecimenId(specimen, pedigrees);
@@ -1840,7 +1843,7 @@ public class VepHelper {
         // Gemini
         // All affected must be HET or UNK
         // [affected] No unaffected can be het or homalt (can be unknown)
-        // At least 1 affected must have 1 affected parent (or have no parents).
+        // At least 1 affected must have 1 affected parent (or have no parents). <- nope
 
         // Jannovar
         // at least one affected person has a HET call for this variant,
@@ -1879,7 +1882,7 @@ public class VepHelper {
             }
         }
 
-        if ((hasNoParent) ||  (hasParent && nbAffected > 1) ) {
+        if ((hasNoParent) ||  (hasParent && nbAffected >= 1) ) {
 //            System.out.print(" (hasNoParent) ||  (hasParent && nbAffected > 1) "+nbAffected);
             return true;
         }
@@ -1940,23 +1943,27 @@ public class VepHelper {
 
     }
 
-    public static boolean isDeNovo(List<String> genotypesFamily, List<Pedigree> familyPed) {
+    public static String isDeNovo(List<String> genotypesFamily, List<Pedigree> familyPed) {
 
         // Gemini
-        // All affected must be HET
-        // [affected] all unaffected must be homref or homalt
+        // All affected must be HET but they could be ./.
+        // [affected] all unaffected must be homref or homalt or unk (could)
         // at least 1 affected kid must have unaffected parents
+        // "0/1", "0/1", "./."
+        // "0/1", "./.", "0/0"
 
         boolean hasParent = false;
+        boolean isProbable = false;
+
 
         int nbAffected = 0;
         if (familyPed.size() > 1) {
             hasParent = true;
         } else {
-            return false;
+            return "NO";
         }
         if (familyPed.get(0).getPhenotype().equalsIgnoreCase("1")) {
-            return false;
+            return "NO";
         }
 //        System.out.print("\nHave Parent="+hasParent);
 
@@ -1967,21 +1974,31 @@ public class VepHelper {
             if (!familyPed.get(i).getPhenotype().equalsIgnoreCase("1")) {
 //                System.out.print(" is affected");
                 nbAffected++;
+                if (zygosity.equalsIgnoreCase("UNK")) {
+                    isProbable = true;
+                    nbAffected--; //unconfirmed affection at this locus
+                    continue;
+                }
                 if (! (zygosity.equalsIgnoreCase("HET"))) {
-                        return false;
+                    return "NO";
                 }
 
+            } else if (zygosity.equalsIgnoreCase("UNK")) {
+                isProbable = true;
+                continue;
             } else if (!zygosity.startsWith("HOM") ) {
-                return false;
+                return "NO";
             }
         }
 
         if ( (hasParent && nbAffected > 1) ) {
-//            System.out.print(" (hasNoParent) ||  (hasParent && nbAffected > 1) "+nbAffected);
-            return false;
+            return "NO";
         }
-//        System.out.print(" nbaff="+nbAffected);
-        return true;
+        if (isProbable) {
+            return "PROBABLY DENOVO";
+        } else {
+            return "DENOVO";
+        }
 
     }
 

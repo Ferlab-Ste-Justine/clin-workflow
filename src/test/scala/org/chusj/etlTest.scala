@@ -13,6 +13,7 @@ class etlTest extends FunSuite {
 
   val genotypesFamily1: util.List[String] = new util.ArrayList[String](util.Arrays.asList("1/1", "0/0", "./."))
   val genotypesFamily2: util.List[String] = new util.ArrayList[String](util.Arrays.asList("0/1", "0/0", "0/0"))
+  val genotypesFamily2b: util.List[String] = new util.ArrayList[String](util.Arrays.asList("0/1", "./.", "0/0"))
   val genotypesFamily3: util.List[String] = new util.ArrayList[String](util.Arrays.asList("0/0", "1/0", "0/0"))
   val genotypesFamily4: util.List[String] = new util.ArrayList[String](util.Arrays.asList("0/0", "0/0", "1/0"))
   val genotypesFamily5: util.List[String] = new util.ArrayList[String](util.Arrays.asList("1/0", "./.", "./."))
@@ -25,6 +26,7 @@ class etlTest extends FunSuite {
   val genotypesFamily12: util.List[String] = new util.ArrayList[String](util.Arrays.asList("0/1", "1/1", "0/1"))
   val genotypesFamily13: util.List[String] = new util.ArrayList[String](util.Arrays.asList("0/1", "0/0", "1/1"))
   val genotypesFamily14: util.List[String] = new util.ArrayList[String](util.Arrays.asList("1/1", "1/1", "0/1"))
+  val genotypesFamily15: util.List[String] = new util.ArrayList[String](util.Arrays.asList("1/1", "./.", "./."))
 
 
 
@@ -66,6 +68,7 @@ class etlTest extends FunSuite {
 
     assert(!testAutosomalDominant(genotypesFamily1, pedigrees))
     assert(testAutosomalDominant(genotypesFamily2, pedigrees))
+    assert(testAutosomalDominant(genotypesFamily2b, pedigrees))
     assert(!testAutosomalDominant(genotypesFamily3, pedigrees))
     assert(!testAutosomalDominant(genotypesFamily4, pedigrees))
     assert(testAutosomalDominant(genotypesFamily5, pedigrees))
@@ -78,6 +81,7 @@ class etlTest extends FunSuite {
     assert(testAutosomalDominant(genotypesFamily12, pedigrees))
     assert(testAutosomalDominant(genotypesFamily13, pedigrees))
     assert(!testAutosomalDominant(genotypesFamily14, pedigrees))
+    assert(!testAutosomalDominant(genotypesFamily15, pedigrees))
 
   }
 
@@ -90,10 +94,11 @@ class etlTest extends FunSuite {
      */
 
     assert(!testAutosomalDominant(genotypesFamily1, pedigrees))
-    assert(!testAutosomalDominant(genotypesFamily2, pedigrees))
+    assert(testAutosomalDominant(genotypesFamily2, pedigrees))
+    assert(testAutosomalDominant(genotypesFamily2b, pedigrees))
     assert(!testAutosomalDominant(genotypesFamily3, pedigrees))
     assert(!testAutosomalDominant(genotypesFamily4, pedigrees))
-    assert(!testAutosomalDominant(genotypesFamily5, pedigrees))
+    assert(testAutosomalDominant(genotypesFamily5, pedigrees))
     assert(!testAutosomalDominant(genotypesFamily6, pedigrees))
     assert(!testAutosomalDominant(genotypesFamily7, pedigrees))
     assert(!testAutosomalDominant(genotypesFamily8, pedigrees))
@@ -103,6 +108,7 @@ class etlTest extends FunSuite {
     assert(!testAutosomalDominant(genotypesFamily12, pedigrees))
     assert(!testAutosomalDominant(genotypesFamily13, pedigrees))
     assert(!testAutosomalDominant(genotypesFamily14, pedigrees))
+    assert(!testAutosomalDominant(genotypesFamily15, pedigrees))
 
   }
 
@@ -116,6 +122,7 @@ class etlTest extends FunSuite {
 
     assert(!testAutosomalDominant(genotypesFamily1, pedigrees))
     assert(!testAutosomalDominant(genotypesFamily2, pedigrees))
+    assert(testAutosomalDominant(genotypesFamily2b, pedigrees))
     assert(!testAutosomalDominant(genotypesFamily3, pedigrees))
     assert(!testAutosomalDominant(genotypesFamily4, pedigrees))
     assert(testAutosomalDominant(genotypesFamily5, pedigrees))
@@ -128,6 +135,7 @@ class etlTest extends FunSuite {
     assert(!testAutosomalDominant(genotypesFamily12, pedigrees))
     assert(!testAutosomalDominant(genotypesFamily13, pedigrees))
     assert(!testAutosomalDominant(genotypesFamily14, pedigrees))
+    assert(!testAutosomalDominant(genotypesFamily15, pedigrees))
 
 
   }
@@ -142,6 +150,7 @@ class etlTest extends FunSuite {
 
     assert(!testAutosomalDominant(genotypesFamily1, pedigrees))
     assert(!testAutosomalDominant(genotypesFamily2, pedigrees))
+    assert(!testAutosomalDominant(genotypesFamily2b, pedigrees))
     assert(!testAutosomalDominant(genotypesFamily3, pedigrees))
     assert(!testAutosomalDominant(genotypesFamily4, pedigrees))
     assert(testAutosomalDominant(genotypesFamily5, pedigrees))
@@ -154,6 +163,7 @@ class etlTest extends FunSuite {
     assert(!testAutosomalDominant(genotypesFamily12, pedigrees))
     assert(!testAutosomalDominant(genotypesFamily13, pedigrees))
     assert(!testAutosomalDominant(genotypesFamily14, pedigrees))
+    assert(!testAutosomalDominant(genotypesFamily15, pedigrees))
 
   }
 
@@ -163,6 +173,7 @@ class etlTest extends FunSuite {
 
     assert(testAutosomalRecessif(genotypesFamily1, pedigrees))
     assert(!testAutosomalRecessif(genotypesFamily2, pedigrees))
+    assert(!testAutosomalRecessif(genotypesFamily2b, pedigrees))
     assert(!testAutosomalRecessif(genotypesFamily3, pedigrees))
     assert(!testAutosomalRecessif(genotypesFamily4, pedigrees))
     assert(!testAutosomalRecessif(genotypesFamily5, pedigrees))
@@ -176,6 +187,7 @@ class etlTest extends FunSuite {
     assert(!testAutosomalRecessif(genotypesFamily12, pedigrees))
     assert(!testAutosomalRecessif(genotypesFamily13, pedigrees))
     assert(testAutosomalRecessif(genotypesFamily14, pedigrees))
+    assert(testAutosomalRecessif(genotypesFamily15, pedigrees))
 
   }
 
@@ -189,6 +201,7 @@ class etlTest extends FunSuite {
 
     assert(!testAutosomalRecessif(genotypesFamily1, pedigrees))
     assert(!testAutosomalRecessif(genotypesFamily2, pedigrees))
+    assert(!testAutosomalRecessif(genotypesFamily2b, pedigrees))
     assert(!testAutosomalRecessif(genotypesFamily3, pedigrees))
     assert(!testAutosomalRecessif(genotypesFamily4, pedigrees))
     assert(!testAutosomalRecessif(genotypesFamily5, pedigrees))
@@ -201,6 +214,7 @@ class etlTest extends FunSuite {
     assert(!testAutosomalRecessif(genotypesFamily12, pedigrees))
     assert(!testAutosomalRecessif(genotypesFamily13, pedigrees))
     assert(!testAutosomalRecessif(genotypesFamily14, pedigrees))
+    assert(testAutosomalRecessif(genotypesFamily15, pedigrees))
 
 
   }
@@ -215,6 +229,7 @@ class etlTest extends FunSuite {
 
     assert(!testAutosomalRecessif(genotypesFamily1, pedigrees))
     assert(!testAutosomalRecessif(genotypesFamily2, pedigrees))
+    assert(!testAutosomalRecessif(genotypesFamily2b, pedigrees))
     assert(!testAutosomalRecessif(genotypesFamily3, pedigrees))
     assert(!testAutosomalRecessif(genotypesFamily4, pedigrees))
     assert(!testAutosomalRecessif(genotypesFamily5, pedigrees))
@@ -227,6 +242,7 @@ class etlTest extends FunSuite {
     assert(!testAutosomalRecessif(genotypesFamily12, pedigrees))
     assert(!testAutosomalRecessif(genotypesFamily13, pedigrees))
     assert(!testAutosomalRecessif(genotypesFamily14, pedigrees))
+    assert(!testAutosomalRecessif(genotypesFamily15, pedigrees))
 
 
   }
@@ -241,6 +257,7 @@ class etlTest extends FunSuite {
 
     assert(!testAutosomalRecessif(genotypesFamily1, pedigrees))
     assert(!testAutosomalRecessif(genotypesFamily2, pedigrees))
+    assert(!testAutosomalRecessif(genotypesFamily2b, pedigrees))
     assert(!testAutosomalRecessif(genotypesFamily3, pedigrees))
     assert(!testAutosomalRecessif(genotypesFamily4, pedigrees))
     assert(!testAutosomalRecessif(genotypesFamily5, pedigrees))
@@ -253,26 +270,29 @@ class etlTest extends FunSuite {
     assert(!testAutosomalRecessif(genotypesFamily12, pedigrees))
     assert(!testAutosomalRecessif(genotypesFamily13, pedigrees))
     assert(!testAutosomalRecessif(genotypesFamily14, pedigrees))
+    assert(!testAutosomalRecessif(genotypesFamily15, pedigrees))
   }
 
   test("Testing denovo transmission with a Solo") {
     val pedigrees = loadPedigree("src/test/resources/pedigreeTest0.ped")
     // FA0002 SP00011 0 0 1 2
 
-    assert(!testDenovo(genotypesFamily1, pedigrees))
-    assert(!testDenovo(genotypesFamily2, pedigrees))
-    assert(!testDenovo(genotypesFamily3, pedigrees))
-    assert(!testDenovo(genotypesFamily4, pedigrees))
-    assert(!testDenovo(genotypesFamily5, pedigrees))
-    assert(!testDenovo(genotypesFamily6, pedigrees))
-    assert(!testDenovo(genotypesFamily7, pedigrees))
-    assert(!testDenovo(genotypesFamily8, pedigrees))
-    assert(!testDenovo(genotypesFamily9, pedigrees))
-    assert(!testDenovo(genotypesFamily10, pedigrees))
-    assert(!testDenovo(genotypesFamily11, pedigrees))
-    assert(!testDenovo(genotypesFamily12, pedigrees))
-    assert(!testDenovo(genotypesFamily13, pedigrees))
-    assert(!testDenovo(genotypesFamily14, pedigrees))
+    assert(testDenovo(genotypesFamily1, pedigrees) == "NO")
+    assert(testDenovo(genotypesFamily2, pedigrees) == "NO")
+    assert(testDenovo(genotypesFamily2b, pedigrees) == "NO")
+    assert(testDenovo(genotypesFamily3, pedigrees) == "NO")
+    assert(testDenovo(genotypesFamily4, pedigrees) == "NO")
+    assert(testDenovo(genotypesFamily5, pedigrees) == "NO")
+    assert(testDenovo(genotypesFamily6, pedigrees) == "NO")
+    assert(testDenovo(genotypesFamily7, pedigrees) == "NO")
+    assert(testDenovo(genotypesFamily8, pedigrees) == "NO")
+    assert(testDenovo(genotypesFamily9, pedigrees) == "NO")
+    assert(testDenovo(genotypesFamily10, pedigrees) == "NO")
+    assert(testDenovo(genotypesFamily11, pedigrees) == "NO")
+    assert(testDenovo(genotypesFamily12, pedigrees) == "NO")
+    assert(testDenovo(genotypesFamily13, pedigrees) == "NO")
+    assert(testDenovo(genotypesFamily14, pedigrees) == "NO")
+    assert(testDenovo(genotypesFamily15, pedigrees) == "NO")
 
   }
 
@@ -284,20 +304,22 @@ class etlTest extends FunSuite {
     FA0002 SP00036 0 0 2 1
      */
 
-    assert(!testDenovo(genotypesFamily1, pedigrees))
-    assert(testDenovo(genotypesFamily2, pedigrees))
-    assert(!testDenovo(genotypesFamily3, pedigrees))
-    assert(!testDenovo(genotypesFamily4, pedigrees))
-    assert(!testDenovo(genotypesFamily5, pedigrees))
-    assert(!testDenovo(genotypesFamily6, pedigrees))
-    assert(!testDenovo(genotypesFamily7, pedigrees))
-    assert(!testDenovo(genotypesFamily8, pedigrees))
-    assert(!testDenovo(genotypesFamily9, pedigrees))
-    assert(!testDenovo(genotypesFamily10, pedigrees))
-    assert(!testDenovo(genotypesFamily11, pedigrees))
-    assert(!testDenovo(genotypesFamily12, pedigrees))
-    assert(testDenovo(genotypesFamily13, pedigrees))
-    assert(!testDenovo(genotypesFamily14, pedigrees))
+    assert(testDenovo(genotypesFamily1, pedigrees) == "NO")
+    assert(testDenovo(genotypesFamily2, pedigrees) == "DENOVO")
+    assert(testDenovo(genotypesFamily2b, pedigrees)== "PROBABLY DENOVO")
+    assert(testDenovo(genotypesFamily3, pedigrees) == "NO")
+    assert(testDenovo(genotypesFamily4, pedigrees) == "NO")
+    assert(testDenovo(genotypesFamily5, pedigrees)== "PROBABLY DENOVO")
+    assert(testDenovo(genotypesFamily6, pedigrees) == "NO")
+    assert(testDenovo(genotypesFamily7, pedigrees) == "NO")
+    assert(testDenovo(genotypesFamily8, pedigrees) == "NO")
+    assert(testDenovo(genotypesFamily9, pedigrees) == "NO")
+    assert(testDenovo(genotypesFamily10, pedigrees) == "NO")
+    assert(testDenovo(genotypesFamily11, pedigrees) == "NO")
+    assert(testDenovo(genotypesFamily12, pedigrees) == "NO")
+    assert(testDenovo(genotypesFamily13, pedigrees) == "DENOVO")
+    assert(testDenovo(genotypesFamily14, pedigrees) == "NO")
+    assert(testDenovo(genotypesFamily15, pedigrees) == "NO")
 
   }
 
@@ -309,20 +331,22 @@ class etlTest extends FunSuite {
     FA0002 SP00036 0 0 2 1
      */
 
-    assert(!testDenovo(genotypesFamily1, pedigrees))
-    assert(!testDenovo(genotypesFamily2, pedigrees))
-    assert(!testDenovo(genotypesFamily3, pedigrees))
-    assert(!testDenovo(genotypesFamily4, pedigrees))
-    assert(!testDenovo(genotypesFamily5, pedigrees))
-    assert(!testDenovo(genotypesFamily6, pedigrees))
-    assert(!testDenovo(genotypesFamily7, pedigrees))
-    assert(!testDenovo(genotypesFamily8, pedigrees))
-    assert(!testDenovo(genotypesFamily9, pedigrees))
-    assert(!testDenovo(genotypesFamily10, pedigrees))
-    assert(!testDenovo(genotypesFamily11, pedigrees))
-    assert(!testDenovo(genotypesFamily12, pedigrees))
-    assert(!testDenovo(genotypesFamily13, pedigrees))
-    assert(!testDenovo(genotypesFamily14, pedigrees))
+    assert(testDenovo(genotypesFamily1, pedigrees) == "NO")
+    assert(testDenovo(genotypesFamily2, pedigrees) == "NO")
+    assert(testDenovo(genotypesFamily2b, pedigrees) == "PROBABLY DENOVO")
+    assert(testDenovo(genotypesFamily3, pedigrees) == "NO")
+    assert(testDenovo(genotypesFamily4, pedigrees) == "NO")
+    assert(testDenovo(genotypesFamily5, pedigrees) == "PROBABLY DENOVO")
+    assert(testDenovo(genotypesFamily6, pedigrees) == "NO")
+    assert(testDenovo(genotypesFamily7, pedigrees) == "NO")
+    assert(testDenovo(genotypesFamily8, pedigrees) == "NO")
+    assert(testDenovo(genotypesFamily9, pedigrees) == "NO")
+    assert(testDenovo(genotypesFamily10, pedigrees) == "NO")
+    assert(testDenovo(genotypesFamily11, pedigrees) == "NO")
+    assert(testDenovo(genotypesFamily12, pedigrees) == "NO")
+    assert(testDenovo(genotypesFamily13, pedigrees) == "NO")
+    assert(testDenovo(genotypesFamily14, pedigrees) == "NO")
+    assert(testDenovo(genotypesFamily15, pedigrees) == "NO")
 
   }
 
@@ -334,20 +358,22 @@ class etlTest extends FunSuite {
     FA0002 SP00036 0 0 2 HP:0000268
      */
 
-    assert(!testDenovo(genotypesFamily1, pedigrees))
-    assert(!testDenovo(genotypesFamily2, pedigrees))
-    assert(!testDenovo(genotypesFamily3, pedigrees))
-    assert(!testDenovo(genotypesFamily4, pedigrees))
-    assert(!testDenovo(genotypesFamily5, pedigrees))
-    assert(!testDenovo(genotypesFamily6, pedigrees))
-    assert(!testDenovo(genotypesFamily7, pedigrees))
-    assert(!testDenovo(genotypesFamily8, pedigrees))
-    assert(!testDenovo(genotypesFamily9, pedigrees))
-    assert(!testDenovo(genotypesFamily10, pedigrees))
-    assert(!testDenovo(genotypesFamily11, pedigrees))
-    assert(!testDenovo(genotypesFamily12, pedigrees))
-    assert(!testDenovo(genotypesFamily13, pedigrees))
-    assert(!testDenovo(genotypesFamily14, pedigrees))
+    assert(testDenovo(genotypesFamily1, pedigrees) == "NO")
+    assert(testDenovo(genotypesFamily2, pedigrees) == "NO")
+    assert(testDenovo(genotypesFamily2b, pedigrees) == "NO")
+    assert(testDenovo(genotypesFamily3, pedigrees) == "NO")
+    assert(testDenovo(genotypesFamily4, pedigrees) == "NO")
+    assert(testDenovo(genotypesFamily5, pedigrees) == "PROBABLY DENOVO")
+    assert(testDenovo(genotypesFamily6, pedigrees) == "NO")
+    assert(testDenovo(genotypesFamily7, pedigrees) == "NO")
+    assert(testDenovo(genotypesFamily8, pedigrees) == "NO")
+    assert(testDenovo(genotypesFamily9, pedigrees) == "NO")
+    assert(testDenovo(genotypesFamily10, pedigrees) == "NO")
+    assert(testDenovo(genotypesFamily11, pedigrees) == "NO")
+    assert(testDenovo(genotypesFamily12, pedigrees) == "NO")
+    assert(testDenovo(genotypesFamily13, pedigrees) == "NO")
+    assert(testDenovo(genotypesFamily14, pedigrees) == "NO")
+    assert(testDenovo(genotypesFamily15, pedigrees) == "NO")
 
   }
 
@@ -395,7 +421,7 @@ class etlTest extends FunSuite {
     VepHelper.isAutosomalRecessif(genotypesFamily,familyPed)
   }
 
-  def testDenovo(genotypesFamily: util.List[String], familyPed: util.List[Pedigree]) : Boolean = {
+  def testDenovo(genotypesFamily: util.List[String], familyPed: util.List[Pedigree]) : String = {
     VepHelper.isDeNovo(genotypesFamily,familyPed)
   }
 
