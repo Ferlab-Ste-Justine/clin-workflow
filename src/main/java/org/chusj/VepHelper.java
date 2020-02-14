@@ -2102,6 +2102,7 @@ public class VepHelper {
             // and * no unaffected person has a HET or HOM call.
 
         boolean isGirl=false,isBoy=false;
+        boolean xd = false;
 
         if (familyPed.get(0).sex.equalsIgnoreCase("1")) {
             isBoy=true;
@@ -2134,28 +2135,42 @@ public class VepHelper {
                 // at least one affected male has a HET or HOM call or a affected female a HET call for this variant
                 if (i==0 && !strict && isGirl && zygosity.equalsIgnoreCase("HET")) {
                     return true;
+                } else if (i==0 && isGirl && !zygosity.equalsIgnoreCase("HET")) {
+                    return false;
                 } else if (i==0 && isBoy && !strict && (zygosity.equalsIgnoreCase("HET") || zygosity.equalsIgnoreCase("HOM")) ) {
                     return true;
+                } else if (i==0 && isBoy && zygosity.equalsIgnoreCase("HOM REF")) {
+                    return false;
                 }
                 if (strict && i>0) {
                     // girls of affected dad must be affected
                     if (isGirl && !isFth) {
                         return false;
+                    } else if (isGirl && isFth) {
+                        xd=true;
                     }
                     // mothers of affected males must be het (and affected)
                     if (isMth && isBoy) {
                         if (!zygosity.equalsIgnoreCase("HET")) {
                             return false;
+                        } else {
+                            xd=true;
                         }
                     }
-
+                    // no affected person has a REF call;
+                    if (zygosity.equalsIgnoreCase("HOM REF")) {
+                        return false;
+                    }
                 }
+
 
             } else if (!zygosity.equalsIgnoreCase("HOM REF") ) {
                 return false;
+            } else {
+                xd = true;
             }
         }
-        return false;
+        return xd;
     }
 
     static boolean isBoy(String sex) {

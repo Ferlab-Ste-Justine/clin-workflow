@@ -844,6 +844,7 @@ class etlTest extends FunSuite {
     // FA0002 SP00011 0 0 1 2
     // HET or a HOM
 
+    isAffectedStatusConsidered = false
     assert(testXDominant(genotypesFamily0, pedigrees)) // "1/1", "0/0", "./." //AR-IMPOSSIBLE
     assert(testXDominant(genotypesFamily1, pedigrees)) // "0/1", "0/0", "0/0" //denovo et AD
     assert(testXDominant(genotypesFamily2, pedigrees)) // "0/1", "./.", "0/0" //possible denovo et possible AD
@@ -864,7 +865,7 @@ class etlTest extends FunSuite {
   test("Testing X-linked Dominant transmission with a female solo") {
     val pedigrees = loadPedigree("src/test/resources/pedigreeTest0F.ped")
     // FA0002 SP00011 0 0 2 2
-    // contain one HOM call
+    // if * the person is female then the variant call list must contain one HET call.
 
     assert(!testXDominant(genotypesFamily0, pedigrees)) // "1/1", "0/0", "./." //AR-IMPOSSIBLE
     assert(testXDominant(genotypesFamily1, pedigrees)) // "0/1", "0/0", "0/0" //denovo et AD
@@ -887,6 +888,11 @@ class etlTest extends FunSuite {
 
   test("Testing X-linked Dominant transmission with a male and 0 affected parent") {
     val pedigrees = loadPedigree("src/test/resources/pedigreeTest1.ped")
+    // HET or a HOM
+    // girls of affected dad must be affected
+    // boys of affected dad must be unaffected
+    // mothers of affected males must be het (and affected)
+    // at least 1 parent of affected females must be het (and affected)
 
     isAffectedStatusConsidered = false
     assert(testXDominant(genotypesFamily0, pedigrees)) // "1/1", "0/0", "./." //AR-IMPOSSIBLE
@@ -906,26 +912,48 @@ class etlTest extends FunSuite {
     assert(testXDominant(genotypesFamilyE, pedigrees)) // "1/1", "1/1", "0/1" //AR
     assert(testXDominant(genotypesFamilyF, pedigrees)) // "1/1", "./.", "./." //possible AR
     isAffectedStatusConsidered = true
-    assert(testXDominant(genotypesFamily0, pedigrees)) // "1/1", "0/0", "./." //AR-IMPOSSIBLE
+    assert(!testXDominant(genotypesFamily0, pedigrees)) // "1/1", "0/0", "./." //AR-IMPOSSIBLE
     assert(testXDominant(genotypesFamily1, pedigrees)) // "0/1", "0/0", "0/0" //denovo et AD
-    assert(testXDominant(genotypesFamily2, pedigrees)) // "0/1", "./.", "0/0" //possible denovo et possible AD
+    assert(!testXDominant(genotypesFamily2, pedigrees)) // "0/1", "./.", "0/0" //possible denovo et possible AD
     assert(!testXDominant(genotypesFamily3, pedigrees)) // "0/0", "1/0", "0/0" //Aucune transmission (n'est pas reporté)
     assert(!testXDominant(genotypesFamily4, pedigrees)) // "0/0", "0/0", "1/0" //Aucune transmission (n'est pas reporté)
-    assert(testXDominant(genotypesFamily5, pedigrees)) // "1/0", "./.", "./." //possible denovo et possible AD
+    assert(!testXDominant(genotypesFamily5, pedigrees)) // "1/0", "./.", "./." //possible denovo et possible AD
     assert(testXDominant(genotypesFamily6, pedigrees)) // "1/1", "0/0", "0/0" //AR-IMPOSSIBLE
-    assert(testXDominant(genotypesFamily7, pedigrees)) // "0/1", "1/0", "1/0" //AD
-    assert(testXDominant(genotypesFamily8, pedigrees)) // "1/1", "1/0", "1/0" //AR
-    assert(testXDominant(genotypesFamily9, pedigrees)) // "1/1", "0/1", "./." //possible AR
-    assert(testXDominant(genotypesFamilyA, pedigrees)) // "0/1", "0/1", "0/0" //AD
-    assert(testXDominant(genotypesFamilyB, pedigrees)) // "0/1", "0/1", "./." //AD
-    assert(testXDominant(genotypesFamilyC, pedigrees)) // "0/1", "1/1", "0/1" //AD
-    assert(testXDominant(genotypesFamilyD, pedigrees)) // "0/1", "0/0", "1/1" //AD
-    assert(testXDominant(genotypesFamilyE, pedigrees)) // "1/1", "1/1", "0/1" //AR
-    assert(testXDominant(genotypesFamilyF, pedigrees)) // "1/1", "./.", "./." //possible AR
+    assert(!testXDominant(genotypesFamily7, pedigrees)) // "0/1", "1/0", "1/0" //AD
+    assert(!testXDominant(genotypesFamily8, pedigrees)) // "1/1", "1/0", "1/0" //AR
+    assert(!testXDominant(genotypesFamily9, pedigrees)) // "1/1", "0/1", "./." //possible AR
+    assert(!testXDominant(genotypesFamilyA, pedigrees)) // "0/1", "0/1", "0/0" //AD
+    assert(!testXDominant(genotypesFamilyB, pedigrees)) // "0/1", "0/1", "./." //AD
+    assert(!testXDominant(genotypesFamilyC, pedigrees)) // "0/1", "1/1", "0/1" //AD
+    assert(!testXDominant(genotypesFamilyD, pedigrees)) // "0/1", "0/0", "1/1" //AD
+    assert(!testXDominant(genotypesFamilyE, pedigrees)) // "1/1", "1/1", "0/1" //AR
+    assert(!testXDominant(genotypesFamilyF, pedigrees)) // "1/1", "./.", "./." //possible AR
+  }
+
+  test("Testing X-linked Dominant transmission with a male and affected mth") {
+    val pedigrees = loadPedigree("src/test/resources/pedigreeTest11.ped")
+    /*
+    FA0002 SP00011 SP00061 SP00036 1 2
+    FA0002 SP00061 0 0 1 1
+    FA0002 SP00036 0 0 2 2
+     */
+    // Affected males are HET or HOM_ALT
+    // girls of affected dad must be affected
+    // boys of affected dad must be unaffected
+    // mothers of affected males must be het (and affected)
+    // at least 1 parent of affected females must be het (and affected)
+    isAffectedStatusConsidered = true
+    assert(!testXDominant(genotypesFamilyD, pedigrees)) // "0/1", "0/0", "1/1" //AD
+    assert(!testXDominant(genotypesFamily7, pedigrees)) // "0/1", "1/0", "1/0" //AD
+    assert(!testXDominant(genotypesFamily8, pedigrees)) // "1/1", "1/0", "1/0" //AR
+    val a = new util.ArrayList[String](util.Arrays.asList("0/1", "0/0", "0/1"))
+    assert(testXDominant(a, pedigrees))
 
   }
+
   test("Testing X-linked Dominant transmission with a female and 0 affected parent") {
     val pedigrees = loadPedigree("src/test/resources/pedigreeTest1F.ped")
+    // if * the person is female then the variant call list must contain one HET call.
 
     isAffectedStatusConsidered = false
     assert(!testXDominant(genotypesFamily0, pedigrees)) // "1/1", "0/0", "./." //AR-IMPOSSIBLE
@@ -944,29 +972,30 @@ class etlTest extends FunSuite {
     assert(testXDominant(genotypesFamilyD, pedigrees)) // "0/1", "0/0", "1/1" //AD
     assert(!testXDominant(genotypesFamilyE, pedigrees)) // "1/1", "1/1", "0/1" //AR
     assert(!testXDominant(genotypesFamilyF, pedigrees)) // "1/1", "./.", "./." //possible AR
+    isAffectedStatusConsidered = true
+    assert(!testXDominant(genotypesFamily0, pedigrees)) // "1/1", "0/0", "./." //AR-IMPOSSIBLE
+    assert(testXDominant(genotypesFamily1, pedigrees)) // "0/1", "0/0", "0/0" //denovo et AD
+    assert(!testXDominant(genotypesFamily2, pedigrees)) // "0/1", "./.", "0/0" //possible denovo et possible AD
+    assert(!testXDominant(genotypesFamily3, pedigrees)) // "0/0", "1/0", "0/0" //Aucune transmission (n'est pas reporté)
+    assert(!testXDominant(genotypesFamily4, pedigrees)) // "0/0", "0/0", "1/0" //Aucune transmission (n'est pas reporté)
+    assert(!testXDominant(genotypesFamily5, pedigrees)) // "1/0", "./.", "./." //possible denovo et possible AD
+    assert(!testXDominant(genotypesFamily6, pedigrees)) // "1/1", "0/0", "0/0" //AR-IMPOSSIBLE
+    assert(!testXDominant(genotypesFamily7, pedigrees)) // "0/1", "1/0", "1/0" //AD
+    assert(!testXDominant(genotypesFamily8, pedigrees)) // "1/1", "1/0", "1/0" //AR
+    assert(!testXDominant(genotypesFamily9, pedigrees)) // "1/1", "0/1", "./." //possible AR
+    assert(!testXDominant(genotypesFamilyA, pedigrees)) // "0/1", "0/1", "0/0" //AD
+    assert(!testXDominant(genotypesFamilyB, pedigrees)) // "0/1", "0/1", "./." //AD
+    assert(!testXDominant(genotypesFamilyC, pedigrees)) // "0/1", "1/1", "0/1" //AD
+    assert(!testXDominant(genotypesFamilyD, pedigrees)) // "0/1", "0/0", "1/1" //AD
+    assert(!testXDominant(genotypesFamilyE, pedigrees)) // "1/1", "1/1", "0/1" //AR
+    assert(!testXDominant(genotypesFamilyF, pedigrees)) // "1/1", "./.", "./." //possible AR
 
   }
 
   test("Testing X-linked Dominant transmission with a male and affected Father") {
     val pedigrees = loadPedigree("src/test/resources/pedigreeTest2.ped")
 
-    isAffectedStatusConsidered = true
-    assert(testXDominant(genotypesFamily0, pedigrees)) // "1/1", "0/0", "./." //AR-IMPOSSIBLE
-    assert(testXDominant(genotypesFamily1, pedigrees)) // "0/1", "0/0", "0/0" //denovo et AD
-    assert(testXDominant(genotypesFamily2, pedigrees)) // "0/1", "./.", "0/0" //possible denovo et possible AD
-    assert(!testXDominant(genotypesFamily3, pedigrees)) // "0/0", "1/0", "0/0" //Aucune transmission (n'est pas reporté)
-    assert(!testXDominant(genotypesFamily4, pedigrees)) // "0/0", "0/0", "1/0" //Aucune transmission (n'est pas reporté)
-    assert(testXDominant(genotypesFamily5, pedigrees)) // "1/0", "./.", "./." //possible denovo et possible AD
-    assert(testXDominant(genotypesFamily6, pedigrees)) // "1/1", "0/0", "0/0" //AR-IMPOSSIBLE
-    assert(testXDominant(genotypesFamily7, pedigrees)) // "0/1", "1/0", "1/0" //AD
-    assert(testXDominant(genotypesFamily8, pedigrees)) // "1/1", "1/0", "1/0" //AR
-    assert(testXDominant(genotypesFamily9, pedigrees)) // "1/1", "0/1", "./." //possible AR
-    assert(testXDominant(genotypesFamilyA, pedigrees)) // "0/1", "0/1", "0/0" //AD
-    assert(testXDominant(genotypesFamilyB, pedigrees)) // "0/1", "0/1", "./." //AD
-    assert(testXDominant(genotypesFamilyC, pedigrees)) // "0/1", "1/1", "0/1" //AD
-    assert(testXDominant(genotypesFamilyD, pedigrees)) // "0/1", "0/0", "1/1" //AD
-    assert(testXDominant(genotypesFamilyE, pedigrees)) // "1/1", "1/1", "0/1" //AR
-    assert(testXDominant(genotypesFamilyF, pedigrees)) // "1/1", "./.", "./." //possible AR
+
     isAffectedStatusConsidered = false
     assert(testXDominant(genotypesFamily0, pedigrees)) // "1/1", "0/0", "./." //AR-IMPOSSIBLE
     assert(testXDominant(genotypesFamily1, pedigrees)) // "0/1", "0/0", "0/0" //denovo et AD
@@ -984,6 +1013,23 @@ class etlTest extends FunSuite {
     assert(testXDominant(genotypesFamilyD, pedigrees)) // "0/1", "0/0", "1/1" //AD
     assert(testXDominant(genotypesFamilyE, pedigrees)) // "1/1", "1/1", "0/1" //AR
     assert(testXDominant(genotypesFamilyF, pedigrees)) // "1/1", "./.", "./." //possible AR
+    isAffectedStatusConsidered = true
+    assert(!testXDominant(genotypesFamily0, pedigrees)) // "1/1", "0/0", "./." //AR-IMPOSSIBLE
+    assert(!testXDominant(genotypesFamily1, pedigrees)) // "0/1", "0/0", "0/0" //denovo et AD
+    assert(testXDominant(genotypesFamily2, pedigrees)) // "0/1", "./.", "0/0" //possible denovo et possible AD
+    assert(!testXDominant(genotypesFamily3, pedigrees)) // "0/0", "1/0", "0/0" //Aucune transmission (n'est pas reporté)
+    assert(!testXDominant(genotypesFamily4, pedigrees)) // "0/0", "0/0", "1/0" //Aucune transmission (n'est pas reporté)
+    assert(!testXDominant(genotypesFamily5, pedigrees)) // "1/0", "./.", "./." //possible denovo et possible AD
+    assert(!testXDominant(genotypesFamily6, pedigrees)) // "1/1", "0/0", "0/0" //AR-IMPOSSIBLE
+    assert(!testXDominant(genotypesFamily7, pedigrees)) // "0/1", "1/0", "1/0" //AD
+    assert(!testXDominant(genotypesFamily8, pedigrees)) // "1/1", "1/0", "1/0" //AR
+    assert(!testXDominant(genotypesFamily9, pedigrees)) // "1/1", "0/1", "./." //possible AR
+    assert(testXDominant(genotypesFamilyA, pedigrees)) // "0/1", "0/1", "0/0" //AD
+    assert(!testXDominant(genotypesFamilyB, pedigrees)) // "0/1", "0/1", "./." //AD
+    assert(!testXDominant(genotypesFamilyC, pedigrees)) // "0/1", "1/1", "0/1" //AD
+    assert(!testXDominant(genotypesFamilyD, pedigrees)) // "0/1", "0/0", "1/1" //AD
+    assert(!testXDominant(genotypesFamilyE, pedigrees)) // "1/1", "1/1", "0/1" //AR
+    assert(!testXDominant(genotypesFamilyF, pedigrees)) // "1/1", "./.", "./." //possible AR
   }
   test("Testing X-linked Dominant transmission with a female and affected father") {
     val pedigrees = loadPedigree("src/test/resources/pedigreeTest2F.ped")
@@ -1007,19 +1053,19 @@ class etlTest extends FunSuite {
     assert(!testXDominant(genotypesFamilyF, pedigrees)) // "1/1", "./.", "./." //possible AR
     isAffectedStatusConsidered = true
     assert(!testXDominant(genotypesFamily0, pedigrees)) //"1/1", "0/0", "./." //AR-IMPOSSIBLE
-    assert(testXDominant(genotypesFamily1, pedigrees)) // "0/1", "0/0", "0/0" //denovo et AD
+    assert(!testXDominant(genotypesFamily1, pedigrees)) // "0/1", "0/0", "0/0" //denovo et AD
     assert(testXDominant(genotypesFamily2, pedigrees)) // "0/1", "./.", "0/0" //possible denovo et possible AD
     assert(!testXDominant(genotypesFamily3, pedigrees)) // "0/0", "1/0", "0/0" //Aucune transmission (n'est pas reporté)
     assert(!testXDominant(genotypesFamily4, pedigrees)) // "0/0", "0/0", "1/0" //Aucune transmission (n'est pas reporté)
-    assert(testXDominant(genotypesFamily5, pedigrees)) // "1/0", "./.", "./." //possible denovo et possible AD
+    assert(!testXDominant(genotypesFamily5, pedigrees)) // "1/0", "./.", "./." //possible denovo et possible AD
     assert(!testXDominant(genotypesFamily6, pedigrees)) // "1/1", "0/0", "0/0" //AR-IMPOSSIBLE
-    assert(testXDominant(genotypesFamily7, pedigrees)) // "0/1", "1/0", "1/0" //AD
+    assert(!testXDominant(genotypesFamily7, pedigrees)) // "0/1", "1/0", "1/0" //AD
     assert(!testXDominant(genotypesFamily8, pedigrees)) // "1/1", "1/0", "1/0" //AR
     assert(!testXDominant(genotypesFamily9, pedigrees)) // "1/1", "0/1", "./." //possible AR
     assert(testXDominant(genotypesFamilyA, pedigrees)) // "0/1", "0/1", "0/0" //AD
-    assert(testXDominant(genotypesFamilyB, pedigrees)) // "0/1", "0/1", "./." //AD
-    assert(testXDominant(genotypesFamilyC, pedigrees)) // "0/1", "1/1", "0/1" //AD
-    assert(testXDominant(genotypesFamilyD, pedigrees)) // "0/1", "0/0", "1/1" //AD
+    assert(!testXDominant(genotypesFamilyB, pedigrees)) // "0/1", "0/1", "./." //AD
+    assert(!testXDominant(genotypesFamilyC, pedigrees)) // "0/1", "1/1", "0/1" //AD
+    assert(!testXDominant(genotypesFamilyD, pedigrees)) // "0/1", "0/0", "1/1" //AD
     assert(!testXDominant(genotypesFamilyE, pedigrees)) // "1/1", "1/1", "0/1" //AR
     assert(!testXDominant(genotypesFamilyF, pedigrees)) // "1/1", "./.", "./." //possible AR
 
