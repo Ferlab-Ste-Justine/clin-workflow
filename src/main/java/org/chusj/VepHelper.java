@@ -551,18 +551,19 @@ public class VepHelper {
                             }
                         }
                         // analysis of transmission - X & autosomal (dominant & recessif)
+                        boolean strictMode = false;
                         if ( !( chrPos.equalsIgnoreCase("X") || chrPos.equalsIgnoreCase("Y") ) ) {
-                            if (isAutosomalDominant(genotypeOfAllMembers, familyPed)) {
+                            if (isAutosomalDominant(genotypeOfAllMembers, familyPed, strictMode)) {
                                 toPrint = true;
 
                             }
-                            if (isAutosomalRecessif(genotypeOfAllMembers, familyPed)) {
+                            if (isAutosomalRecessif(genotypeOfAllMembers, familyPed, strictMode)) {
                                 //toPrint = true;
                             }
                         } else if (chrPos.equalsIgnoreCase("X")){
                             // X-Related
                         }
-                        if (!isDeNovo(genotypeOfAllMembers, familyPed).equalsIgnoreCase("NO")) {
+                        if (!isDeNovo(genotypeOfAllMembers, familyPed, strictMode).equalsIgnoreCase("NO")) {
 
 
                         }
@@ -1836,7 +1837,7 @@ public class VepHelper {
         return familyMap;
     }
 
-    public static boolean isAutosomalDominant(List<String> genotypesFamily, List<Pedigree> familyPed) {
+    public static boolean isAutosomalDominant(List<String> genotypesFamily, List<Pedigree> familyPed, boolean strict) {
         //boolean isAutosomalDominant = true;
 //        familyPed.forEach((ped) -> System.out.println(ped));
 
@@ -1846,10 +1847,9 @@ public class VepHelper {
         // At least 1 affected must have 1 affected parent (or have no parents). <- nope
 
         // Jannovar
-        // at least one affected person has a HET call for this variant,
-        // no affected person has a REF or HOM call, and
-        // no unaffected person has a HET or HOM call.
-
+        // at least one affected person has a HET call for this variant,  affected proband is HET
+        // no affected person has a REF or HOM call, and  proband cannot be REF or HOM
+        // no unaffected person has a HET or HOM call.  parent should not be HET or HOM
 
         boolean hasParent = false, hasNoParent = false;
         int nbAffected = 0;
@@ -1860,12 +1860,21 @@ public class VepHelper {
         }
 //        System.out.print("\nhasParent="+hasParent);
 //        System.out.print(" hasNoParent="+hasNoParent);
-
-        for (int i=0; i<familyPed.size(); i++) {
+        int qtyIndividualToTest =1;
+        if (strict) {
+            qtyIndividualToTest = familyPed.size();
+        }
+        for (int i=0; i<qtyIndividualToTest; i++) {
+            boolean isAffected;
+            if (strict) {
+                isAffected = (!familyPed.get(i).getPhenotype().equalsIgnoreCase("1"));
+            } else {
+                isAffected = (i==0 && !familyPed.get(i).getPhenotype().equalsIgnoreCase("1"));
+            }
 
             String zygosity = zygosity(genotypesFamily.get(i));
 //            System.out.print(" i="+i+ " "+ zygosity);
-            if (!familyPed.get(i).getPhenotype().equalsIgnoreCase("1")) {
+            if (isAffected) {
 //                System.out.print(" is affected");
                 nbAffected++;
                 if (! (zygosity.equalsIgnoreCase("HET"))) {
@@ -1891,7 +1900,7 @@ public class VepHelper {
 
     }
 
-    public static boolean isAutosomalRecessif(List<String> genotypesFamily, List<Pedigree> familyPed) {
+    public static boolean isAutosomalRecessif(List<String> genotypesFamily, List<Pedigree> familyPed, boolean strict) {
         boolean isAutosomalRecessif = false;
 
 
@@ -1902,10 +1911,9 @@ public class VepHelper {
 
         // Janovar
         // at least one affected person has a HOM call for this variant and
-        // no affected person has a REF or HET call.
+        //  no affected person has a REF or HET call. xx not considered
         // The unaffected parents of affected persons must not be REF or HOM.
         // There is no unaffected person that has a HOM call.
-
 
         boolean hasParent = false;
         int nbAffected = 0;
@@ -1914,11 +1922,21 @@ public class VepHelper {
             hasParent = true;
 //            System.out.print("\n has parent");
         }
+        int qtyIndividualToTest =1;
+        if (strict) {
+            qtyIndividualToTest = familyPed.size();
+        }
 
-        for (int i=0; i<familyPed.size(); i++) {
+        for (int i=0; i<qtyIndividualToTest; i++) {
             String zygosity = zygosity(genotypesFamily.get(i));
-//            System.out.print(" i="+i+ " "+ zygosity);
-            if (!familyPed.get(i).getPhenotype().equalsIgnoreCase("1")) {
+            // we don't consider affected status of parent
+            boolean isAffected;
+            if (strict) {
+                isAffected = (!familyPed.get(i).getPhenotype().equalsIgnoreCase("1"));
+            } else {
+                isAffected = (i==0 && !familyPed.get(i).getPhenotype().equalsIgnoreCase("1"));
+            }
+            if (isAffected) {
 //                System.out.print(" is affected");
                 nbAffected++;
                 if  (!zygosity.equalsIgnoreCase("HOM"))   {
@@ -1930,7 +1948,6 @@ public class VepHelper {
 //                    System.out.print(" is not affected and == HOM or HOM REF ");
                     return false;
                 }
-
             }
         }
 
@@ -1943,17 +1960,15 @@ public class VepHelper {
 
     }
 
-    public static String isDeNovo(List<String> genotypesFamily, List<Pedigree> familyPed) {
+    public static String isDeNovo(List<String> genotypesFamily, List<Pedigree> familyPed, boolean strict) {
 
         // Gemini
         // All affected must be HET but they could be ./.
         // [affected] all unaffected must be homref or homalt or unk (could)
         // at least 1 affected kid must have unaffected parents
-        // "0/1", "0/1", "./."
-        // "0/1", "./.", "0/0"
 
         boolean hasParent = false;
-        boolean isProbable = false;
+        boolean isPossible = false;
 
 
         int nbAffected = 0;
@@ -1968,14 +1983,19 @@ public class VepHelper {
 //        System.out.print("\nHave Parent="+hasParent);
 
         for (int i=0; i<familyPed.size(); i++) {
-
+            boolean isAffected;
+            if (strict) {
+                isAffected = (!familyPed.get(i).getPhenotype().equalsIgnoreCase("1"));
+            } else {
+                isAffected = (i==0 && !familyPed.get(i).getPhenotype().equalsIgnoreCase("1"));
+            }
             String zygosity = zygosity(genotypesFamily.get(i));
 //            System.out.print(" i="+i+ " "+ zygosity);
-            if (!familyPed.get(i).getPhenotype().equalsIgnoreCase("1")) {
+            if (isAffected) {
 //                System.out.print(" is affected");
                 nbAffected++;
                 if (zygosity.equalsIgnoreCase("UNK")) {
-                    isProbable = true;
+                    isPossible = true;
                     nbAffected--; //unconfirmed affection at this locus
                     continue;
                 }
@@ -1984,23 +2004,181 @@ public class VepHelper {
                 }
 
             } else if (zygosity.equalsIgnoreCase("UNK")) {
-                isProbable = true;
+                isPossible = true;
                 continue;
-            } else if (!zygosity.startsWith("HOM") ) {
+            } else if (!zygosity.equalsIgnoreCase("HOM REF") ) {
                 return "NO";
             }
         }
 
-        if ( (hasParent && nbAffected > 1) ) {
+        if ( (strict && hasParent && nbAffected > 1) ) {
             return "NO";
         }
-        if (isProbable) {
-            return "PROBABLY DENOVO";
+        if (isPossible) {
+            return "Possible DeNovo";
         } else {
-            return "DENOVO";
+            return "DeNovo";
         }
 
     }
 
+    public static boolean isXRecessif(List<String> genotypesFamily, List<Pedigree> familyPed, boolean strict) {
+
+        // Gemini
+        // Affected females must be HOM_ALT
+        // Unaffected females are HET or HOM_REF
+        // Affected males are not HOM_REF
+        // Unaffected males are HOM_REF
+
+        // Janovar
+        // First of all variants must be X-Chromosomal.
+        // If the pedigree only contains one person then we decide if
+            // the person is female then the variant call list must contain one HOM call,
+            // else the variant call list must contain a HET or a HOM call.
+        // If there is more than one person in the pedigree then there must be at least one compatible variant call in the list:
+            // at least one affected male has a HET or HOM call or a affected female a HOM call for this variant
+            // For the parents of affected females
+                // the father must be affected and
+                // the mother cannot have it REF or HOM
+            // For the parents of affected males *
+                // the unaffected father cannot have the variant HET or HOM
+                // * the mother cannot be HOM
+
+
+        for (int i=0; i<familyPed.size(); i++) {
+            String zygosity = zygosity(genotypesFamily.get(i));
+            boolean isAffected;
+            if (strict) {
+                isAffected = isAffected(familyPed.get(i).getPhenotype());
+            } else {
+                isAffected = (i==0 && isAffected(familyPed.get(i).getPhenotype()));
+            }
+
+            if (isAffected) {
+                if (isGirl(familyPed.get(i).sex)) {
+                    if ( zygosity.equalsIgnoreCase("HOM")) {
+                        return true;
+                    } else {
+                        return false;
+                    }
+                } else if (isBoy(familyPed.get(i).sex)) {
+                    if ( zygosity.equalsIgnoreCase("HOM") || zygosity.equalsIgnoreCase("HET")) {
+                        return true;
+                    } else {
+                        return false;
+                    }
+                }
+            } else {
+                if (i==0) {
+                    return false;
+                }
+            }
+        }
+
+        return false;
+
+    }
+
+    public static boolean isXDominant(List<String> genotypesFamily, List<Pedigree> familyPed, boolean strict) {
+
+        // Gemini
+        // Affected males are HET or HOM_ALT
+        // Affected females must be HET
+        // Unaffecteds must be HOM_REF
+        // girls of affected dad must be affected
+        // boys of affected dad must be unaffected
+        // mothers of affected males must be het (and affected)
+        // at least 1 parent of affected females must be het (and affected)
+
+        // Janovar
+        // First of all variants must be X-Chromosomal.
+        // If the pedigree only contains one person
+            // if * the person is female then the variant call list must contain one HET call.
+            // else else the variant call list must contain a HET or a HOM call.
+        // If there is more than one person in the pedigree then there must be at least one compatible call
+            // at least one affected male has a HET or HOM call or a affected female a HET call for this variant
+            // no affected person has a REF call;
+            // no a affected female has a HOM call;
+            // and * no unaffected person has a HET or HOM call.
+
+        boolean isGirl=false,isBoy=false;
+
+        if (familyPed.get(0).sex.equalsIgnoreCase("1")) {
+            isBoy=true;
+        } else if (familyPed.get(0).sex.equalsIgnoreCase("2")) {
+            isGirl=true;
+        } else {
+            return false;
+        }
+        if (familyPed.size() == 1) {
+            strict = false;
+        }
+
+        for (int i=0; i<familyPed.size(); i++) {
+
+            // at least 1 parent of affected females must be het (and affected)
+
+            String zygosity = zygosity(genotypesFamily.get(i));
+            boolean isAffected;
+            boolean isFth = isBoy(familyPed.get(i).getSex());
+            boolean isMth = isGirl(familyPed.get(i).getSex());
+            if (strict) {
+                isAffected = isAffected(familyPed.get(i).getPhenotype());
+
+            } else {
+                isAffected = (i==0 && isAffected(familyPed.get(i).getPhenotype()));
+            }
+
+            if (isAffected) {
+//                System.out.print(" is affected");
+                // at least one affected male has a HET or HOM call or a affected female a HET call for this variant
+                if (i==0 && !strict && isGirl && zygosity.equalsIgnoreCase("HET")) {
+                    return true;
+                } else if (i==0 && isBoy && !strict && (zygosity.equalsIgnoreCase("HET") || zygosity.equalsIgnoreCase("HOM")) ) {
+                    return true;
+                }
+                if (strict && i>0) {
+                    // girls of affected dad must be affected
+                    if (isGirl && !isFth) {
+                        return false;
+                    }
+                    // mothers of affected males must be het (and affected)
+                    if (isMth && isBoy) {
+                        if (!zygosity.equalsIgnoreCase("HET")) {
+                            return false;
+                        }
+                    }
+
+                }
+
+            } else if (!zygosity.equalsIgnoreCase("HOM REF") ) {
+                return false;
+            }
+        }
+        return false;
+    }
+
+    static boolean isBoy(String sex) {
+        if (sex.equalsIgnoreCase("1")) {
+            return true;
+        } else {
+            return false;
+        }
+
+    }
+    static boolean isGirl(String sex) {
+        if (sex.equalsIgnoreCase("2")) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+    static boolean isAffected(String status) {
+        if (status.equalsIgnoreCase("1")) {
+            return false;
+        } else {
+            return true;
+        }
+    }
 
 }

@@ -23,6 +23,7 @@ import static org.elasticsearch.index.query.QueryBuilders.queryStringQuery;
 public class PatientHelper {
 
     public static RestHighLevelClient client;
+    private static String INDEX_NAME = "patient";
 
 
     public static void main(String[] args) throws Exception {
@@ -103,7 +104,7 @@ public class PatientHelper {
         for (int i=0; i< 10; i++) {
             try {
 
-                SearchRequest searchRequest = new SearchRequest("test");
+                SearchRequest searchRequest = new SearchRequest(INDEX_NAME);
                 SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
 
                 QueryStringQueryBuilder queryStringQueryBuilder = queryStringQuery(query);
