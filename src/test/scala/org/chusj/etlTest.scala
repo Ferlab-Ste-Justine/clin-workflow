@@ -51,7 +51,6 @@ class etlTest extends FunSuite {
     assert(testAutosomalDominant(genotypesFamilyD, pedigrees)) // "0/1", "0/0", "1/1" //AD
     assert(!testAutosomalDominant(genotypesFamilyE, pedigrees)) // "1/1", "1/1", "0/1" //AR
     assert(!testAutosomalDominant(genotypesFamilyF, pedigrees)) // "1/1", "./.", "./." //possible AR
-
   }
 
   test("Testing autosomal dominant transmission with 0 affected parents") {
@@ -80,7 +79,6 @@ class etlTest extends FunSuite {
     assert(!testAutosomalDominant(genotypesFamilyD, pedigrees)) // "0/1", "0/0", "1/1" //AD
     assert(!testAutosomalDominant(genotypesFamilyE, pedigrees)) // "1/1", "1/1", "0/1" //AR
     assert(!testAutosomalDominant(genotypesFamilyF, pedigrees)) // "1/1", "./.", "./." //possible AR
-
     isAffectedStatusConsidered = false; // strictMode
     assert(!testAutosomalDominant(genotypesFamily0, pedigrees)) // "1/1", "0/0", "./." //AR-IMPOSSIBLE
     assert(testAutosomalDominant(genotypesFamily1, pedigrees)) // "0/1", "0/0", "0/0" //denovo et AD
@@ -90,8 +88,6 @@ class etlTest extends FunSuite {
     assert(testAutosomalDominant(genotypesFamilyB, pedigrees)) // "0/1", "0/1", "./." //AD
     assert(testAutosomalDominant(genotypesFamilyC, pedigrees)) // "0/1", "1/1", "0/1" //AD
     assert(testAutosomalDominant(genotypesFamilyD, pedigrees)) // "0/1", "0/0", "1/1" //AD
-
-
   }
 
   test("Testing autosomal dominant transmission with affected father @ pos 1") {
@@ -135,9 +131,6 @@ class etlTest extends FunSuite {
       assert(testAutosomalDominant(genotypesFamilyD, pedigrees)) // "0/1", "0/0", "1/1" //AD
       assert(!testAutosomalDominant(genotypesFamilyE, pedigrees)) // "1/1", "1/1", "0/1" //AR
       assert(!testAutosomalDominant(genotypesFamilyF, pedigrees)) // "1/1", "./.", "./." //possible AR
-
-
-
   }
 
   test("Testing autosomal dominant transmission with 2 affected parents") {
@@ -181,8 +174,6 @@ class etlTest extends FunSuite {
       assert(testAutosomalDominant(genotypesFamilyD, pedigrees)) // "0/1", "0/0", "1/1" //AD
       assert(!testAutosomalDominant(genotypesFamilyE, pedigrees)) // "1/1", "1/1", "0/1" //AR
       assert(!testAutosomalDominant(genotypesFamilyF, pedigrees)) // "1/1", "./.", "./." //possible AR
-
-
   }
 
   test("Testing autosomal recessif transmission with a solo") {
@@ -205,7 +196,6 @@ class etlTest extends FunSuite {
     assert(!testAutosomalRecessif(genotypesFamilyD, pedigrees)) // "0/1", "0/0", "1/1" //AD
     assert(testAutosomalRecessif(genotypesFamilyE, pedigrees)) // "1/1", "1/1", "0/1" //AR
     assert(testAutosomalRecessif(genotypesFamilyF, pedigrees)) // "1/1", "./.", "./." //possible AR
-
   }
 
   test("Testing autosomal recessif transmission with 0 affected parents") {
@@ -250,8 +240,6 @@ class etlTest extends FunSuite {
     assert(!testAutosomalRecessif(genotypesFamilyD, pedigrees)) // "0/1", "0/0", "1/1" //AD
     assert(testAutosomalRecessif(genotypesFamilyE, pedigrees)) // "1/1", "1/1", "0/1" //AR
     assert(testAutosomalRecessif(genotypesFamilyF, pedigrees)) // "1/1", "./.", "./." //possible AR
-
-
   }
 
   test("Testing autosomal recessif transmission with affected father @ pos 1") {
@@ -296,7 +284,6 @@ class etlTest extends FunSuite {
       assert(!testAutosomalRecessif(genotypesFamilyD, pedigrees)) // "0/1", "0/0", "1/1" //AD
       assert(testAutosomalRecessif(genotypesFamilyE, pedigrees)) // "1/1", "1/1", "0/1" //AR
       assert(testAutosomalRecessif(genotypesFamilyF, pedigrees)) // "1/1", "./.", "./." //possible AR
-
   }
 
   test("Testing autosomal recessif transmission with 2 affected parents") {
@@ -341,7 +328,6 @@ class etlTest extends FunSuite {
       assert(!testAutosomalRecessif(genotypesFamilyD, pedigrees)) // "0/1", "0/0", "1/1" //AD
       assert(testAutosomalRecessif(genotypesFamilyE, pedigrees)) // "1/1", "1/1", "0/1" //AR
       assert(testAutosomalRecessif(genotypesFamilyF, pedigrees)) // "1/1", "./.", "./." //possible AR
-
   }
 
   test("Testing denovo transmission with a Solo") {
@@ -381,7 +367,6 @@ class etlTest extends FunSuite {
     assert(testDenovo(genotypesFamilyD, pedigrees) == "NO") // "0/1", "0/0", "1/1" //AD
     assert(testDenovo(genotypesFamilyE, pedigrees) == "NO") // "1/1", "1/1", "0/1" //AR
     assert(testDenovo(genotypesFamilyF, pedigrees) == "NO") // "1/1", "./.", "./." //possible AR
-
   }
 
   test("Testing denovo transmission with 0 affected parents") {
@@ -425,7 +410,6 @@ class etlTest extends FunSuite {
     assert(testDenovo(genotypesFamilyD, pedigrees) == "NO") // "0/1", "0/0", "1/1" //AD
     assert(testDenovo(genotypesFamilyE, pedigrees) == "NO") // "1/1", "1/1", "0/1" //AR
     assert(testDenovo(genotypesFamilyF, pedigrees) == "NO") // "1/1", "./.", "./." //possible AR
-
   }
 
   test("Testing denovo transmission with affected father @ pos 1") {
@@ -470,9 +454,6 @@ class etlTest extends FunSuite {
       assert(testDenovo(genotypesFamilyD, pedigrees) == "NO") // "0/1", "0/0", "1/1" //AD
       assert(testDenovo(genotypesFamilyE, pedigrees) == "NO") // "1/1", "1/1", "0/1" //AR
       assert(testDenovo(genotypesFamilyF, pedigrees) == "NO") // "1/1", "./.", "./." //possible AR
-
-
-
   }
 
   test("Testing denovo transmission with 2 affected parents") {
@@ -516,8 +497,6 @@ class etlTest extends FunSuite {
       assert(testDenovo(genotypesFamilyD, pedigrees) == "NO") // "0/1", "0/0", "1/1" //AD
       assert(testDenovo(genotypesFamilyE, pedigrees) == "NO") // "1/1", "1/1", "0/1" //AR
       assert(testDenovo(genotypesFamilyF, pedigrees) == "NO") // "1/1", "./.", "./." //possible AR
-
-
   }
 
   test("Testing X-linked Recessif transmission with a male solo") {
@@ -598,6 +577,10 @@ class etlTest extends FunSuite {
     assert(testXRecessif(genotypesFamilyE, pedigrees)) // "1/1", "1/1", "0/1" //AR
     assert(testXRecessif(genotypesFamilyF, pedigrees)) // "1/1", "./.", "./." //possible AR
     isAffectedStatusConsidered = true // strictMode
+    // For the parents of affected males *
+    // the unaffected father cannot have the variant HET or HOM
+    // * the mother cannot be HOM
+
     assert(testXRecessif(genotypesFamily0, pedigrees)) // "1/1", "0/0", "./." //AR-IMPOSSIBLE
     assert(testXRecessif(genotypesFamily1, pedigrees)) // "0/1", "0/0", "0/0" //denovo et AD
     assert(testXRecessif(genotypesFamily2, pedigrees)) // "0/1", "./.", "0/0" //possible denovo et possible AD
@@ -605,14 +588,14 @@ class etlTest extends FunSuite {
     assert(!testXRecessif(genotypesFamily4, pedigrees)) // "0/0", "0/0", "1/0" //Aucune transmission (n'est pas reporté)
     assert(testXRecessif(genotypesFamily5, pedigrees)) // "1/0", "./.", "./." //possible denovo et possible AD
     assert(testXRecessif(genotypesFamily6, pedigrees)) // "1/1", "0/0", "0/0" //AR-IMPOSSIBLE
-    assert(testXRecessif(genotypesFamily7, pedigrees)) // "0/1", "1/0", "1/0" //AD
-    assert(testXRecessif(genotypesFamily8, pedigrees)) // "1/1", "1/0", "1/0" //AR
-    assert(testXRecessif(genotypesFamily9, pedigrees)) // "1/1", "0/1", "./." //possible AR
-    assert(testXRecessif(genotypesFamilyA, pedigrees)) // "0/1", "0/1", "0/0" //AD
-    assert(testXRecessif(genotypesFamilyB, pedigrees)) // "0/1", "0/1", "./." //AD
-    assert(testXRecessif(genotypesFamilyC, pedigrees)) // "0/1", "1/1", "0/1" //AD
-    assert(testXRecessif(genotypesFamilyD, pedigrees)) // "0/1", "0/0", "1/1" //AD
-    assert(testXRecessif(genotypesFamilyE, pedigrees)) // "1/1", "1/1", "0/1" //AR
+    assert(!testXRecessif(genotypesFamily7, pedigrees)) // "0/1", "1/0", "1/0" //AD
+    assert(!testXRecessif(genotypesFamily8, pedigrees)) // "1/1", "1/0", "1/0" //AR
+    assert(!testXRecessif(genotypesFamily9, pedigrees)) // "1/1", "0/1", "./." //possible AR
+    assert(!testXRecessif(genotypesFamilyA, pedigrees)) // "0/1", "0/1", "0/0" //AD
+    assert(!testXRecessif(genotypesFamilyB, pedigrees)) // "0/1", "0/1", "./." //AD
+    assert(!testXRecessif(genotypesFamilyC, pedigrees)) // "0/1", "1/1", "0/1" //AD
+    assert(!testXRecessif(genotypesFamilyD, pedigrees)) // "0/1", "0/0", "1/1" //AD
+    assert(!testXRecessif(genotypesFamilyE, pedigrees)) // "1/1", "1/1", "0/1" //AR
     assert(testXRecessif(genotypesFamilyF, pedigrees)) // "1/1", "./.", "./." //possible AR
   }
 
@@ -641,23 +624,25 @@ class etlTest extends FunSuite {
     assert(testXRecessif(genotypesFamilyE, pedigrees)) // "1/1", "1/1", "0/1" //AR
     assert(testXRecessif(genotypesFamilyF, pedigrees)) // "1/1", "./.", "./." //possible AR
     isAffectedStatusConsidered = true // strictMode
-    assert(testXRecessif(genotypesFamily0, pedigrees)) // "1/1", "0/0", "./." //AR-IMPOSSIBLE
+    // For the parents of affected females
+    // the father must be affected and
+    // the mother cannot have it REF or HOM
+    assert(!testXRecessif(genotypesFamily0, pedigrees)) // "1/1", "0/0", "./." //AR-IMPOSSIBLE
     assert(!testXRecessif(genotypesFamily1, pedigrees)) // "0/1", "0/0", "0/0" //denovo et AD
     assert(!testXRecessif(genotypesFamily2, pedigrees)) // "0/1", "./.", "0/0" //possible denovo et possible AD
     assert(!testXRecessif(genotypesFamily3, pedigrees)) // "0/0", "1/0", "0/0" //Aucune transmission (n'est pas reporté)
     assert(!testXRecessif(genotypesFamily4, pedigrees)) // "0/0", "0/0", "1/0" //Aucune transmission (n'est pas reporté)
     assert(!testXRecessif(genotypesFamily5, pedigrees)) // "1/0", "./.", "./." //possible denovo et possible AD
-    assert(testXRecessif(genotypesFamily6, pedigrees)) // "1/1", "0/0", "0/0" //AR-IMPOSSIBLE
+    assert(!testXRecessif(genotypesFamily6, pedigrees)) // "1/1", "0/0", "0/0" //AR-IMPOSSIBLE
     assert(!testXRecessif(genotypesFamily7, pedigrees)) // "0/1", "1/0", "1/0" //AD
-    assert(testXRecessif(genotypesFamily8, pedigrees)) // "1/1", "1/0", "1/0" //AR
-    assert(testXRecessif(genotypesFamily9, pedigrees)) // "1/1", "0/1", "./." //possible AR
+    assert(!testXRecessif(genotypesFamily8, pedigrees)) // "1/1", "1/0", "1/0" //AR
+    assert(!testXRecessif(genotypesFamily9, pedigrees)) // "1/1", "0/1", "./." //possible AR
     assert(!testXRecessif(genotypesFamilyA, pedigrees)) // "0/1", "0/1", "0/0" //AD
     assert(!testXRecessif(genotypesFamilyB, pedigrees)) // "0/1", "0/1", "./." //AD
     assert(!testXRecessif(genotypesFamilyC, pedigrees)) // "0/1", "1/1", "0/1" //AD
     assert(!testXRecessif(genotypesFamilyD, pedigrees)) // "0/1", "0/0", "1/1" //AD
-    assert(testXRecessif(genotypesFamilyE, pedigrees)) // "1/1", "1/1", "0/1" //AR
-    assert(testXRecessif(genotypesFamilyF, pedigrees)) // "1/1", "./.", "./." //possible AR
-
+    assert(!testXRecessif(genotypesFamilyE, pedigrees)) // "1/1", "1/1", "0/1" //AR
+    assert(!testXRecessif(genotypesFamilyF, pedigrees)) // "1/1", "./.", "./." //possible AR
   }
 
   test("Testing X-linked Recessif transmission with a male and affected father @ pos 1") {
@@ -686,6 +671,9 @@ class etlTest extends FunSuite {
       assert(testXRecessif(genotypesFamilyE, pedigrees)) // "1/1", "1/1", "0/1" //AR
       assert(testXRecessif(genotypesFamilyF, pedigrees)) // "1/1", "./.", "./." //possible AR
     isAffectedStatusConsidered = true
+    // For the parents of affected males *
+    // the unaffected father cannot have the variant HET or HOM
+    // * the mother cannot be HOM
       assert(testXRecessif(genotypesFamily0, pedigrees)) // "1/1", "0/0", "./." //AR-IMPOSSIBLE
       assert(testXRecessif(genotypesFamily1, pedigrees)) // "0/1", "0/0", "0/0" //denovo et AD
       assert(testXRecessif(genotypesFamily2, pedigrees)) // "0/1", "./.", "0/0" //possible denovo et possible AD
@@ -699,7 +687,7 @@ class etlTest extends FunSuite {
       assert(testXRecessif(genotypesFamilyA, pedigrees)) // "0/1", "0/1", "0/0" //AD
       assert(testXRecessif(genotypesFamilyB, pedigrees)) // "0/1", "0/1", "./." //AD
       assert(testXRecessif(genotypesFamilyC, pedigrees)) // "0/1", "1/1", "0/1" //AD
-      assert(testXRecessif(genotypesFamilyD, pedigrees)) // "0/1", "0/0", "1/1" //AD
+      assert(!testXRecessif(genotypesFamilyD, pedigrees)) // "0/1", "0/0", "1/1" //AD
       assert(testXRecessif(genotypesFamilyE, pedigrees)) // "1/1", "1/1", "0/1" //AR
       assert(testXRecessif(genotypesFamilyF, pedigrees)) // "1/1", "./.", "./." //possible AR
   }
@@ -711,7 +699,6 @@ class etlTest extends FunSuite {
     FA0002 SP00061 0 0 1 2
     FA0002 SP00036 0 0 2 1
      */
-
     isAffectedStatusConsidered = false
     assert(testXRecessif(genotypesFamily0, pedigrees)) // "1/1", "0/0", "./." //AR-IMPOSSIBLE
     assert(!testXRecessif(genotypesFamily1, pedigrees)) // "0/1", "0/0", "0/0" //denovo et AD
@@ -730,13 +717,16 @@ class etlTest extends FunSuite {
     assert(testXRecessif(genotypesFamilyE, pedigrees)) // "1/1", "1/1", "0/1" //AR
     assert(testXRecessif(genotypesFamilyF, pedigrees)) // "1/1", "./.", "./." //possible AR
     isAffectedStatusConsidered = true // strictMode
-    assert(testXRecessif(genotypesFamily0, pedigrees)) // "1/1", "0/0", "./." //AR-IMPOSSIBLE
+    // For the parents of affected females
+    // the father must be affected
+    // the mother cannot have it REF or HOM
+    assert(!testXRecessif(genotypesFamily0, pedigrees)) // "1/1", "0/0", "./." //AR-IMPOSSIBLE
     assert(!testXRecessif(genotypesFamily1, pedigrees)) // "0/1", "0/0", "0/0" //denovo et AD
     assert(!testXRecessif(genotypesFamily2, pedigrees)) // "0/1", "./.", "0/0" //possible denovo et possible AD
     assert(!testXRecessif(genotypesFamily3, pedigrees)) // "0/0", "1/0", "0/0" //Aucune transmission (n'est pas reporté)
     assert(!testXRecessif(genotypesFamily4, pedigrees)) // "0/0", "0/0", "1/0" //Aucune transmission (n'est pas reporté)
     assert(!testXRecessif(genotypesFamily5, pedigrees)) // "1/0", "./.", "./." //possible denovo et possible AD
-    assert(testXRecessif(genotypesFamily6, pedigrees)) // "1/1", "0/0", "0/0" //AR-IMPOSSIBLE
+    assert(!testXRecessif(genotypesFamily6, pedigrees)) // "1/1", "0/0", "0/0" //AR-IMPOSSIBLE
     assert(!testXRecessif(genotypesFamily7, pedigrees)) // "0/1", "1/0", "1/0" //AD
     assert(testXRecessif(genotypesFamily8, pedigrees)) // "1/1", "1/0", "1/0" //AR
     assert(testXRecessif(genotypesFamily9, pedigrees)) // "1/1", "0/1", "./." //possible AR
@@ -745,7 +735,7 @@ class etlTest extends FunSuite {
     assert(!testXRecessif(genotypesFamilyC, pedigrees)) // "0/1", "1/1", "0/1" //AD
     assert(!testXRecessif(genotypesFamilyD, pedigrees)) // "0/1", "0/0", "1/1" //AD
     assert(testXRecessif(genotypesFamilyE, pedigrees)) // "1/1", "1/1", "0/1" //AR
-    assert(testXRecessif(genotypesFamilyF, pedigrees)) // "1/1", "./.", "./." //possible AR
+    assert(!testXRecessif(genotypesFamilyF, pedigrees)) // "1/1", "./.", "./." //possible AR
 
   }
 
@@ -756,7 +746,6 @@ class etlTest extends FunSuite {
     FA0002 SP00061 0 0 1 2
     FA0002 SP00036 0 0 2 HP:0000268
      */
-
     isAffectedStatusConsidered = false
     assert(testXRecessif(genotypesFamily0, pedigrees)) // "1/1", "0/0", "./." //AR-IMPOSSIBLE
     assert(testXRecessif(genotypesFamily1, pedigrees)) // "0/1", "0/0", "0/0" //denovo et AD
@@ -775,6 +764,9 @@ class etlTest extends FunSuite {
     assert(testXRecessif(genotypesFamilyE, pedigrees)) // "1/1", "1/1", "0/1" //AR
     assert(testXRecessif(genotypesFamilyF, pedigrees)) // "1/1", "./.", "./." //possible AR
     isAffectedStatusConsidered = true // strictMode
+    // For the parents of affected males *
+    // the unaffected father cannot have the variant HET or HOM
+    // * the mother cannot be HOM
     assert(testXRecessif(genotypesFamily0, pedigrees)) // "1/1", "0/0", "./." //AR-IMPOSSIBLE
     assert(testXRecessif(genotypesFamily1, pedigrees)) // "0/1", "0/0", "0/0" //denovo et AD
     assert(testXRecessif(genotypesFamily2, pedigrees)) // "0/1", "./.", "0/0" //possible denovo et possible AD
@@ -788,10 +780,9 @@ class etlTest extends FunSuite {
     assert(testXRecessif(genotypesFamilyA, pedigrees)) // "0/1", "0/1", "0/0" //AD
     assert(testXRecessif(genotypesFamilyB, pedigrees)) // "0/1", "0/1", "./." //AD
     assert(testXRecessif(genotypesFamilyC, pedigrees)) // "0/1", "1/1", "0/1" //AD
-    assert(testXRecessif(genotypesFamilyD, pedigrees)) // "0/1", "0/0", "1/1" //AD
+    assert(!testXRecessif(genotypesFamilyD, pedigrees)) // "0/1", "0/0", "1/1" //AD
     assert(testXRecessif(genotypesFamilyE, pedigrees)) // "1/1", "1/1", "0/1" //AR
     assert(testXRecessif(genotypesFamilyF, pedigrees)) // "1/1", "./.", "./." //possible AR
-
   }
 
   test("Testing X-linked Recessif transmission with a female and both affected parents") {
@@ -801,7 +792,6 @@ class etlTest extends FunSuite {
     FA0002 SP00061 0 0 1 2
     FA0002 SP00036 0 0 2 HP:0000268
      */
-
     isAffectedStatusConsidered = false
     assert(testXRecessif(genotypesFamily0, pedigrees)) // "1/1", "0/0", "./." //AR-IMPOSSIBLE
     assert(!testXRecessif(genotypesFamily1, pedigrees)) // "0/1", "0/0", "0/0" //denovo et AD
@@ -820,13 +810,16 @@ class etlTest extends FunSuite {
     assert(testXRecessif(genotypesFamilyE, pedigrees)) // "1/1", "1/1", "0/1" //AR
     assert(testXRecessif(genotypesFamilyF, pedigrees)) // "1/1", "./.", "./." //possible AR
     isAffectedStatusConsidered = true // strictMode
-    assert(testXRecessif(genotypesFamily0, pedigrees)) // "1/1", "0/0", "./." //AR-IMPOSSIBLE
+    // For the parents of affected females
+    // the father must be affected
+    // the mother cannot have it REF or HOM
+    assert(!testXRecessif(genotypesFamily0, pedigrees)) // "1/1", "0/0", "./." //AR-IMPOSSIBLE
     assert(!testXRecessif(genotypesFamily1, pedigrees)) // "0/1", "0/0", "0/0" //denovo et AD
     assert(!testXRecessif(genotypesFamily2, pedigrees)) // "0/1", "./.", "0/0" //possible denovo et possible AD
     assert(!testXRecessif(genotypesFamily3, pedigrees)) // "0/0", "1/0", "0/0" //Aucune transmission (n'est pas reporté)
     assert(!testXRecessif(genotypesFamily4, pedigrees)) // "0/0", "0/0", "1/0" //Aucune transmission (n'est pas reporté)
     assert(!testXRecessif(genotypesFamily5, pedigrees)) // "1/0", "./.", "./." //possible denovo et possible AD
-    assert(testXRecessif(genotypesFamily6, pedigrees)) // "1/1", "0/0", "0/0" //AR-IMPOSSIBLE
+    assert(!testXRecessif(genotypesFamily6, pedigrees)) // "1/1", "0/0", "0/0" //AR-IMPOSSIBLE
     assert(!testXRecessif(genotypesFamily7, pedigrees)) // "0/1", "1/0", "1/0" //AD
     assert(testXRecessif(genotypesFamily8, pedigrees)) // "1/1", "1/0", "1/0" //AR
     assert(testXRecessif(genotypesFamily9, pedigrees)) // "1/1", "0/1", "./." //possible AR
@@ -835,8 +828,7 @@ class etlTest extends FunSuite {
     assert(!testXRecessif(genotypesFamilyC, pedigrees)) // "0/1", "1/1", "0/1" //AD
     assert(!testXRecessif(genotypesFamilyD, pedigrees)) // "0/1", "0/0", "1/1" //AD
     assert(testXRecessif(genotypesFamilyE, pedigrees)) // "1/1", "1/1", "0/1" //AR
-    assert(testXRecessif(genotypesFamilyF, pedigrees)) // "1/1", "./.", "./." //possible AR
-
+    assert(!testXRecessif(genotypesFamilyF, pedigrees)) // "1/1", "./.", "./." //possible AR
   }
 
   test("Testing X-linked Dominant transmission with a male solo") {
@@ -931,7 +923,7 @@ class etlTest extends FunSuite {
   }
 
   test("Testing X-linked Dominant transmission with a male and affected mth") {
-    val pedigrees = loadPedigree("src/test/resources/pedigreeTest11.ped")
+    val pedigrees = loadPedigree("src/test/resources/pedigreeTest2M.ped")
     /*
     FA0002 SP00011 SP00061 SP00036 1 2
     FA0002 SP00061 0 0 1 1
@@ -954,7 +946,6 @@ class etlTest extends FunSuite {
   test("Testing X-linked Dominant transmission with a female and 0 affected parent") {
     val pedigrees = loadPedigree("src/test/resources/pedigreeTest1F.ped")
     // if * the person is female then the variant call list must contain one HET call.
-
     isAffectedStatusConsidered = false
     assert(!testXDominant(genotypesFamily0, pedigrees)) // "1/1", "0/0", "./." //AR-IMPOSSIBLE
     assert(testXDominant(genotypesFamily1, pedigrees)) // "0/1", "0/0", "0/0" //denovo et AD
@@ -989,13 +980,10 @@ class etlTest extends FunSuite {
     assert(!testXDominant(genotypesFamilyD, pedigrees)) // "0/1", "0/0", "1/1" //AD
     assert(!testXDominant(genotypesFamilyE, pedigrees)) // "1/1", "1/1", "0/1" //AR
     assert(!testXDominant(genotypesFamilyF, pedigrees)) // "1/1", "./.", "./." //possible AR
-
   }
 
   test("Testing X-linked Dominant transmission with a male and affected Father") {
     val pedigrees = loadPedigree("src/test/resources/pedigreeTest2.ped")
-
-
     isAffectedStatusConsidered = false
     assert(testXDominant(genotypesFamily0, pedigrees)) // "1/1", "0/0", "./." //AR-IMPOSSIBLE
     assert(testXDominant(genotypesFamily1, pedigrees)) // "0/1", "0/0", "0/0" //denovo et AD
@@ -1033,7 +1021,6 @@ class etlTest extends FunSuite {
   }
   test("Testing X-linked Dominant transmission with a female and affected father") {
     val pedigrees = loadPedigree("src/test/resources/pedigreeTest2F.ped")
-
     isAffectedStatusConsidered = false
     assert(!testXDominant(genotypesFamily0, pedigrees)) //"1/1", "0/0", "./." //AR-IMPOSSIBLE
     assert(testXDominant(genotypesFamily1, pedigrees)) // "0/1", "0/0", "0/0" //denovo et AD
@@ -1068,6 +1055,111 @@ class etlTest extends FunSuite {
     assert(!testXDominant(genotypesFamilyD, pedigrees)) // "0/1", "0/0", "1/1" //AD
     assert(!testXDominant(genotypesFamilyE, pedigrees)) // "1/1", "1/1", "0/1" //AR
     assert(!testXDominant(genotypesFamilyF, pedigrees)) // "1/1", "./.", "./." //possible AR
+  }
+
+  test("testing transmission with Alex DL data") {
+    //("0/1", "0/0", "0/0")) //-> 	de_novo [if both parents unaffected]
+    var test: util.List[String] = null
+    test = new util.ArrayList[String](util.Arrays.asList("0/1", "0/0", "0/0"))
+    isAffectedStatusConsidered = false
+    var pedigrees = loadPedigree("src/test/resources/pedigreeTest1.ped")
+    assert(testDenovo(test, pedigrees) == "DeNovo")
+    isAffectedStatusConsidered = true
+    assert(testDenovo(test, pedigrees) == "DeNovo")
+    //("0/1", "0/0", "0/1")) // autosomal_dominant [if affected mother and unaffected father]
+    test = new util.ArrayList[String](util.Arrays.asList("0/1", "0/0", "0/1"))
+    pedigrees = loadPedigree("src/test/resources/pedigreeTest2M.ped")
+    isAffectedStatusConsidered = false
+    assert(testAutosomalDominant(test, pedigrees))
+    assert(!testAutosomalRecessif(test, pedigrees))
+    isAffectedStatusConsidered = true
+    assert(testAutosomalDominant(test, pedigrees))
+    assert(!testAutosomalRecessif(test, pedigrees))
+    //("0/1", "0/0", "1/1")) //-> 	autosomal_dominant with HOM mother [if affected mother and unaffected father]
+    test = new util.ArrayList[String](util.Arrays.asList("0/1", "0/0", "1/1"))
+    isAffectedStatusConsidered = false
+    assert(testAutosomalDominant(test, pedigrees))
+    assert(!testAutosomalRecessif(test, pedigrees))
+    isAffectedStatusConsidered = true
+    //assert(testAutosomalDominant(test, pedigrees))
+    assert(!testAutosomalRecessif(test, pedigrees))
+
+    //("0/1", "0/0", "./.") -> 	possible de_novo [if both parents unaffected]
+    //possible autosomal_dominant [if affected mother and unaffected father]
+    test = new util.ArrayList[String](util.Arrays.asList("0/1", "0/0", "./."))
+    pedigrees = loadPedigree("src/test/resources/pedigreeTest1.ped")
+    assert(testDenovo(test, pedigrees) == "Possible DeNovo")
+    isAffectedStatusConsidered = true
+    assert(testDenovo(test, pedigrees) == "Possible DeNovo")
+    pedigrees = loadPedigree("src/test/resources/pedigreeTest2M.ped")
+    isAffectedStatusConsidered = false
+    assert(testAutosomalDominant(test, pedigrees))
+    assert(!testAutosomalRecessif(test, pedigrees))
+    isAffectedStatusConsidered = true
+    assert(testAutosomalDominant(test, pedigrees))
+    assert(!testAutosomalRecessif(test, pedigrees))
+
+    //("0/1", "0/1", "0/1") -> 	autosomal_dominant [if both parents affected]
+    test = new util.ArrayList[String](util.Arrays.asList("0/1", "0/1", "0/1"))
+    pedigrees = loadPedigree("src/test/resources/pedigreeTest3.ped")
+    isAffectedStatusConsidered = false
+    assert(testAutosomalDominant(test, pedigrees))
+    assert(!testAutosomalRecessif(test, pedigrees))
+    isAffectedStatusConsidered = true
+    assert(testAutosomalDominant(test, pedigrees))
+    assert(!testAutosomalRecessif(test, pedigrees))
+
+    // ("0/1", "0/1", "./.") -> 	autosomal_dominant [if at least one affected parent]
+    test = new util.ArrayList[String](util.Arrays.asList("0/1", "0/1", "./."))
+    pedigrees = loadPedigree("src/test/resources/pedigreeTest2M.ped")
+    isAffectedStatusConsidered = false
+    assert(testAutosomalDominant(test, pedigrees))
+    assert(!testAutosomalRecessif(test, pedigrees))
+    isAffectedStatusConsidered = true
+    assert(!testAutosomalDominant(test, pedigrees)) // unaffected fth is het
+    assert(!testAutosomalRecessif(test, pedigrees))
+    pedigrees = loadPedigree("src/test/resources/pedigreeTest1.ped")
+    isAffectedStatusConsidered = false
+    assert(testAutosomalDominant(test, pedigrees))
+    assert(!testAutosomalRecessif(test, pedigrees))
+    isAffectedStatusConsidered = true
+    assert(!testAutosomalDominant(test, pedigrees)) // unaffected fth is het
+    assert(!testAutosomalRecessif(test, pedigrees))
+    pedigrees = loadPedigree("src/test/resources/pedigreeTest2.ped")
+    isAffectedStatusConsidered = false
+    assert(testAutosomalDominant(test, pedigrees))
+    assert(!testAutosomalRecessif(test, pedigrees))
+    isAffectedStatusConsidered = true
+    assert(testAutosomalDominant(test, pedigrees))
+    assert(!testAutosomalRecessif(test, pedigrees))
+    pedigrees = loadPedigree("src/test/resources/pedigreeTest3.ped")
+    isAffectedStatusConsidered = false
+    assert(testAutosomalDominant(test, pedigrees))
+    assert(!testAutosomalRecessif(test, pedigrees))
+    isAffectedStatusConsidered = true
+    assert(testAutosomalDominant(test, pedigrees))
+    assert(!testAutosomalRecessif(test, pedigrees))
+
+
+    //("1/1", "0/1", "0/1") -> 	autosomal_recessive [if both parents unaffected]
+    test = new util.ArrayList[String](util.Arrays.asList("1/1", "0/1", "0/1"))
+    pedigrees = loadPedigree("src/test/resources/pedigreeTest1.ped")
+    isAffectedStatusConsidered = false
+    assert(!testAutosomalDominant(test, pedigrees))
+    assert(testAutosomalRecessif(test, pedigrees))
+    isAffectedStatusConsidered = true
+    assert(!testAutosomalDominant(test, pedigrees))
+    assert(testAutosomalRecessif(test, pedigrees))
+    pedigrees = loadPedigree("src/test/resources/pedigreeTest2.ped")
+    isAffectedStatusConsidered = false
+    assert(testAutosomalRecessif(test, pedigrees))
+    isAffectedStatusConsidered = true
+    assert(!testAutosomalRecessif(test, pedigrees))
+    pedigrees = loadPedigree("src/test/resources/pedigreeTest3.ped")
+    isAffectedStatusConsidered = false
+    assert(testAutosomalRecessif(test, pedigrees))
+    isAffectedStatusConsidered = true
+    assert(!testAutosomalRecessif(test, pedigrees))
 
   }
 
@@ -1084,7 +1176,6 @@ class etlTest extends FunSuite {
   }
 
   test("Testing impact score") {
-
     assert(
       VepHelper.getImpactScore("HIGH") == 4 &&
         VepHelper.getImpactScore("MODIFIER") == 1 &&
@@ -1094,11 +1185,9 @@ class etlTest extends FunSuite {
         VepHelper.getImpactScore("BOB") == 0 &&
         VepHelper.getImpactScore("") == 0 &&
         VepHelper.getImpactScore(null) == 0)
-
   }
 
-  def testZygo(): Boolean = {
-
+  def testZygo(): Boolean =
       VepHelper.zygosity("0/0") == "HOM REF" &&
       VepHelper.zygosity("0|0") == "HOM REF" &&
       VepHelper.zygosity("0/1") == "HET" &&
@@ -1106,10 +1195,7 @@ class etlTest extends FunSuite {
       VepHelper.zygosity("1/1") == "HOM" &&
       VepHelper.zygosity("2/2") == "HOM"
 
-  }
-
   def testCountAltAllele() : Boolean = {
-
       VepHelper.countAlternativeAllele("0/0") == 0 &&
       VepHelper.countAlternativeAllele("0|0") == 0 &&
       VepHelper.countAlternativeAllele("0/1") == 1 &&
@@ -1117,11 +1203,9 @@ class etlTest extends FunSuite {
       VepHelper.countAlternativeAllele("1/1") == 2 &&
       VepHelper.countAlternativeAllele("1|1") == 2 &&
       VepHelper.countAlternativeAllele("./.") == 0
-
   }
 
   def testCountNumberOfAllele() : Boolean = {
-
     VepHelper.countNumberOfAllele("0/0") == 2 &&
       VepHelper.countNumberOfAllele("0|0") == 2 &&
       VepHelper.countNumberOfAllele("0/1") == 2 &&
@@ -1129,7 +1213,6 @@ class etlTest extends FunSuite {
       VepHelper.countNumberOfAllele("1/1") == 2 &&
       VepHelper.countNumberOfAllele("1|1") == 2 &&
       VepHelper.countNumberOfAllele("./.") == 0
-
   }
 
   def testAutosomalDominant(genotypesFamily: util.List[String], familyPed: util.List[Pedigree]) : Boolean = {
@@ -1151,6 +1234,4 @@ class etlTest extends FunSuite {
   def testXDominant(genotypesFamily: util.List[String], familyPed: util.List[Pedigree]) : Boolean = {
     VepHelper.isXDominant(genotypesFamily,familyPed, isAffectedStatusConsidered)
   }
-
-
 }
