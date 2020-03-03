@@ -18,6 +18,7 @@ public class FunctionalAnnotation {
     private JSONObject scores;
     private JSONObject predictions;
     private String biotype;
+    private boolean canonical = false;
 
     public String getBiotype() {
         return biotype;
@@ -72,6 +73,14 @@ public class FunctionalAnnotation {
 
     private String getAaChange() {
         return aaChange;
+    }
+
+    public boolean isCanonical() {
+        return canonical;
+    }
+
+    public void setCanonical(boolean canonical) {
+        this.canonical = canonical;
     }
 
     public void setAaChange(String aaChange) {
@@ -161,6 +170,9 @@ public class FunctionalAnnotation {
             fa.put("predictions", predictions);
         }
         fa.put("biotype", biotype);
+        if (isCanonical()) {
+            fa.put("canonical", canonical);
+        }
 
 
         return fa;

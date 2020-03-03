@@ -18,6 +18,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.*;
 
+import static org.chusj.VepHelper.getSpecimenList;
 import static org.elasticsearch.index.query.QueryBuilders.queryStringQuery;
 
 public class PatientHelper {
@@ -34,8 +35,8 @@ public class PatientHelper {
 
             client = clientTry;
             //
-            //List<String> listOfSpecimen = new ArrayList<>(Arrays.asList("SP00047", "SP00072", "SP00022"));
-            List<String> listOfSpecimen = new ArrayList<>(Arrays.asList("SP00011", "SP00061", "SP00036"));
+            List<String> listOfSpecimen = new ArrayList<>(Arrays.asList("SP00047", "SP00072", "SP00022"));
+            //List<String> listOfSpecimen = new ArrayList<>(Arrays.asList("SP00011", "SP00061", "SP00036"));
                 //List<String> list2 = new ArrayList<>(Arrays.asList("SP00011", "SP00061", "SP00036"));
             List<String> hpoTerms = getHpoTerms(getAPatientFromESFromID("PA00002"));
             hpoTerms.forEach(System.out::println);
@@ -52,9 +53,12 @@ public class PatientHelper {
 //                System.out.println("\tisProband:"+v.isProban());
 //                System.out.println("\tRelation:"+v.getRelation());
             });
+            List<String> specimenList = getSpecimenList("FAM_C3_92_new.txt");
+            Map<String, Patient> patientMap = preparePedigree(specimenList);
+            patientMap.forEach((k,v) -> System.out.println("id=" + k + "\n\t" + v));
 
             List<Pedigree> pedigrees = loadPedigree("pedigreeTest1.ped");
-            pedigrees.forEach((ped) -> System.out.println(ped));
+            //pedigrees.forEach((ped) -> System.out.println(ped));
             donors = preparePedigreeFromPedAndFHIR(pedigrees);
             donors.forEach((k,v) -> System.out.println("id=" + k + "\n\t" + v));
             //String pedigreePropsFile = "pedigree.properties";
@@ -101,7 +105,7 @@ public class PatientHelper {
     private static List<JSONObject> getPatientFromESWithQueryString(String query) {
         boolean requestSuccess = false;
         List<JSONObject> patients = new ArrayList<>();
-        for (int i=0; i< 10; i++) {
+        for (int i=0; i< 3; i++) {
             try {
 
                 SearchRequest searchRequest = new SearchRequest(INDEX_NAME);
@@ -305,7 +309,7 @@ public class PatientHelper {
 
 
         listOfSpecimen.forEach((specimen) -> {
-//            System.out.println("specimen ="+ specimen);
+            System.out.println("specimen ="+ specimen);
 
 
             List<JSONObject> patients = getPatientFromESWithQueryString(specimen);
@@ -326,19 +330,14 @@ public class PatientHelper {
                     String orgId;
                     String practitionerId;
                     if (clinicalImpression.length() > 0) {
-//                        System.out.println("\tfrom CI");
-                        practitionerRoleId = getPractitionerRoleIdFromClinicalImpression(clinicalImpression, clincicalImpressionRef);
+//                        practitionerRoleId = getPractitionerRoleIdFromClinicalImpression(clinicalImpression, clincicalImpressionRef);
                         orgId = getOrgIdFromClinicalImpression(clinicalImpression, clincicalImpressionRef);
                         practitionerId = getPractitionerIdFromClinicalImpression(clinicalImpression, clincicalImpressionRef);
                     } else {
-//                        System.out.println("\tfrom GP");
                         practitionerRoleId = (String) ((JSONObject)((JSONArray) patientObj.get("generalPractitioner")).get(0)).get("id");
                         orgId = getOrgId((JSONArray) patientObj.get("practitioners"), practitionerRoleId);
                         practitionerId = getPractitionerId((JSONArray) patientObj.get("practitioners"), practitionerRoleId);
                     }
-//                    System.out.println("practitionerRoleId="+practitionerRoleId);
-//                    System.out.println("practitionerId="+practitionerId);
-//                    System.out.println("orgId="+orgId);
                     patient.setOrgId(orgId);
                     patient.setPractitionerId(practitionerId);
 
@@ -374,7 +373,6 @@ public class PatientHelper {
 
         listOfSpecimen.removeAll(patientNotFound);
 
-        //hpoTerms.forEach((hpo) -> System.out.println(hpo));
         // relationship call 2
         if (listOfSpecimen.size() > 1 ) {
             patientMap.forEach((k,v) -> {
@@ -383,6 +381,7 @@ public class PatientHelper {
 
                     JSONObject patient = new JSONObject(v.getPatient());
                     JSONArray link = (JSONArray) patient.get("link");
+                    //System.out.println("link="+link.toString(0));
 
                     String[] linkToOthersPatientIds = new String[link.length()];
                     String[] linkToOthersSpecimenIds = new String[link.length()];
@@ -391,7 +390,6 @@ public class PatientHelper {
                         String relationship = (String) rel.get("relationship");
                         String id = (String) rel.get("id");
                         linkToOthersPatientIds[i] = id;
-                        //System.out.println("V:"+v.getPatientId()+"id:"+id);
                         linkToOthersSpecimenIds[i] = patientMap.get(id).getSpecimenId();
                         patientMap.get(id).setRelation(relationship);
 

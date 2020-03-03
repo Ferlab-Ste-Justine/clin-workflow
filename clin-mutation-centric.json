@@ -130,9 +130,6 @@
             "adAlt": {
               "type": "long"
             },
-            "nbHpoTerms": {
-              "type": "long"
-            },
             "genotypeFamily": {
               "type": "text"
             },
@@ -164,6 +161,15 @@
               }
             },
             "organizationId": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              }
+            },
+            "transmission": {
               "type": "text",
               "fields": {
                 "keyword": {

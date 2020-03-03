@@ -306,6 +306,9 @@ public class VEPSparkDriverProgram {
             if (!donor.isNull("genotypeFamily")) {
                 donorMap.put("genotypeFamily", donor.get("genotypeFamily"));
             }
+            if (!donor.isNull("transmission")) {
+                donorMap.put("transmission", donor.get("transmission"));
+            }
 //            if (!donor.isNull("dn")) {
 //                donorMap.put("dn", donor.get("dn"));
 //            }
@@ -423,7 +426,7 @@ public class VEPSparkDriverProgram {
         parameters.put("transmission", object.get("transmission"));
         parameters.put("exomiserScore", object.get("combinedScore"));
         parameters.put("lastUpdate", object.get("lastUpdate"));
-        parameters.put("transmissionKeyName", "transmission");
+        //parameters.put("transmissionKeyName", "transmission");
         parameters.put("exomiserScoreKeyName", "exomiserScore");
         parameters.put("overwriteKey", "lastUpdate");
         parameters.put("specimen", specimenId);
