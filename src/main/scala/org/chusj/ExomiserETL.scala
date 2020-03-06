@@ -125,13 +125,13 @@ object ExomiserETL {
         jsonObjectList.add(toJsonObj(exomiser,build,specimenIdForProband))
 
         if (jsonObjectList.size() > bulkOpsQty) {
-          VEPSparkDriverProgram.bulkStoreJsonObj(jsonObjectList, false, pedigreeProps, false, true)
+          VEPSparkDriverProgram.bulkStoreJsonObj(jsonObjectList, false, pedigreeProps, false, true, false)
           VEPSparkDriverProgram.TOTAL_COUNT += jsonObjectList.size()
           jsonObjectList = new util.ArrayList[JSONObject]
         }
       }
       // empty bucket
-      VEPSparkDriverProgram.bulkStoreJsonObj(jsonObjectList, false, pedigreeProps, false, true)
+      VEPSparkDriverProgram.bulkStoreJsonObj(jsonObjectList, false, pedigreeProps, false, true, false)
       VEPSparkDriverProgram.TOTAL_COUNT += jsonObjectList.size()
     })
 

@@ -34,8 +34,11 @@ public class VEPSparkDriverProgram {
     public static RestHighLevelClient client;
     private static SockIOPool pool;
     private static MemCachedClient mcc;
-    private static String INDEX_NAME = "mutations";
+    private static String MUTATION_INDEX_NAME = "mutations_test";
+    private static String GENE_INDEX_NAME = "genes";
+
     public static int TOTAL_COUNT = 0;
+    private static List<GeneVariants> variants = new ArrayList<>();
 
 
     public static void main(String[] args) throws Exception {
@@ -67,7 +70,6 @@ public class VEPSparkDriverProgram {
         try (RestHighLevelClient clientTry = new RestHighLevelClient(
                 RestClient.builder(
                         new HttpHost("localhost", 9200, "http")))) {
-
 
 
             client = clientTry;
@@ -102,26 +104,46 @@ public class VEPSparkDriverProgram {
             lines.foreachPartition(partitionOfRecords -> {
                 List<JSONObject> jsonObjectList = new ArrayList<>();
                 while (partitionOfRecords.hasNext()) {
-                    jsonObjectList.add(VepHelper.processVcfDataLine(partitionOfRecords.next(), pedigreeProps,
-                            patientMap, pedigrees, specimenList, familyMap));
+                    Variant variant = VepHelper.processVcfDataLine(partitionOfRecords.next(), pedigreeProps,
+                            patientMap, pedigrees, specimenList, familyMap);
+
+                    if (variant != null) {
+                        for (Gene gene: variant.getGenes()) {
+                            GeneVariants geneVariants = new GeneVariants();
+                            geneVariants.setGene(gene);
+                            geneVariants.setVariant(variant);
+                            variants.add(geneVariants);
+                        }
+
+                        JSONObject payload = new JSONObject(variant.getJsonObjInString());
+                                jsonObjectList.add(payload);
+                    }
                     if (jsonObjectList.size() >= bulkOpsQty) {
                         //System.out.println("Bulk Items in partition-" + jsonObjectList.size());
-                        bulkStoreJsonObj(jsonObjectList, esUpsert, pedigreeProps, splitGene, false);
+                        bulkStoreJsonObj(jsonObjectList, esUpsert, pedigreeProps, splitGene, false, false);
                         jsonObjectList = new ArrayList<>();
                     }
                 }
 //                System.err.println("Bulk Items left in partition-" + jsonObjectList.size());
-                bulkStoreJsonObj(jsonObjectList, esUpsert, pedigreeProps, splitGene, false);
+                bulkStoreJsonObj(jsonObjectList, esUpsert, pedigreeProps, splitGene, false, false);
 
             });
+            // time to split by genes
+            //System.out.println("variant count = " + variants.size());
+            JavaRDD<GeneVariants> blob = sc.parallelize(variants);
+            System.out.println("GeneVariants count = " + blob.count());
+
         }
         sc.close();
         client.close();
     }
 
-    public static Boolean bulkStoreJsonObj(List<JSONObject> propertiesOneMutations, boolean esUpsert, Properties pedigreeProps, boolean splitGene, boolean exoUpsert) {
+    public static Boolean bulkStoreJsonObj(List<JSONObject> payloads,
+                                           boolean esUpsert, Properties pedigreeProps,
+                                           boolean splitGene, boolean exoUpsert,
+                                           boolean geneUpsert) {
 
-        if (propertiesOneMutations == null || propertiesOneMutations.isEmpty()) {
+        if (payloads == null || payloads.isEmpty()) {
 //            System.err.println("-");
             return null;
         }
@@ -129,36 +151,39 @@ public class VEPSparkDriverProgram {
         BulkRequest request = new BulkRequest();
 //        List<JSONObject> geneList = new ArrayList<>();
 
-        for (JSONObject propertiesOneMutation: propertiesOneMutations) {
-            if (propertiesOneMutation == null ) {
+        for (JSONObject payload: payloads) {
+            if (payload == null ) {
                 System.out.print("-");
                 continue;
             }
 
-            JSONArray labName = (JSONArray) propertiesOneMutation.remove("labos");
-            String uid = (String) propertiesOneMutation.remove("id");
+            JSONArray labName = (JSONArray) payload.remove("labos");
+            String uid = (String) payload.remove("id");
 //            if (splitGene) {
 //                // This will also set the join type to mutation
-//                geneList.addAll(extractGenesFromMutation(propertiesOneMutation, uid, false));
+//                geneList.addAll(extractGenesFromMutation(payload, uid, false));
 //            }
+            if (geneUpsert) {
+                request.add(new IndexRequest(GENE_INDEX_NAME, "_doc", uid)
+                        .source(payload.toString(0), XContentType.JSON));
 
-            if (exoUpsert) {
-                propertiesOneMutation.put("uid", uid);
-//                System.out.println(propertiesOneMutation.toString(0));
-                String specimenId = (String) propertiesOneMutation.remove("specimenId");
+            } else if (exoUpsert) {
+                payload.put("uid", uid);
+//                System.out.println(payload.toString(0));
+                String specimenId = (String) payload.remove("specimenId");
                 request.add(
-                        upsertExomiserRequest(propertiesOneMutation,uid,specimenId));
+                        upsertExomiserRequest(payload,uid,specimenId));
             } else if (esUpsert) {
-                JSONArray donorArray = (JSONArray) propertiesOneMutation.get("donors");
-                JSONObject frequencies = (JSONObject) propertiesOneMutation.get("frequencies");
-                JSONArray specimenList = (JSONArray) propertiesOneMutation.get("specimenList");
+                JSONArray donorArray = (JSONArray) payload.get("donors");
+                JSONObject frequencies = (JSONObject) payload.get("frequencies");
+                JSONArray specimenList = (JSONArray) payload.get("specimenList");
 
                 request.add(
-                        upsertRequest(propertiesOneMutation.toString(0), uid, donorArray, specimenList, frequencies, labName)
+                        upsertRequest(payload.toString(0), uid, donorArray, specimenList, frequencies, labName)
                 );
             } else {
-                request.add(new IndexRequest(INDEX_NAME, "_doc", uid)
-                        .source(propertiesOneMutation.toString(0), XContentType.JSON));
+                request.add(new IndexRequest(MUTATION_INDEX_NAME, "_doc", uid)
+                        .source(payload.toString(0), XContentType.JSON));
             }
         }
         boolean success = true;
@@ -187,7 +212,7 @@ public class VEPSparkDriverProgram {
                     if (!successArray[i]) {
                         retrySuccess = false;
                         System.err.print("Unable to bulk " + ((esUpsert) ? "upsert " : "insert "));
-                        for (JSONObject propertiesOneMutation : propertiesOneMutations) {
+                        for (JSONObject propertiesOneMutation : payloads) {
                             if (propertiesOneMutation == null) {
                                 continue;
                             }
@@ -411,7 +436,7 @@ public class VEPSparkDriverProgram {
                 , parameters);
 
 
-        UpdateRequest request = new UpdateRequest(INDEX_NAME, "_doc", uid);
+        UpdateRequest request = new UpdateRequest(MUTATION_INDEX_NAME, "_doc", uid);
         request.script(inline);
 
         request.upsert(object, XContentType.JSON);
@@ -449,7 +474,7 @@ public class VEPSparkDriverProgram {
                 , parameters);
 
 
-        UpdateRequest request = new UpdateRequest(INDEX_NAME, "_doc", uid);
+        UpdateRequest request = new UpdateRequest(MUTATION_INDEX_NAME, "_doc", uid);
         request.script(inline);
 
         request.upsert(object.toString(0), XContentType.JSON);
@@ -513,11 +538,6 @@ public class VEPSparkDriverProgram {
                 theObj.put("AN", (String) freqLabo.get("labName"));
                 theObj.remove("labName");
             }
-
-
-
         }
-
     }
-
 }

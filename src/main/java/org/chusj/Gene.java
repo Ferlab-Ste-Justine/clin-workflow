@@ -1,9 +1,10 @@
 package org.chusj;
 
+import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Objects;
 
-public class Gene {
+public class Gene implements Serializable {
 
     private String ensemblId;
     private String geneSymbol;
@@ -104,5 +105,10 @@ public class Gene {
         result = 31 * result + Arrays.hashCode(omim);
         result = 31 * result + Arrays.hashCode(orphanet);
         return result;
+    }
+
+    @Override
+    public String toString() {
+        return "geneSymbol=" + geneSymbol ;
     }
 }

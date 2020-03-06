@@ -92,7 +92,7 @@ public class VepHelper {
             Map<String, Patient> patientsMap = PatientHelper.preparePedigree(specimenList);
 //        Map<String, Patient> patientMap = PatientHelper.preparePedigreeFromProps(pedigreeProps);
 
-            specimenList.forEach((x) -> System.out.println(x));
+            specimenList.forEach(System.out::println);
 
             pedigrees.forEach(System.out::println);
 //            patientMap.forEach((k, v) -> System.out.println(k + "\n\t" + v));
@@ -119,9 +119,11 @@ public class VepHelper {
                     if (fetchedLine == null) {
                         break;
                     } else {
-                        JSONObject propertiesOneMutation = processVcfDataLine(fetchedLine, pedigreeProps, patientsMap,
+                        Variant oneVariant = processVcfDataLine(fetchedLine, pedigreeProps, patientsMap,
                                 pedigrees, specimenList, familyMap);
-                        if (toPrint && propertiesOneMutation != null) {
+
+                        if (toPrint && oneVariant != null) {
+                            JSONObject propertiesOneMutation = new JSONObject(oneVariant.getJsonObjInString());
                             System.out.println(propertiesOneMutation.toString(0));
                             //extractGenesFromMutation(propertiesOneMutation, "0", true).stream().forEach((gene) -> System.out.println("\t"+gene.toString(0)));
                             toPrint = false;
@@ -148,7 +150,7 @@ public class VepHelper {
 
 
 
-    static JSONObject processVcfDataLine(String extractedLine,  Properties pedigreeProps,
+    static Variant processVcfDataLine(String extractedLine,  Properties pedigreeProps,
                                          Map<String, Patient> patientMap, List<Pedigree> pedigrees,
                                          List<String> specimenList, Map<String,Family> familyMapRef) {
 
@@ -268,12 +270,15 @@ public class VepHelper {
         if (chrPos.length() > 2) {
             return null;
         }
+        Variant variant = new Variant();
         String dnaChange = reference + ">" + alt.split(",")[0];
         String mutationId = "chr" + chrPos + ":g." + position + dnaChange;
         String uid = getMD5Hash(mutationId +"@"+build);
 
         propertiesOneMutation.put("id", uid);
+        variant.setId(uid);
         propertiesOneMutation.put("mutationId", mutationId);
+        variant.setMutationId(mutationId);
         propertiesOneMutation.put("dnaChange", dnaChange);
         propertiesOneMutation.put("chrom", chrPos);
         propertiesOneMutation.put("refAllele", reference);
@@ -400,6 +405,7 @@ public class VepHelper {
         for (Gene gene: geneSet) {
             geneObj = new JSONObject();
             if (gene.getGeneSymbol().trim().isEmpty()) continue;
+
             geneObj.put("geneSymbol", gene.getGeneSymbol());
             geneObj.put("ensemblId", gene.getEnsemblId());
             geneObj.put("biotype", gene.getBiotype());
@@ -411,6 +417,7 @@ public class VepHelper {
 //                    "ensemblId:" + gene.getEnsemblId();
 //            geneObj.put("tableRow", tableRow);
             geneArray.put(geneObj);
+            variant.addGene(gene);
         }
 
         // Patient and donor analysis
@@ -689,7 +696,11 @@ public class VepHelper {
         if ( dbExt[CLINVAR]  || dbExt[OMIM] || dbExt[ORPHANET]  )//|| dbExt[DBSNP] )
             lastOne = propertiesOneMutation;
 
-        return propertiesOneMutation;
+
+        variant.setJsonObjInString(propertiesOneMutation.toString(0));
+        //variant.setGenes();
+        //return propertiesOneMutation;
+        return variant;
     }
 
     private static List<Pedigree> getFamilyPed(String familyId, List<Pedigree> pedigrees) {
@@ -1657,8 +1668,8 @@ public class VepHelper {
         }
     }
 
-    private static void addGeneSetsToObjs(String ensId, JSONObject jsonObject, JSONObject availObj,
-                                          Map<String, Patient> patientMap, List<Pedigree> pedigrees) {
+    static void addGeneSetsToObjs(String ensId, JSONObject jsonObject, JSONObject availObj,
+                                  Map<String, Patient> patientMap, List<Pedigree> pedigrees) {
 
         Set<String> geneSets = getMembersForEnsId(ensId);
         Set<String> aliasSet = new HashSet<>();
@@ -1671,9 +1682,13 @@ public class VepHelper {
             if (member.startsWith("symbol:")) {
                 // VEP geneSymbol sometimes put an alias instead
                 String symbol = member.replace("symbol:", "");
-                String geneSymbol = jsonObject.getString("geneSymbol");
-                if (!symbol.equalsIgnoreCase(geneSymbol)) {
-                    aliasSet.add(geneSymbol);
+                if (!jsonObject.isNull("geneSymbol")) {
+                    String geneSymbol = jsonObject.getString("geneSymbol");
+                    if (!symbol.equalsIgnoreCase(geneSymbol)) {
+                        aliasSet.add(geneSymbol);
+                        jsonObject.put("geneSymbol", symbol);
+                    }
+                } else {
                     jsonObject.put("geneSymbol", symbol);
                 }
             } else if (member.startsWith("HP:")) {
@@ -1814,10 +1829,7 @@ public class VepHelper {
                 return false;
             }
         }
-        if ((hasNoParent) ||  (hasParent && nbAffected >= 1) ) {
-            return true;
-        }
-        return false;
+        return (hasNoParent) || (hasParent && nbAffected >= 1);
     }
 
     public static boolean isAutosomalRecessif(List<String> genotypesFamily, List<Pedigree> familyPed, boolean strict) {
@@ -1862,10 +1874,7 @@ public class VepHelper {
                 }
             }
         }
-        if ( hasParent && nbAffected > 1 ) {
-            return false;
-        }
-        return true;
+        return !hasParent || nbAffected <= 1;
     }
 
     public static String isDeNovo(List<String> genotypesFamily, List<Pedigree> familyPed, boolean strict) {
@@ -1909,7 +1918,6 @@ public class VepHelper {
                 }
             } else if (zygosity.equalsIgnoreCase("UNK")) {
                 isPossible = true;
-                continue;
             } else if (!zygosity.equalsIgnoreCase("HOM REF") ) {
                 return "NO";
             }
@@ -1990,9 +1998,7 @@ public class VepHelper {
                         }
                     }
                 } else {
-                    if (i == 0) {
-                        return false;
-                    }
+                    return false;
                 }
             } else {
                 // strict mode
