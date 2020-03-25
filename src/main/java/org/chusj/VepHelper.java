@@ -176,6 +176,7 @@ public class VepHelper {
         }
 
         Set<Gene> geneSet = new HashSet<>();
+        Set<Clinvar> clinvarSet = new HashSet<>();
 
         Map<Integer, FunctionalAnnotation> faMap = new HashMap<>();
         Map<String, Transcript> deStructuredTranscript = new HashMap<>();
@@ -301,7 +302,7 @@ public class VepHelper {
             }
 
             funcAnnotation = processVepAnnotations(s, dbExtId, dbExt, geneSet, deStructuredTranscript,
-                    reference, alt);
+                    reference, alt, clinvarSet);
 
             if (funcAnnotation == null) {
                 System.err.println("#############\n############\n"+
@@ -327,7 +328,7 @@ public class VepHelper {
             }
             String consequence = (String) funcAnnotation.remove("consequence");
             boolean canonical = (!funcAnnotation.isNull("canonical") && (boolean) funcAnnotation.get("canonical"));
-            //boolean isPick = (funcAnnotation.isNull("pick") ? false : true);
+            boolean isPick = (funcAnnotation.isNull("pick") ? false : true);
             Long strand = null;
             if (!funcAnnotation.isNull("strand")) {
                 strand = (long) funcAnnotation.remove("strand");
@@ -364,9 +365,9 @@ public class VepHelper {
             Integer hash = functionalAnnotation.hashCode();
             if (faMap.containsKey(hash)) {
                 FunctionalAnnotation prevFA = faMap.get(hash);
-//                if (isPick) {
-//                    prevFA.setPick(isPick);
-//                }
+                if (isPick) {
+                    prevFA.setPick(isPick);
+                }
                 if (canonical) {
                     prevFA.setCanonical(canonical);
                 }
@@ -374,9 +375,9 @@ public class VepHelper {
             } else {
                 JSONArray ja = new JSONArray();
                 functionalAnnotation.setTheRest(ja);
-//                if (isPick) {
-//                    functionalAnnotation.setPick(isPick);
-//                }
+                if (isPick) {
+                    functionalAnnotation.setPick(isPick);
+                }
                 if (canonical) {
                     functionalAnnotation.setCanonical(canonical);
                 }
@@ -386,11 +387,8 @@ public class VepHelper {
         }
 
         JSONArray consequences = new JSONArray();
-        faMap.forEach((k,v) -> {
-            if (v != null) consequences.put(v.getJsonObj());
-        });
 
-        propertiesOneMutation.put("consequences", consequences);
+
         propertiesOneMutation.put("impactScore", impactScore);
         //propertiesOneMutation.put("type",  variant_class.get("type"));
         String types = toStringList(dbExtId.get(TYPES));
@@ -416,9 +414,25 @@ public class VepHelper {
 //                    "location:" + (geneObj.isNull("location") ? "" : geneObj.get("location")) + "@" +
 //                    "ensemblId:" + gene.getEnsemblId();
 //            geneObj.put("tableRow", tableRow);
+            if (!geneObj.isNull("oldGeneSymbol")) {
+                String newAlias = (String) geneObj.remove("oldGeneSymbol");
+                String newSymbol = (String) geneObj.get("geneSymbol");
+                gene.setNewSymbol(newSymbol);
+                gene.setNewAlias(newAlias);
+
+                faMap.forEach((k,v) -> {
+                    if (v != null && v.getGeneId().equalsIgnoreCase(gene.getEnsemblId())) {
+                        v.setGene(newSymbol);
+                    }
+                });
+            }
             geneArray.put(geneObj);
             variant.addGene(gene);
         }
+        faMap.forEach((k,v) -> {
+            if (v != null) consequences.put(v.getJsonObj());
+        });
+        propertiesOneMutation.put("consequences", consequences);
 
         // Patient and donor analysis
         Map<String, Frequencies> frequenciesPerLabos = new HashMap<>();
@@ -450,14 +464,16 @@ public class VepHelper {
                 int alleleNumberCount = countNumberOfAllele(gt[i]);
                 alleleNumber += alleleNumberCount;
                 freqenceLabo.setAn(freqenceLabo.getAn() + alleleNumberCount);
-                freqenceLabo.setPn(freqenceLabo.getPn() + 1);
-                patientNb++;
+                if (!"HOM REF".equalsIgnoreCase(zygosity)) {
+                    freqenceLabo.setPn(freqenceLabo.getPn() + 1);
+                    patientNb++;
+                }
+                if ("HOM".equalsIgnoreCase(zygosity)) {
+                    homozygoteCount++;
+                    freqenceLabo.setHc(freqenceLabo.getHc()+1);
+                }
+                freqenceLabo.updateAf();
             }
-            if ("HOM".equalsIgnoreCase(zygosity)) {
-                homozygoteCount++;
-                freqenceLabo.setHc(freqenceLabo.getHc()+1);
-            }
-            freqenceLabo.updateAf();
 
             //if ("HOM REF".equalsIgnoreCase(zygosity)) continue;
             arrayDonor[i].put("lastUpdate", localDate);
@@ -523,7 +539,7 @@ public class VepHelper {
             arrayDonor[i].put("practitionerId", currentPatient.getRequesterId());
             arrayDonor[i].put("organizationId", currentPatient.getReqOrgId());
             arrayDonor[i].put("sequencingStrategy", currentPatient.getSequencingStrategy());
-            arrayDonor[i].put("exomiserScore", 0f);
+            //arrayDonor[i].put("exomiserScore", 0f);
             familyMap.get(currentPatient.getFamilyId()).addFamily(i);
 
         }
@@ -723,7 +739,7 @@ public class VepHelper {
      */
     private static JSONObject processVepAnnotations(String csqLine, List<Set<String>> dbExtId, boolean[] dbExt,
                                                     Set<Gene> geneSet, Map<String, Transcript> deStructuredTranscript,
-                                                    String ref, String alt ) {
+                                                    String ref, String alt, Set<Clinvar> clinvarSet) {
 
         String[] functionalAnnotationArray = csqLine.split("[|]", -1);
         // dynamic positioning system -- pos counter++
@@ -795,7 +811,7 @@ public class VepHelper {
         //N20       FLAGS|PICK|VARIANT_CLASS|SYMBOL_SOURCE|
         String FLAGS = functionalAnnotationArray[pos++];
         String PICK = functionalAnnotationArray[pos++];
-        //addStrToJsonObject("pick", PICK, funcAnnotation, false);
+        addStrToJsonObject("pick", PICK, funcAnnotation, false);
         String VARIANT_CLASS = functionalAnnotationArray[pos++];
         //JSONObject variant_class = new JSONObject();
         //addStrToJsonObject("type", VARIANT_CLASS, variant_class, false);
@@ -1141,6 +1157,28 @@ public class VepHelper {
             dbExt[CLINVAR_TRAIT] = true;
             addStrToListSet(dbExtId, CLINVAR_TRAIT, clinvarTrait);
         }
+        /*
+        Refactor of the clinvar structure WIP - discarded for now
+        String[] clinvarIds = clinvar.split("&");
+        String[] omimIds = omim.split("&");
+        String[] clinvarClinsignArray = clinvarClinsign.split("&");
+        String[] clinvarTraitArray = clinvarTrait.split("&");
+        for (int i=0; i<clinvarIds.length; i++) {
+
+            Clinvar clinvar1 = new Clinvar();
+            ClinvarInterpretation ci = new ClinvarInterpretation();
+            clinvar1.setId(clinvarIds[i]);
+            ci.setCondition(clinvarTraitArray[i]);
+            ci.setInterpretation(clinvarClinsignArray[i]);
+            if (omimIds.length == clinvarIds.length) {
+                clinvar1.addOmim(omimIds[i]);
+            }
+            clinvar1.addInterpretation(ci);
+            clinvarSet.add(clinvar1);
+
+        }
+        */
+
 
         //N110 fathmm-MKL_coding_pred|fathmm-MKL_coding_rankscore|fathmm-XF_coding_pred|fathmm-XF_coding_rankscore|
 
@@ -1425,8 +1463,13 @@ public class VepHelper {
 
         }
 
-        if (!cdnaPos.isEmpty() && !".".startsWith(cdnaPos)) {
-            cdnaChange = ref + cdnaPos + alt;
+        // wrong way of doing it
+//        if (!cdnaPos.isEmpty() && !".".startsWith(cdnaPos)) {
+//            cdnaChange = ref + cdnaPos + alt;
+//            //System.out.println("cdnaChange="+cdnaChange);
+//        }
+        if (!CDS_position.isEmpty() && !".".startsWith(CDS_position)) {
+            cdnaChange = CDS_position + ref + ">" + alt;
             //System.out.println("cdnaChange="+cdnaChange);
         }
         addStrToJsonObject("cdnaChange", cdnaChange , funcAnnotation, false);
@@ -1648,8 +1691,13 @@ public class VepHelper {
 
         // Extract the proper set
         Set<String> extractedSet = setList.get(position);
-        String[] splitedStr = value.split("&");
-        Collections.addAll(extractedSet, splitedStr);
+        String[] splitStr = value.split("&");
+        for (int i=0; i<splitStr.length;i++) {
+            if (splitStr[i].startsWith("_")) {
+                splitStr[i] = splitStr[i].replaceFirst("_", "");
+            }
+        }
+        Collections.addAll(extractedSet, splitStr);
     }
 
     private static String toStringList(Set<String> setStr) {
@@ -1677,72 +1725,74 @@ public class VepHelper {
         JSONArray orphanetGeneSets = new JSONArray();
         JSONArray radboudumc = new JSONArray();
 
-        geneSets.forEach( member -> {
+        geneSets.forEach(member -> {
 
-            if (member.startsWith("symbol:")) {
-                // VEP geneSymbol sometimes put an alias instead
-                String symbol = member.replace("symbol:", "");
-                if (!jsonObject.isNull("geneSymbol")) {
-                    String geneSymbol = jsonObject.getString("geneSymbol");
-                    if (!symbol.equalsIgnoreCase(geneSymbol)) {
-                        aliasSet.add(geneSymbol);
+                if (member.startsWith("symbol:")) {
+                    // VEP geneSymbol sometimes put an alias instead
+                    String symbol = member.replace("symbol:", "");
+                    if (!jsonObject.isNull("geneSymbol")) {
+                        String geneSymbol = jsonObject.getString("geneSymbol");
+                        if (!symbol.equalsIgnoreCase(geneSymbol)) {
+                            aliasSet.add(geneSymbol);
+                            jsonObject.put("geneSymbol", symbol);
+                            jsonObject.put("oldGeneSymbol", geneSymbol);
+                        }
+                    } else {
                         jsonObject.put("geneSymbol", symbol);
                     }
-                } else {
-                    jsonObject.put("geneSymbol", symbol);
-                }
-            } else if (member.startsWith("HP:")) {
-                String[] hpoTerms = member.split(",");
-                hpoGeneSets.put(hpoTerms[1] + " (" + hpoTerms[0] + ")");
-                for (Pedigree ped : pedigrees) {
-                    String phenotype = ped.getPhenotype();
+                } else if (member.startsWith("HP:")) {
+                    String[] hpoTerms = member.split(",");
+                    hpoGeneSets.put(hpoTerms[1] + " (" + hpoTerms[0] + ")");
+                    for (Pedigree ped : pedigrees) {
+                        String phenotype = ped.getPhenotype();
 
-                    // -9 (missing), 0 (missing) ,1 (unaffected)
-                    // 2 is affected or could have 1 single hpo term
+                        // -9 (missing), 0 (missing) ,1 (unaffected)
+                        // 2 is affected or could have 1 single hpo term
 
-                    if ( !("-9".equalsIgnoreCase(phenotype) || "0".equalsIgnoreCase(phenotype) || "1".equalsIgnoreCase(phenotype))) {
-                        if (phenotype.equalsIgnoreCase(hpoTerms[0])) {
-                            patientMap.get(ped.getId()).addQtyOfHposTermsFound(1);
-                        }
-                        for (String hpo : patientMap.get(ped.getId()).getHposTerms()) {
-                            if (hpo.equalsIgnoreCase(hpoTerms[0])) {
+                        if (!("-9".equalsIgnoreCase(phenotype) || "0".equalsIgnoreCase(phenotype) || "1".equalsIgnoreCase(phenotype))) {
+                            if (phenotype.equalsIgnoreCase(hpoTerms[0])) {
                                 patientMap.get(ped.getId()).addQtyOfHposTermsFound(1);
+                            }
+                            for (String hpo : patientMap.get(ped.getId()).getHposTerms()) {
+                                if (hpo.equalsIgnoreCase(hpoTerms[0])) {
+                                    patientMap.get(ped.getId()).addQtyOfHposTermsFound(1);
+                                }
                             }
                         }
                     }
-                }
 //                if (hpoTermsNeg.contains(hpoTerms[0])) negPosHposTermsFoundArray[0]++;
 //                if (hpoTermsPos.contains(hpoTerms[0])) negPosHposTermsFoundArray[1]++;
 
-            } else if (member.startsWith("Orph:")) {
-                String[] orphTerms = member.split(",");
-                orphanetGeneSets.put(orphTerms[1] + " (" + orphTerms[0] + ")");
-            } else if (member.startsWith("alias:")) {
-                //alias.put(member.replace("alias:", ""));
-                aliasSet.add(member.replace("alias:", ""));
-            } else if (member.startsWith("Rad:")) {
-                String[] radTerms = member.split(":");
-                radboudumc.put(radTerms[1] + " (" + member + ")");
-            } else if (member.startsWith("geneid:")) {
-                jsonObject.put("geneId", member.replace("geneid:", ""));
-            } else if (member.startsWith("map_location:")) {
-                jsonObject.put("location", member.replace("map_location:", ""));
-            }
+                } else if (member.startsWith("Orph:")) {
+                    String[] orphTerms = member.split(",");
+                    orphanetGeneSets.put(orphTerms[1] + " (" + orphTerms[0] + ")");
+                } else if (member.startsWith("alias:")) {
+                    //alias.put(member.replace("alias:", ""));
+                    aliasSet.add(member.replace("alias:", ""));
+                } else if (member.startsWith("Rad:")) {
+                    String[] radTerms = member.split(":");
+                    radboudumc.put(radTerms[1] + " (" + member + ")");
+                } else if (member.startsWith("geneid:")) {
+                    jsonObject.put("geneId", member.replace("geneid:", ""));
+                } else if (member.startsWith("map_location:")) {
+                    jsonObject.put("location", member.replace("map_location:", ""));
+                }
 
-            if (hpoGeneSets.length()>0) {
-                jsonObject.put("hpo", hpoGeneSets);
-                availObj.put("hpo", true);
-            }
-            if (orphanetGeneSets.length()>0) {
-                jsonObject.put("orphanet", orphanetGeneSets);
-                availObj.put("orphanet", true);
-            }
-            if (aliasSet.size()>0) jsonObject.put("alias", aliasSet.toArray());
-            if (radboudumc.length()>0) {
-                jsonObject.put("radboudumc", radboudumc);
-                availObj.put("radboudumc", true);
-            }
-        });
+                if (hpoGeneSets.length() > 0) {
+                    jsonObject.put("hpo", hpoGeneSets);
+                    availObj.put("hpo", true);
+                }
+                if (orphanetGeneSets.length() > 0) {
+                    jsonObject.put("orphanet", orphanetGeneSets);
+                    availObj.put("orphanet", true);
+                }
+                if (aliasSet.size() > 0) jsonObject.put("alias", aliasSet.toArray());
+                if (radboudumc.length() > 0) {
+                    jsonObject.put("radboudumc", radboudumc);
+                    availObj.put("radboudumc", true);
+                }
+            });
+
     }
 
     private static String[] fillArray(int size) {
@@ -1940,20 +1990,21 @@ public class VepHelper {
         // Affected males are not HOM_REF
         // Unaffected males are HOM_REF
 
-        // Janovar
+        // Janovar (new version)
         // First of all variants must be X-Chromosomal.
-        // If the pedigree only contains one person then we decide if
-            // the person is female then the variant call list must contain one HOM call,
-            // else the variant call list must contain a HET or a HOM call.
-        // If there is more than one person in the pedigree then there must be at least one compatible variant call in the list:
-            // at least one affected male has a HET or HOM call or a affected female a HOM call for this variant
-            // For the parents of affected females
-                // the father must be affected and
-                // the mother cannot have it REF or HOM
-            // For the parents of affected males *
-                // the unaffected father cannot have the variant HET or HOM
-                // * the mother cannot be HOM
-
+        //        Female proband must be HOM
+        //        Male proband must be HET or HOM
+        //
+        //        For the parents of affected females:
+            //	•	the father must be affected and
+            //	•	the mother cannot have it REF or HOM
+        //        For the parents of affected males:
+            //	•	the unaffected father cannot have the variant HET or HOM
+            //	•	the affected father must be  HET or HOM (can be UNK)
+            //	•	the unaffected mother cannot be HOM (can be UNK)
+            //	•	the affected mother must be HOM (can be UNK)
+        //        There is no unaffected person that has a HOM call.
+        //        There is no unaffected male person that has a HET call.
 
         boolean isGirl=false,isBoy=false;
         boolean xr = false;
@@ -1984,13 +2035,13 @@ public class VepHelper {
             if (!strict && i==0) {
                 if (isAffected) {
 
-                    if (isGirl(familyPed.get(i).sex)) {
+                    if (isGirl) {
                         if (zygosity.equalsIgnoreCase("HOM")) {
                             return true;
                         } else {
                             return false;
                         }
-                    } else if (isBoy(familyPed.get(i).sex)) {
+                    } else { //isBoy
                         if (zygosity.equalsIgnoreCase("HOM") || zygosity.equalsIgnoreCase("HET")) {
                             return true;
                         } else {
@@ -2004,88 +2055,75 @@ public class VepHelper {
                 // strict mode
                 boolean isFth = isBoy(familyPed.get(i).getSex());
                 boolean isMth = isGirl(familyPed.get(i).getSex());
-                if (isAffected) {
-                    if (i == 0) {
 
-                        if (isGirl(familyPed.get(i).sex)) {
-                            if (zygosity.equalsIgnoreCase("HOM")) {
-                                xr = true;
-                            } else {
-                                return false;
-                            }
-
-
-                        } else if (isBoy(familyPed.get(i).sex)) {
-                            if (zygosity.equalsIgnoreCase("HOM") || zygosity.equalsIgnoreCase("HET")) {
-                                xr = true;
-                            } else {
-                                return false;
-                            }
+                if (i == 0) {
+                    if (isGirl) {
+                        if (zygosity.equalsIgnoreCase("HOM")) {
+                            xr = true;
                         } else {
-                            //unk sex
                             return false;
                         }
                     } else {
-                        // else father or mth ?
-
-                        // For the parents of affected females
-                        // the father must be affected and
-
-                        if (isGirl && isFth) {
-                            if (zygosity.equalsIgnoreCase("HOM") || zygosity.equalsIgnoreCase("HET")) {
-                                //xr = true;
+                        if (zygosity.equalsIgnoreCase("HOM") || zygosity.equalsIgnoreCase("HET")) {
+                            xr = true;
+                        } else {
+                            return false;
+                        }
+                    }
+                } else { //father or mth
+                    if (isGirl) {
+                        //For the parents of affected females:
+                        //	•	the father must be affected and
+                        //	•	the mother cannot have it REF or HOM
+                        if (isFth && isAffected) {
+                            if (!zygosity.equalsIgnoreCase("HOM REF")) {
+                                xr = true;
                             } else {
                                 return false;
                             }
+
+                        } else if (isFth && !isAffected) {
+                            return false;
+                        } else if (isMth && zygosity.startsWith("HOM")) {
+                            return false;
                         }
-                        if (isGirl && isMth) {
-                            // the mother cannot have it REF or HOM
-                            if (zygosity.startsWith("HOM")) {
+                    } else {
+                        // For the parents of affected males:
+                        //	•	the unaffected father cannot have the variant HET or HOM
+                        //	•	the affected father must be  HET or HOM (can be UNK)
+                        //	•	the unaffected mother cannot be HOM (can be UNK)
+                        //	•	the affected mother must be HOM (cannot be UNK)
+                        if (isFth && isAffected) {
+                            if (zygosity.equalsIgnoreCase("HOM")
+                                    || zygosity.equalsIgnoreCase("HET")
+                                    || zygosity.equalsIgnoreCase("UNK")) {
+                                xr = true;
+                            } else {
                                 return false;
                             }
-                        }
-                        // For the parents of affected males *
-                        // the unaffected father cannot have the variant HET or HOM
-                        // * the mother cannot be HOM
-
-                        if (isBoy && isMth) {
+                         } else if (isFth && !isAffected) {
+                            if (zygosity.equalsIgnoreCase("HOM") || zygosity.equalsIgnoreCase("HET")) {
+                                return false;
+                            } else {
+                                xr = true;
+                            }
+                        } else if (isMth && isAffected) {
+                            if (zygosity.equalsIgnoreCase("HOM") || zygosity.equalsIgnoreCase("UNK")) {
+                                xr = true;
+                            } else {
+                                return false;
+                            }
+                        } else if (isMth && !isAffected) {
                             if (zygosity.equalsIgnoreCase("HOM")) {
                                 return false;
+                            } else {
+                                xr = true;
                             }
-                        }
-                    }
-                } else {
-                    if (i==0) {
-                        // no affected proband
-                        return false;
-                    }
-                    // For the parents of affected males *
-                    // the unaffected father cannot have the variant HET or HOM
-                    // * the mother cannot be HOM
-
-                    if (isBoy && isFth) {
-                        if (zygosity.equalsIgnoreCase("HOM") || zygosity.equalsIgnoreCase("HET")) {
-                            return false;
-                        }
-                    }
-                    if (isBoy && isMth) {
-                        if (zygosity.equalsIgnoreCase("HOM")) {
-                            return false;
-                        }
-                    }
-                    // For the parents of affected females
-                    // the father must be affected and
-                    // the mother cannot have it REF or HOM
-                    if (isGirl && isFth) {
-                        return false;
-                    }
-                    if (isGirl && isMth) {
-                        if (zygosity.startsWith("HOM")) {
-                            return false;
                         }
                     }
                 }
             }
+
         }
         return xr;
     }
@@ -2093,7 +2131,7 @@ public class VepHelper {
     public static boolean isXDominant(List<String> genotypesFamily, List<Pedigree> familyPed, boolean strict) {
 
         // Gemini
-        // Affected males are HET or HOM_ALT
+            // Affected males are HET or HOM
         // Affected females must be HET
         // Unaffecteds must be HOM_REF
         // girls of affected dad must be affected
@@ -2102,21 +2140,25 @@ public class VepHelper {
         // at least 1 parent of affected females must be het (and affected)
 
         // Janovar
-        // First of all variants must be X-Chromosomal.
-        // If the pedigree only contains one person
-            // if * the person is female then the variant call list must contain one HET call.
-            // else else the variant call list must contain a HET or a HOM call.
-        // If there is more than one person in the pedigree then there must be at least one compatible call
-            // at least one affected male has a HET or HOM call or a affected female a HET call for this variant
-            // no affected person has a REF call;
-            // no a affected female has a HOM call;
-            // and * no unaffected person has a HET or HOM call.
+//        •	First of all variants must be X-Chromosomal.
+//        •	If the pedigree only contains one person then we decide
+    //        if * the person is female then the variant call list must contain one HET call.
+    //        * else the variant call list must contain a HET or a HOM call.
+//        •	If there is more than one person in the pedigree then there must be at least one compatible call, meaning:
+//        •	at least one affected male has a HET or HOM call or
+//        •	an affected female a HET call for this variant,
+//        •	no affected person has a REF call,
+//        •	no affected female has a HOM call, and *
+//        •	no unaffected person has a HET or HOM call.
+
+        // CHUSJ - no male proband can be XD
 
         boolean isGirl=false,isBoy=false;
         boolean xd = false;
 
         if (familyPed.get(0).sex.equalsIgnoreCase("1")) {
             isBoy=true;
+            return false;
         } else if (familyPed.get(0).sex.equalsIgnoreCase("2")) {
             isGirl=true;
         } else {
@@ -2147,24 +2189,31 @@ public class VepHelper {
                     return true;
                 } else if (i==0 && isGirl && !zygosity.equalsIgnoreCase("HET")) {
                     return false;
+                } else if (i==0 && isGirl && zygosity.equalsIgnoreCase("HET")) {
+                    xd=true;
                 } else if (i==0 && isBoy && !strict && (zygosity.equalsIgnoreCase("HET") || zygosity.equalsIgnoreCase("HOM")) ) {
                     return true;
                 } else if (i==0 && isBoy && zygosity.equalsIgnoreCase("HOM REF")) {
                     return false;
+                } else if (i==0 && isBoy && (zygosity.equalsIgnoreCase("HET") || zygosity.equalsIgnoreCase("HOM")) ) {
+                    xd=true;
                 }
                 if (strict && i>0) {
                     // girls of affected dad must be affected
-                    if (isGirl && !isFth) {
-                        return false;
-                    } else if (isGirl && isFth) {
+                    if (isGirl && isFth) {
+                        xd=true;
+                    }
+                    // at least 1 parent of affected females must be het (and affected)
+                    if (isGirl && zygosity.equalsIgnoreCase("HET")) {
                         xd=true;
                     }
                     // mothers of affected males must be het (and affected)
                     if (isMth && isBoy) {
-                        if (!zygosity.equalsIgnoreCase("HET")) {
-                            return false;
-                        } else {
+                        if (zygosity.equalsIgnoreCase("HET") ||
+                                (zygosity.equalsIgnoreCase("UNK") && zygosity(genotypesFamily.get(0)).equalsIgnoreCase("HET")) ) {
                             xd=true;
+                        } else {
+                            return false;
                         }
                     }
                     // no affected person has a REF call;
@@ -2173,10 +2222,13 @@ public class VepHelper {
                     }
                 }
 
-            } else if (!zygosity.equalsIgnoreCase("HOM REF") ) {
+            } else if ( !(zygosity.equalsIgnoreCase("HOM REF") || zygosity.equalsIgnoreCase("UNK")) ) {
+                return false;
+            // mothers of affected males must be het (and affected)
+            } else if (isMth && isBoy ) {
                 return false;
             } else {
-                xd = true;
+//                xd = true;
             }
         }
         return xd;

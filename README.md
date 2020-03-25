@@ -99,3 +99,27 @@ reference: https://onlinelibrary.wiley.com/doi/full/10.1002/humu.21517
 on ne garde pas le ensemblTranscriptId  provenant de vep/dbNSFP; décision prise par Vincent sur Slack.
 Enlever ensemblTranscriptID -- next version de l’index - check
 Puisqu’on utilise pas le champ Picked, on devrait l’enlever. On va essayer d’épurer un peu l’index
+
+- March 24, 2020: 
+```
+Alex DL  10:44 AM
+Je confirme avec toi, x linked dominant c'est seulement pour les filles
+10:44
+J'ai mis a jour deux transmissions dans mon fichier, obligeant que ce soit pour les filles seulement
+10:44
+(“0/1”, “0/0”, “0/1”) -> 	x_linked_dominant [if female proband with affected mother and unaffected father]
+10:45
+(“0/1”, “0/1”, “0/1”) -> 	x_linked_dominant [if female proband with both parents affected]
+10:46
+Donc, les garcons ne peuvent qu'être recessif sur le X
+
+Alex DL  10:51 AM
+Oui, j'ai eu une bonne discussion avec Fadi a ce sujet. Il faut faire la distinction entre la transmission de la maladie et du génotype.
+
+Alex DL  10:51 AM
+Une maladie peut etre classée comme récéssive mais se tramsettre de facon dominante
+10:52
+bref, de notre coté pour l'instant on catégorise les transmission de génotypes
+10:52
+comme les garcons n'ont qu'une seule copie du X, ca se veut donc récessif (comme si les deux alleles etaient touchees)
+```

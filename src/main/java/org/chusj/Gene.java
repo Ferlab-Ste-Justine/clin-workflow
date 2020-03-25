@@ -13,6 +13,8 @@ public class Gene implements Serializable {
     private String[] radboudumc;
     private String[] omim;
     private String[] orphanet;
+    private String newSymbol;
+    private String newAlias;
 
 
     public Gene(String ensemblId, String geneSymbol, String biotype, String[] HPO, String[] radboudumc, String[] omim, String[] orphanet) {
@@ -31,6 +33,21 @@ public class Gene implements Serializable {
         this.biotype = biotype;
     }
 
+    public String getNewSymbol() {
+        return newSymbol;
+    }
+
+    public void setNewSymbol(String newSymbol) {
+        this.newSymbol = newSymbol;
+    }
+
+    public String getNewAlias() {
+        return newAlias;
+    }
+
+    public void setNewAlias(String newAlias) {
+        this.newAlias = newAlias;
+    }
 
     public String getEnsemblId() {
         return ensemblId;

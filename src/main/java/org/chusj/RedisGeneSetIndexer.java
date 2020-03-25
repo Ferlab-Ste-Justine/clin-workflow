@@ -4,6 +4,7 @@ import org.apache.http.HttpHost;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.json.JSONObject;
+import org.json.simple.JSONArray;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -53,6 +54,9 @@ public class RedisGeneSetIndexer {
                                 // private static void addGeneSetsToObjs(String ensId, JSONObject jsonObject, JSONObject availObj,
                                 //                                          Map<String, Patient> patientMap, List<Pedigree> pedigrees)
                                 gene.put("ensemblId", ensemblId);
+                                gene.put("variants", new JSONArray());
+                                gene.put("donors", new JSONArray());
+                                gene.put("frequencies", new JSONArray());
                                 VepHelper.addGeneSetsToObjs(ensemblId, gene, new JSONObject(), null, new ArrayList<>());
                                 if (gene.isNull("geneId")) {
                                     System.err.println(" Empty gene set for id:"+ensemblId);
@@ -60,18 +64,21 @@ public class RedisGeneSetIndexer {
                                     gene.put("id", gene.get("ensemblId"));
                                     jsonObjectList.add(gene);
                                 }
+                                if (gene.isNull("alias")) {
+                                    gene.put("alias", new JSONArray());
+                                }
                             }
                         }
                         if (jsonObjectList.size() >= bulkOpsQty) {
                             //System.out.println("Bulk Items in partition-" + jsonObjectList.size());
                             VEPSparkDriverProgram.bulkStoreJsonObj(
-                                    jsonObjectList, false, null, false, false, true);
+                                    jsonObjectList, false,false, true);
                             jsonObjectList = new ArrayList<>();
                         }
                     }
                 }
                 VEPSparkDriverProgram.bulkStoreJsonObj(
-                        jsonObjectList, false, null, false, false, true);
+                        jsonObjectList, false, false, true);
             }
             client.close();
         }

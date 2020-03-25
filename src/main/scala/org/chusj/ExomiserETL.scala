@@ -57,10 +57,7 @@ object ExomiserETL {
       else
       "SP" + newArgs(2)
 
-
     val build:String = pedigreeProps.get("assemblyVersion").toString
-
-
 
     val spark = SparkSession.builder()
       .appName("ExomiserETL")
@@ -125,20 +122,19 @@ object ExomiserETL {
         jsonObjectList.add(toJsonObj(exomiser,build,specimenIdForProband))
 
         if (jsonObjectList.size() > bulkOpsQty) {
-          VEPSparkDriverProgram.bulkStoreJsonObj(jsonObjectList, false, pedigreeProps, false, true, false)
+          VEPSparkDriverProgram.bulkStoreJsonObj(jsonObjectList, false, true, false)
           VEPSparkDriverProgram.TOTAL_COUNT += jsonObjectList.size()
           jsonObjectList = new util.ArrayList[JSONObject]
         }
       }
       // empty bucket
-      VEPSparkDriverProgram.bulkStoreJsonObj(jsonObjectList, false, pedigreeProps, false, true, false)
+      VEPSparkDriverProgram.bulkStoreJsonObj(jsonObjectList, false, true, false)
       VEPSparkDriverProgram.TOTAL_COUNT += jsonObjectList.size()
     })
 
     println(s"Total count=${VEPSparkDriverProgram.TOTAL_COUNT}")
     VEPSparkDriverProgram.client.close()
   }
-
 
   def toJsonObj(oneExo: Exomiser, build: String, specimenId: String): JSONObject = {
     val oneVariant = new JSONObject
@@ -161,6 +157,4 @@ object ExomiserETL {
 
     oneVariant
   }
-
-
 }

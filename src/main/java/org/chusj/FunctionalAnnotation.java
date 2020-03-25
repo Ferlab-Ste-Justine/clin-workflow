@@ -19,6 +19,7 @@ public class FunctionalAnnotation {
     private JSONObject predictions;
     private String biotype;
     private boolean canonical = false;
+    private boolean pick = false;
 
     public String getBiotype() {
         return biotype;
@@ -129,7 +130,13 @@ public class FunctionalAnnotation {
         this.theRest = theRest;
     }
 
+    public boolean isPick() {
+        return pick;
+    }
 
+    public void setPick(boolean pick) {
+        this.pick = pick;
+    }
 
     @Override
     public boolean equals(Object o) {
@@ -172,6 +179,9 @@ public class FunctionalAnnotation {
         fa.put("biotype", biotype);
         if (isCanonical()) {
             fa.put("canonical", canonical);
+        }
+        if (isPick()) {
+            fa.put("pick", pick);
         }
 
 
