@@ -329,11 +329,20 @@
               }
             },
             "orphanet": {
-              "type": "text",
-              "fields": {
-                "keyword": {
-                  "type": "keyword",
-                  "ignore_above": 256
+              "type": "nested",
+              "include_in_parent": true,
+              "properties": {
+                "dataId" : {
+                  "type" : "text"
+                },
+                "panel" : {
+                  "type": "text",
+                  "fields": {
+                    "keyword": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  }
                 }
               }
             },

@@ -70,8 +70,8 @@ public class VepHelper {
     public static void main(String[] args) throws Exception {
 
         if (args.length != 3) {
-//            args = new String[]{"FAM_C3_92_new5k.txt", "pedigree.properties", "pedigree.ped"};
-            args = new String[]{"batch5000.txt",  "pedigree.properties", "pedigreeTest1.ped"};
+            args = new String[]{"FAM_C3_92_new5k.txt", "pedigree.properties", "pedigree.ped"};
+//            args = new String[]{"batch5000.txt",  "pedigree.properties", "pedigreeTest1.ped"};
         }
 
         String extractFile = args[0];
@@ -1764,8 +1764,13 @@ public class VepHelper {
 //                if (hpoTermsPos.contains(hpoTerms[0])) negPosHposTermsFoundArray[1]++;
 
                 } else if (member.startsWith("Orph:")) {
-                    String[] orphTerms = member.split(",");
-                    orphanetGeneSets.put(orphTerms[1] + " (" + orphTerms[0] + ")");
+                    String[] orphanetObj = member.split(";");
+
+                    String[] orphTerms = orphanetObj[0].split(",");
+                    JSONObject orphanetJsonObj = new JSONObject();
+                    orphanetJsonObj.put("dataId", orphanetObj[1].replace("did:", ""));
+                    orphanetJsonObj.put("panel", orphTerms[1] + " (" + orphTerms[0] + ")");
+                    orphanetGeneSets.put(orphanetJsonObj);
                 } else if (member.startsWith("alias:")) {
                     //alias.put(member.replace("alias:", ""));
                     aliasSet.add(member.replace("alias:", ""));
