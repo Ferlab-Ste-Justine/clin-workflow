@@ -1724,6 +1724,7 @@ public class VepHelper {
         JSONArray hpoGeneSets = new JSONArray();
         JSONArray orphanetGeneSets = new JSONArray();
         JSONArray radboudumc = new JSONArray();
+        JSONArray omimSets = new JSONArray();
 
         geneSets.forEach(member -> {
 
@@ -1781,22 +1782,31 @@ public class VepHelper {
                     jsonObject.put("geneId", member.replace("geneid:", ""));
                 } else if (member.startsWith("map_location:")) {
                     jsonObject.put("location", member.replace("map_location:", ""));
+                } else if (member.startsWith("omim:")) {
+                    omimSets.put(member.replace("omim:", ""));
+                } else if (member.startsWith("hgnc:")) {
+                    jsonObject.put("hgnc", member.replace("hgnc:", ""));
+                } else if (member.startsWith("name:")) {
+                    jsonObject.put("name", member.replace("name:", ""));
                 }
 
-                if (hpoGeneSets.length() > 0) {
-                    jsonObject.put("hpo", hpoGeneSets);
-                    availObj.put("hpo", true);
-                }
-                if (orphanetGeneSets.length() > 0) {
-                    jsonObject.put("orphanet", orphanetGeneSets);
-                    availObj.put("orphanet", true);
-                }
-                if (aliasSet.size() > 0) jsonObject.put("alias", aliasSet.toArray());
-                if (radboudumc.length() > 0) {
-                    jsonObject.put("radboudumc", radboudumc);
-                    availObj.put("radboudumc", true);
-                }
             });
+        if (hpoGeneSets.length() > 0) {
+            jsonObject.put("hpo", hpoGeneSets);
+            availObj.put("hpo", true);
+        }
+        if (orphanetGeneSets.length() > 0) {
+            jsonObject.put("orphanet", orphanetGeneSets);
+            availObj.put("orphanet", true);
+        }
+        if (aliasSet.size() > 0) jsonObject.put("alias", aliasSet.toArray());
+        if (omimSets.length() > 0) {
+            jsonObject.put("omim", omimSets);
+        }
+        if (radboudumc.length() > 0) {
+            jsonObject.put("radboudumc", radboudumc);
+            availObj.put("radboudumc", true);
+        }
 
     }
 

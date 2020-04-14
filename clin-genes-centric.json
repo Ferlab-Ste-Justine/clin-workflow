@@ -81,17 +81,37 @@
         "location": {
           "type": "text"
         },
-        "genes": {
-          "type": "nested",
-          "include_in_parent": true,
-          "properties": {
-
-          }
-        },
         "lastAnnotationUpdate": {
           "type": "date"
         },
         "variants": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword",
+              "ignore_above": 256
+            }
+          }
+        },
+        "omim": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword",
+              "ignore_above": 256
+            }
+          }
+        },
+        "hgnc": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword",
+              "ignore_above": 256
+            }
+          }
+        },
+        "name": {
           "type": "text",
           "fields": {
             "keyword": {

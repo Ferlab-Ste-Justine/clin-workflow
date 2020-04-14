@@ -301,15 +301,6 @@
                 }
               }
             },
-            "tableRow": {
-              "type": "text",
-              "fields": {
-                "keyword": {
-                  "type": "keyword",
-                  "index": false
-                }
-              }
-            },
             "biotype": {
               "type": "text",
               "fields": {
@@ -375,7 +366,34 @@
             },
             "location": {
               "type": "text"
+              },
+            "omim": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
               }
+            },
+            "hgnc": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              }
+            },
+            "name": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              }
+            }
           }
         },
         "lastAnnotationUpdate": {
