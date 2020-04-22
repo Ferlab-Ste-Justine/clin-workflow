@@ -228,6 +228,15 @@
                   "ignore_above": 256
                 }
               }
+            },
+            "dbSNP": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              }
             }
           }
         },

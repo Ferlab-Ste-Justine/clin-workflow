@@ -1777,7 +1777,7 @@ public class VepHelper {
                     aliasSet.add(member.replace("alias:", ""));
                 } else if (member.startsWith("Rad:")) {
                     String[] radTerms = member.split(":");
-                    radboudumc.put(radTerms[1] + " (" + member + ")");
+                    radboudumc.put(radTerms[1]);
                 } else if (member.startsWith("geneid:")) {
                     jsonObject.put("geneId", member.replace("geneid:", ""));
                 } else if (member.startsWith("map_location:")) {
