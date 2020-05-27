@@ -1,6 +1,6 @@
 {
   "settings": {
-    "number_of_shards": 4,
+    "number_of_shards": 3,
     "number_of_replicas": 2
   },
   "mappings": {
@@ -376,12 +376,33 @@
             "location": {
               "type": "text"
               },
+            "geneMim" : {
+              "type" : "text"
+            },
             "omim": {
-              "type": "text",
-              "fields": {
-                "keyword": {
-                  "type": "keyword",
-                  "ignore_above": 256
+              "type": "nested",
+              "include_in_parent": true,
+              "properties": {
+                "phenotypeMim" : {
+                  "type" : "text"
+                },
+                "phenotype" : {
+                  "type": "text",
+                  "fields": {
+                    "keyword": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  }
+                },
+                "inheritance" : {
+                  "type": "text",
+                  "fields": {
+                    "keyword": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  }
                 }
               }
             },

@@ -33,7 +33,7 @@ To create the index 'mutations', run the following command line where ElasticSea
             
             transcripts grouping (gene, aaChange, consequence, CDNAChange, strand)
             VEP imapct scoring 0-4 
-            Gene analysis (Redis)
+            Gene analysis (cellbase/Redis)
             donor/specimen analysis (FHIR)
             internal & laboratory frequencies
             family & transmission analysis (AD, AR, DeNovo, XD, XR)
@@ -122,4 +122,36 @@ Une maladie peut etre classée comme récéssive mais se tramsettre de facon dom
 bref, de notre coté pour l'instant on catégorise les transmission de génotypes
 10:52
 comme les garcons n'ont qu'une seule copie du X, ca se veut donc récessif (comme si les deux alleles etaient touchees)
+```
+
+### To run etl
+#### To compile and build runtime:
+```shell script
+mvn clean install
+``` 
+#### Step 0a indexation de cellbase (only once)
+
+To execute etl for the cellbase; make sure cellbase is available (port 6379) 
+```shell script
+java -jar target/ExtractTLoad-1.0-SNAPSHOT-jar-with-dependencies.jar Homo_sapiens.gene_info.txt
+```
+#### Step 1a edit etl.properties file if necessary
+##### Default values is:
+```properties
+assemblyVersion=GRCh38
+annotationTool=VEP 97
+``` 
+
+#### Step 1b indexation
+
+To execute etl with an extracted vcfs into column delimited files; it's pedigree need to be available
+```shell script
+~/bin/spark-2.4.3/bin/spark-submit --class org.chusj.VEPSparkDriverProgram --deploy-mode client --master 'local[*]' \
+target/ExtractTLoad-1.0-SNAPSHOT-jar-with-dependencies.jar vcf.txt etl.properties true local 'local[12]' 12g 12 51 pedigreeTest1.ped
+```
+#### Step 2 Exomiser
+To index the exomiser report for a proband;
+```shell script
+~/bin/spark-2.4.3/bin/spark-submit --class org.chusj.ExomiserETL --deploy-mode client --master 'local[*]' \
+target/ExtractTLoad-1.0-SNAPSHOT-jar-with-dependencies.jar exomiser/FAM_C3_92.json etl.properties SP00011 6 45
 ```

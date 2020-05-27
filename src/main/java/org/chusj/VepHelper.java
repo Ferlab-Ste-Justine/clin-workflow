@@ -1725,6 +1725,7 @@ public class VepHelper {
         JSONArray orphanetGeneSets = new JSONArray();
         JSONArray radboudumc = new JSONArray();
         JSONArray omimSets = new JSONArray();
+        JSONArray omimPhenotypeSets = new JSONArray();
 
         geneSets.forEach(member -> {
 
@@ -1788,6 +1789,25 @@ public class VepHelper {
                     jsonObject.put("hgnc", member.replace("hgnc:", ""));
                 } else if (member.startsWith("name:")) {
                     jsonObject.put("name", member.replace("name:", ""));
+                } else if (member.startsWith("op:")) {
+                    JSONObject omimData = new JSONObject();
+                    String[] omimObj = member.split(";");
+                    String phenotypeMim = omimObj[0].substring(3,9);
+                    omimData.put("phenotypeMim", phenotypeMim);
+                    String phenotypeName = omimObj[0].substring(10);
+                    omimData.put("phenotype", phenotypeName);
+                    if (omimObj.length == 2) {
+                        String[] inheritances = omimObj[1].split(",");
+                        if (inheritances.length > 0) {
+                            JSONArray transmissionArray = new JSONArray();
+                            for (String inheritance: inheritances) {
+                                transmissionArray.put(inheritance);
+                            }
+                            omimData.put("inheritance", transmissionArray);
+                        }
+                    }
+
+                    omimPhenotypeSets.put(omimData);
                 }
 
             });
@@ -1801,11 +1821,15 @@ public class VepHelper {
         }
         if (aliasSet.size() > 0) jsonObject.put("alias", aliasSet.toArray());
         if (omimSets.length() > 0) {
-            jsonObject.put("omim", omimSets);
+            jsonObject.put("geneMim", omimSets);
         }
         if (radboudumc.length() > 0) {
             jsonObject.put("radboudumc", radboudumc);
             availObj.put("radboudumc", true);
+        }
+        if (omimPhenotypeSets.length() > 0) {
+            jsonObject.put("omim", omimPhenotypeSets);
+            toPrint = true;
         }
 
     }
@@ -1843,6 +1867,7 @@ public class VepHelper {
             if (ped == null) {
                 // an error occurs...
                 System.err.println("!!! All specimen from the vcf that was found in the patient DB need an entry in the ped file");
+                System.err.println("specimen id: "+specimen+" not found in ped but found in patient db");
                 System.exit(1);
             }
             Family family = new Family(ped.getFamilyId());

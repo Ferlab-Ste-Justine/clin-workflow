@@ -328,10 +328,11 @@ public class VEPSparkDriverProgram {
                 }
                 break;
             } catch (Exception e) {
-                System.err.println("Error :"+e);
                 if (e.getCause().getMessage().contains("Request Entity Too Large")) {
                     System.err.println("3x1/3");
                     break;
+                } else {
+                    System.err.println("Error :"+e);
                 }
                 System.err.println("*******Bulk "+((esUpsert) ? "upsert":"insert")+" try #"+(i+1)+" failed...");
                 if (secondTry) {
