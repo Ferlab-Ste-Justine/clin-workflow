@@ -783,7 +783,7 @@ public class VepHelper {
         String biotype = functionalAnnotationArray[pos++];
         addStrToJsonObject("biotype", biotype, funcAnnotation, false);
         String EXON = functionalAnnotationArray[pos++];
-//        addStrToJsonObject("exon", functionalAnnotationArray[pos++], funcAnnotation, false);
+        addStrToJsonObject("exon", EXON, funcAnnotation, false);
         String INTRON = functionalAnnotationArray[pos++];
 //        addStrToJsonObject("intron", functionalAnnotationArray[pos++], funcAnnotation, false);
 
@@ -1829,7 +1829,6 @@ public class VepHelper {
         }
         if (omimPhenotypeSets.length() > 0) {
             jsonObject.put("omim", omimPhenotypeSets);
-            toPrint = true;
         }
 
     }

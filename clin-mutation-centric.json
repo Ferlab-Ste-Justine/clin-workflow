@@ -600,6 +600,9 @@
                     }
                   }
                 },
+                "exon": {
+                  "type": "text"
+                },
                 "featureType": {
                   "type": "text",
                   "fields": {
