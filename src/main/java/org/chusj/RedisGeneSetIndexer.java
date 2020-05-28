@@ -17,15 +17,16 @@ public class RedisGeneSetIndexer {
     public static int bulkOpsQty = 51;
 
     public static void main(String[] args) throws Exception {
-        if (args.length != 1) {
-            args = new String[]{"Homo_sapiens.gene_info.txt"};
+        if (args.length != 2) {
+            args = new String[]{"Homo_sapiens.gene_info.txt", "9200"};
         }
 
         String extractFile = args[0];
+        int esPort = Integer.valueOf(args[1]);
 
         try (RestHighLevelClient clientTry = new RestHighLevelClient(
                 RestClient.builder(
-                        new HttpHost("localhost", 9200, "http")))) {
+                        new HttpHost("localhost", esPort, "http")))) {
 
             client = clientTry;
             VEPSparkDriverProgram.client = clientTry;

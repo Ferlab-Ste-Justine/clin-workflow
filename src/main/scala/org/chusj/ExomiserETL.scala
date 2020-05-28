@@ -32,7 +32,7 @@ object ExomiserETL {
 
 
     val newArgs = if (args.length < 3) // to test locally
-       Array[String]("exomiser/FAM_C3_92.json", "pedigree.properties", "00011", "6", "20")
+       Array[String]("exomiser/FAM_C3_92.json", "pedigree.properties", "00011", "6", "20", "9200")
     else
       args
     val extractFile = newArgs(0)
@@ -42,6 +42,7 @@ object ExomiserETL {
     val bulkOpsQty = newArgs(4).toInt
     import collection.JavaConverters._
     val pedigreeProps = getPropertiesFromFile(pedigrePropsFile)
+    val elasticsearchPort = newArgs(5).toInt
 
     //val pedigreesScala: mutable.Seq[Pedigree] = loadPedigree(pedFile).asScala
 
@@ -96,7 +97,7 @@ object ExomiserETL {
 
     val clientTry = new RestHighLevelClient(
       RestClient.builder(
-        new HttpHost("localhost", 9200, "http")))
+        new HttpHost("localhost", elasticsearchPort, "http")))
 
     VEPSparkDriverProgram.client = clientTry
     //PatientHelper.client = clientTry

@@ -26,12 +26,17 @@ public class PatientHelper {
     public static RestHighLevelClient client;
     private static String INDEX_NAME = "patient";
 
-
     public static void main(String[] args) throws Exception {
+
+
+        if (args.length != 1) {
+            args = new String[]{"9200"};
+        }
+        int esPort = Integer.valueOf(args[0]);
 
         try (RestHighLevelClient clientTry = new RestHighLevelClient(
                 RestClient.builder(
-                        new HttpHost("localhost", 9200, "http")))) {
+                        new HttpHost("localhost", esPort, "http")))) {
 
             client = clientTry;
             //
@@ -165,7 +170,7 @@ public class PatientHelper {
                         JSONArray phenotypes = (JSONArray) ((JSONObject) obs).get("phenotype");
                         phenotypes.forEach((phenotype) -> {
                             //System.out.println("\t" + ((JSONObject) phenotype).toString());
-                            hpoTerms.add((String)  ((JSONObject) phenotype).get("code"));
+                            hpoTerms.add(((String) ((JSONObject) phenotype).get("display")) + " (" + ((String)  ((JSONObject) phenotype).get("code")) + ")");
                         });
                     }
                 }

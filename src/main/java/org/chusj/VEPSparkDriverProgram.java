@@ -43,9 +43,9 @@ public class VEPSparkDriverProgram {
 
     public static void main(String[] args) throws Exception {
 
-        if (args.length < 9 ) {
+        if (args.length < 10 ) {
             throw new Exception("Missing params; need extractFile ETLPropertiesFile ES_UPSERT (true|false) " +
-                    "sparkMaster local[nbWorkers] 8g nbPartitions bulkSize pedFile");
+                    "sparkMaster local[nbWorkers] 8g nbPartitions bulkSize pedFile Elasticsearch_port ");
         }
 
         String extractFile = args[0];
@@ -58,6 +58,7 @@ public class VEPSparkDriverProgram {
         int nbPartitions = Integer.parseInt(args[6]);
         int bulkOpsQty = Integer.parseInt(args[7]);
         String pedFile = args[8];
+        int esPort = Integer.valueOf(args[9]);
         //spliting gene into a join relation is currently disabled as it's not helping in our use cases
         // The feature is kept for now as the simplification of the ES indexing was done at same time
         boolean splitGene = false; //  Boolean.parseBoolean(args[8]);
@@ -69,14 +70,13 @@ public class VEPSparkDriverProgram {
         JavaSparkContext sc;
         try (RestHighLevelClient clientTry = new RestHighLevelClient(
                 RestClient.builder(
-                        new HttpHost("localhost", 9200, "http")))) {
+                        new HttpHost("localhost", esPort, "http")))) {
 
 
             client = clientTry;
             PatientHelper.client = clientTry;
 
             Properties pedigreeProps = VepHelper.getPropertiesFromFile(pedigreePropsFile);
-            //pedigreeProps.forEach( (k,v) -> System.out.println(k+"="+v) );
 
             List<Pedigree> pedigrees = loadPedigree(pedFile);
 //            System.out.println("pedigrees");
@@ -111,10 +111,6 @@ public class VEPSparkDriverProgram {
 
                     if (variant != null) {
                         for (Gene gene: variant.getGenes()) {
-                            //GeneVariants geneVariants = new GeneVariants();
-                            //geneVariants.setGene(gene);
-                            //geneVariants.setVariant(variant);
-                            //VEPSparkDriverProgram.geneVariants.add(geneVariants);
                             JSONObject genePayload = new JSONObject();
                             String mutationId = variant.getMutationId();
                             JSONArray variants = new JSONArray();
@@ -172,38 +168,6 @@ public class VEPSparkDriverProgram {
             System.out.println("//////////////");
             System.out.println("//////////////");
             System.out.println("//////////////");
-
-
-//            sc = new JavaSparkContext(conf);
-//
-//            JavaRDD<GeneVariants> blob = sc.parallelize(geneVariants, nbPartitions);
-//            //System.out.println("GeneVariants count = " + blob.count());
-//            blob.foreachPartition(partitionOfRecords -> {
-//                List<JSONObject> jsonObjectList = new ArrayList<>();
-//                while (partitionOfRecords.hasNext()) {
-//                    JSONObject payload = new JSONObject();
-//                    GeneVariants geneVariants = partitionOfRecords.next();
-//                    String mutationId = geneVariants.getVariant().getMutationId();
-//                    JSONArray variants = new JSONArray();
-//                    variants.put(mutationId);
-//                    payload.put("id", geneVariants.getGene().getEnsemblId());
-//                    payload.put("geneSymbol", geneVariants.getGene().getGeneSymbol());
-//                    payload.put("biotype", geneVariants.getGene().getBiotype());
-//                    payload.put("ensemblId", geneVariants.getGene().getEnsemblId());
-//                    payload.put("mutationId", mutationId);
-//                    payload.put("variants", variants);
-//                    payload.put("donors", new JSONArray());
-//                    payload.put("frequencies", new new JSONArray());
-//                    jsonObjectList.add(payload);
-//
-//                    if (jsonObjectList.size() >= bulkOpsQty) {
-//                        //System.out.println("Bulk Items in partition-" + jsonObjectList.size());
-//                        bulkStoreJsonObj(jsonObjectList, esUpsert, false, true);
-//                        jsonObjectList = new ArrayList<>();
-//                    }
-//                }
-//                bulkStoreJsonObj(jsonObjectList, esUpsert, false, true);
-//            });
 
         }
         sc.close();
@@ -384,7 +348,6 @@ public class VEPSparkDriverProgram {
             donorMap.put("adFreq", donor.get("adFreq"));
             donorMap.put("adAlt", donor.get("adAlt"));
             donorMap.put("adTotal", donor.get("adTotal"));
-            //donorMap.put("exomiserScore", donor.get("exomiserScore"));
 //            donorMap.put("af", donor.get("af"));
 //            donorMap.put("dp", donor.get("dp"));
             donorMap.put("gt", donor.get("gt"));
@@ -402,18 +365,10 @@ public class VEPSparkDriverProgram {
             if (!donor.isNull("transmission")) {
                 donorMap.put("transmission", donor.get("transmission"));
             }
-//            if (!donor.isNull("dn")) {
-//                donorMap.put("dn", donor.get("dn"));
-//            }
-//            if (!donor.isNull("dq")) {
-//                donorMap.put("dq", donor.get("dq"));
-//            }
-            if (!donor.isNull("nbHpoTerms")) {
-                donorMap.put("nbHpoTerms", donor.get("nbHpoTerms"));
+            if (!donor.isNull("phenotypes")) {
+                donorMap.put("phenotypes", donor.get("phenotypes"));
             }
-
             donorMap.put("lastUpdate", donor.get("lastUpdate"));
-
             donorsLst.add(donorMap);
         }
 
@@ -432,12 +387,8 @@ public class VEPSparkDriverProgram {
             laboMap.put("PN", freqLabo.get("PN"));
             laboMap.put("labName", labName);
             labFreqList.add(laboMap);
-
         }
-
-
         JSONObject freqInterne = (JSONObject) frequencies.get("interne");
-
 
         parameters.put("specimen", specimenList);
         parameters.put("donorsLst",  donorsLst );
@@ -450,13 +401,6 @@ public class VEPSparkDriverProgram {
         parameters.put("labFreqList", labFreqList);
         //parameters.put("")
 
-
-//        Map<String, Object> freqLaboMap = new HashMap<>();
-//        freqLaboMap.put("AC", freqLabo.get("AC"));
-//        freqLaboMap.put("AN", freqLabo.get("AN"));
-//        freqLaboMap.put("AF", freqLabo.get("AF"));
-//        freqLaboMap.put("HC", freqLabo.get("HC"));
-//        freqLaboMap.put("PN", freqLabo.get("PN"));
         parameters.put("freqLabList", labFreqList);
 
 

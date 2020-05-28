@@ -7,7 +7,7 @@ public class Main {
 
         if (args.length == 0 ) {
             RedisGeneSetHelper.main(args);
-        } else if ( args.length == 1) {
+        } else if ( args.length == 2) {
             RedisGeneSetIndexer.main(args);
         } else if ( args.length == 3) {
             VepHelper.main(args);

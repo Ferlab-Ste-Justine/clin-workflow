@@ -70,19 +70,22 @@ public class VepHelper {
     public static void main(String[] args) throws Exception {
 
         if (args.length != 3) {
-            args = new String[]{"FAM_C3_92_new5k.txt", "pedigree.properties", "pedigree.ped"};
+            args = new String[]{"FAM_C3_92_new5k.txt", "pedigree.properties", "pedigree.ped", "9200"};
 //            args = new String[]{"batch5000.txt",  "pedigree.properties", "pedigreeTest1.ped"};
         }
 
         String extractFile = args[0];
         String pedigrePropsFile = args[1];
         String pedFile = args[2];
+        int esPort = Integer.valueOf(args[1]);
+
 
         List<String> specimenList = getSpecimenList(extractFile);
 
+        // the port is for the indexed fhir data (index patient)
         try (RestHighLevelClient clientTry = new RestHighLevelClient(
                 RestClient.builder(
-                        new HttpHost("localhost", 9200, "http")))) {
+                        new HttpHost("localhost", esPort, "http")))) {
 
 
             PatientHelper.client = clientTry;
@@ -398,7 +401,6 @@ public class VepHelper {
             System.err.println("empty type for :" + mutationId);
         }
 
-
         // Genes analysis
         for (Gene gene: geneSet) {
             geneObj = new JSONObject();
@@ -473,6 +475,15 @@ public class VepHelper {
                     freqenceLabo.setHc(freqenceLabo.getHc()+1);
                 }
                 freqenceLabo.updateAf();
+            }
+
+            if (!currentPatient.getHposTerms().isEmpty()) {
+                JSONArray phenotypes = new JSONArray();
+                for (String hpo: currentPatient.getHposTerms()) {
+                    phenotypes.put(hpo);
+                }
+                arrayDonor[i].put("phenotypes", phenotypes);
+                toPrint = true;
             }
 
             //if ("HOM REF".equalsIgnoreCase(zygosity)) continue;
@@ -1794,7 +1805,7 @@ public class VepHelper {
                     String[] omimObj = member.split(";");
                     String phenotypeMim = omimObj[0].substring(3,9);
                     omimData.put("phenotypeMim", phenotypeMim);
-                    String phenotypeName = omimObj[0].substring(10);
+                    String phenotypeName = omimObj[0].substring(9);
                     omimData.put("phenotype", phenotypeName);
                     if (omimObj.length == 2) {
                         String[] inheritances = omimObj[1].split(",");

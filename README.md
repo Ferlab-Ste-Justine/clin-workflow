@@ -15,9 +15,17 @@ And
 https://usf.app.box.com/s/cdws8yx5occ603ccbknwyamz5reapdug
 
 ##### ElasticSearch Set-up
-To create the index 'mutations', run the following command line where ElasticSearch is available (ssh -L or ssh thru environment)
+To create the index 'mutations', run the following commands lines where ElasticSearch is available (ssh -L or ssh thru environment)
 
-```curl -XPUT "http://localhost:9200/mutations" -H 'Content-Type: application/json' -d @clin-mutation-centric.json```
+The delete is because the devops have decided to own elasticsearch and pre-configure settings which make the creation of the index crash 
+```shell script
+
+curl -XDELETE "http://localhost:9200/mutations"
+curl -XDELETE "http://localhost:9200/genes"
+curl -XPUT "http://localhost:9200/genes" -H 'Content-Type: application/json' -d @clin-genes-centric.json
+curl -XPUT "http://localhost:9200/mutations" -H 'Content-Type: application/json' -d @clin-mutation-centric.json
+
+```
 
 #### ETL Genomic Algorithm 
      
@@ -131,9 +139,9 @@ mvn clean install
 ``` 
 #### Step 0a indexation de cellbase (only once)
 
-To execute etl for the cellbase; make sure cellbase is available (port 6379) 
+To execute etl for the cellbase; make sure cellbase is available (port 6379)
 ```shell script
-java -jar target/ExtractTLoad-1.0-SNAPSHOT-jar-with-dependencies.jar Homo_sapiens.gene_info.txt
+java -jar target/ExtractTLoad-1.0-SNAPSHOT-jar-with-dependencies.jar Homo_sapiens.gene_info.txt 9201
 ```
 #### Step 1a edit etl.properties file if necessary
 ##### Default values is:
@@ -147,11 +155,11 @@ annotationTool=VEP 97
 To execute etl with an extracted vcfs into column delimited files; it's pedigree need to be available
 ```shell script
 ~/bin/spark-2.4.3/bin/spark-submit --class org.chusj.VEPSparkDriverProgram --deploy-mode client --master 'local[*]' \
-target/ExtractTLoad-1.0-SNAPSHOT-jar-with-dependencies.jar vcf.txt etl.properties true local 'local[12]' 12g 12 51 pedigreeTest1.ped
+target/ExtractTLoad-1.0-SNAPSHOT-jar-with-dependencies.jar vcf.txt etl.properties true local 'local[12]' 12g 12 51 pedigreeTest1.ped 9201
 ```
 #### Step 2 Exomiser
 To index the exomiser report for a proband;
 ```shell script
 ~/bin/spark-2.4.3/bin/spark-submit --class org.chusj.ExomiserETL --deploy-mode client --master 'local[*]' \
-target/ExtractTLoad-1.0-SNAPSHOT-jar-with-dependencies.jar exomiser/FAM_C3_92.json etl.properties SP00011 6 45
+target/ExtractTLoad-1.0-SNAPSHOT-jar-with-dependencies.jar exomiser/FAM_C3_92.json etl.properties SP00011 6 45 9201
 ```
