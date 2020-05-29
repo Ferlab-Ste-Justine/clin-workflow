@@ -70,14 +70,14 @@ public class VepHelper {
     public static void main(String[] args) throws Exception {
 
         if (args.length != 3) {
-            args = new String[]{"FAM_C3_92_new5k.txt", "pedigree.properties", "pedigree.ped", "9200"};
+            args = new String[]{"FAM_C3_92_new5k.txt", "etl.properties", "pedigree.ped", "9201"};
 //            args = new String[]{"batch5000.txt",  "pedigree.properties", "pedigreeTest1.ped"};
         }
 
         String extractFile = args[0];
         String pedigrePropsFile = args[1];
         String pedFile = args[2];
-        int esPort = Integer.valueOf(args[1]);
+        int esPort = Integer.valueOf(args[3]);
 
 
         List<String> specimenList = getSpecimenList(extractFile);
@@ -161,7 +161,6 @@ public class VepHelper {
 
         String[] lineValueArray = extractedLine.split("\t");
         // dynamic positioning system -- pos counter++
-//        toPrint = false;
         int pos = 0;
         int impactScore;
         String chrom = lineValueArray[pos++];
@@ -483,7 +482,6 @@ public class VepHelper {
                     phenotypes.put(hpo);
                 }
                 arrayDonor[i].put("phenotypes", phenotypes);
-                toPrint = true;
             }
 
             //if ("HOM REF".equalsIgnoreCase(zygosity)) continue;
@@ -498,7 +496,6 @@ public class VepHelper {
             // snpSift Extract does not keep correctly the qty of unknown value . (only give 1 number (0) in GEN[*].AD
 
             if (ad.length < nbDonor * 2) {
-                //toPrint = true;
                 if ("./.".equalsIgnoreCase(gt[i])) {
                     adS = ad[adPointer] + "," + ad[adPointer++]; // increment only by 1
                 } else {
@@ -599,6 +596,10 @@ public class VepHelper {
 
                             if (genotypeFamily.length() > 0) {
                                 arrayDonor[index].put("genotypeFamily", genotypeFamily.toString());
+                                String origin = getOrigin(genotypeFamily.toString());
+                                if (origin != null) {
+                                    arrayDonor[index].put("origin", origin);
+                                }
                             }
                         }
                         // analysis of transmission - X & autosomal (dominant & recessif)
@@ -637,10 +638,10 @@ public class VepHelper {
                             hposTerms.add(currentDonor.getPhenotype());
                         }
                         //arrayDonor[index].put("HpoTerms", hposTerms);
-                        arrayDonor[index].put("nbHpoTerms", currentPatient.getQtyHposTermsFound());
+                        //arrayDonor[index].put("nbHpoTerms", currentPatient.getQtyHposTermsFound());
                         //toPrint = true;
                         // setback to 0 for new variant
-                        currentPatient.setQtyHposTermsFound(0);
+                        //currentPatient.setQtyHposTermsFound(0);
                     }
                 }
                 specimenArray.put(currentDonor.getId());
@@ -2304,5 +2305,77 @@ public class VepHelper {
         } else {
             return true;
         }
+    }
+
+    static String getOrigin(String genotypeFamily) {
+        String origin = null;
+        switch (genotypeFamily) {
+            case "FTH:0/1,MTH:0/0":
+                origin = "FTH";
+                break;
+            case "FTH:0|1,MTH:0/0":
+                origin = "FTH";
+                break;
+            case "FTH:1/0,MTH:0/0":
+                origin = "FTH";
+                break;
+            case "FTH:1|0,MTH:0/0":
+                origin = "FTH";
+                break;
+                // mth
+            case "FTH:0/0,MTH:0/1":
+                origin = "MTH";
+                break;
+            case "FTH:0/0,MTH:1|0":
+                origin = "MTH";
+                break;
+            case "FTH:0/0,MTH:1/0":
+                origin = "MTH";
+                break;
+            case "FTH:0|0,MTH:0|1":
+                origin = "MTH";
+                break;
+            //
+            case "FTH:1/1,MTH:0/0":
+                origin = "FTH";
+                break;
+            case "FTH:1|1,MTH:0/0":
+                origin = "FTH";
+                break;
+            // mth
+            case "FTH:0/0,MTH:1/1":
+                origin = "MTH";
+                break;
+            case "FTH:0/0,MTH:1|1":
+                origin = "MTH";
+                break;
+            //
+            case "FTH:1/1,MTH:1/0":
+                origin = "FTH";
+                break;
+            case "FTH:1|1,MTH:0/1":
+                origin = "FTH";
+                break;
+            case "FTH:1/1,MTH:1|0":
+                origin = "FTH";
+                break;
+            case "FTH:1|1,MTH:0|1":
+                origin = "FTH";
+                break;
+            // mth
+            case "FTH:1/0,MTH:1/1":
+                origin = "MTH";
+                break;
+            case "FTH:0/1,MTH:1|1":
+                origin = "MTH";
+                break;
+            case "FTH:1|0,MTH:1/1":
+                origin = "MTH";
+                break;
+            case "FTH:0|1,MTH:1|1":
+                origin = "MTH";
+                break;
+        }
+        return origin;
     }
 }

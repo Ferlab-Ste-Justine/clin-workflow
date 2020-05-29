@@ -133,6 +133,9 @@
             "genotypeFamily": {
               "type": "text"
             },
+            "origin": {
+              "type": "text"
+            },
             "gt": {
               "type": "text",
               "fields": {

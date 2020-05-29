@@ -362,6 +362,9 @@ public class VEPSparkDriverProgram {
             if (!donor.isNull("genotypeFamily")) {
                 donorMap.put("genotypeFamily", donor.get("genotypeFamily"));
             }
+            if (!donor.isNull("origin")) {
+                donorMap.put("origin", donor.get("origin"));
+            }
             if (!donor.isNull("transmission")) {
                 donorMap.put("transmission", donor.get("transmission"));
             }
